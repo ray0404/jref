@@ -23,12 +23,28 @@ export function parseDirectoryStructure(structure: string): TreeNode {
     children: []
   };
 
+  // Detect indentation mode: does any line contain classic tree chars?
+  const hasTreeChars = lines.some(line => /[├└│]/.test(line));
+  // If using plain indentation, detect indent unit by scanning first few indented lines
+  let indentUnit = 2; // default for repomix
+  if (!hasTreeChars) {
+    const indents = lines
+      .map(l => l.length - l.trimStart().length)
+      .filter(s => s > 0)
+      .slice(0, 10);
+    // Find smallest non-zero indent (usually 2)
+    if (indents.length > 0) {
+      const minIndent = Math.min(...indents);
+      if (minIndent > 0) indentUnit = minIndent;
+    }
+  }
+
   let currentPath: TreeNode[] = [root];
   let currentDepth = 0;
 
   for (const line of lines) {
     // Parse the line to determine depth and name
-    const { depth, name, isDirectory } = parseTreeLine(line);
+    const { depth, name, isDirectory } = parseTreeLine(line, hasTreeChars, indentUnit);
 
     // Adjust current path based on depth
     while (currentDepth >= depth && currentPath.length > 1) {
@@ -60,39 +76,42 @@ export function parseDirectoryStructure(structure: string): TreeNode {
 
 /**
  * Parse a single line from tree output
+ * @param line - The line to parse
+ * @param hasTreeChars - Whether the structure contains classic tree drawing chars (├└│)
+ * @param indentUnit - Number of spaces per indent level (for plain indentation)
  */
-function parseTreeLine(line: string): { depth: number; name: string; isDirectory: boolean } {
-  // Remove tree characters and count indentation
-  let cleanLine = line;
+function parseTreeLine(
+  line: string,
+  hasTreeChars: boolean,
+  indentUnit: number
+): { depth: number; name: string; isDirectory: boolean } {
+  let remaining = line;
   let depth = 0;
 
-  // Count leading spaces and tree characters
-  let foundTreeChar = false;
-
-  while (cleanLine.length > 0) {
-    if (cleanLine.startsWith('├── ') || cleanLine.startsWith('└── ')) {
-      cleanLine = cleanLine.substring(4);
-      depth++;
-      foundTreeChar = true;
-      break;
-    } else if (cleanLine.startsWith('│   ')) {
-      cleanLine = cleanLine.substring(4);
-      depth++;
-    } else if (cleanLine.startsWith('    ')) {
-      cleanLine = cleanLine.substring(4);
-      depth++;
-    } else {
-      break;
+  if (hasTreeChars) {
+    // Classic tree format: consume 4-char prefixes (├──, └──, │   , or 4 spaces)
+    while (remaining.length > 0) {
+      if (remaining.startsWith('├── ') || remaining.startsWith('└── ')) {
+        remaining = remaining.substring(4);
+        depth++;
+      } else if (remaining.startsWith('│   ')) {
+        remaining = remaining.substring(4);
+        depth++;
+      } else if (remaining.startsWith('    ')) {
+        remaining = remaining.substring(4);
+        depth++;
+      } else {
+        break;
+      }
     }
+  } else {
+    // Plain indentation: depth = leading spaces / indentUnit, remainder is trimmed
+    const leadingSpaces = line.length - line.trimStart().length;
+    depth = Math.floor(leadingSpaces / indentUnit);
+    remaining = line.trim();
   }
 
-  // If no tree characters found, it might be the root
-  if (!foundTreeChar && line.includes('/')) {
-    depth = 0;
-  }
-
-  // Extract name and determine if directory
-  const name = cleanLine.trim();
+  const name = remaining.trim();
   const isDirectory = name.endsWith('/');
 
   return {
