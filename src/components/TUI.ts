@@ -24,35 +24,46 @@ interface FlatTreeItem {
 export function buildFlatTree(root: TreeNode, expanded: Set<string>): FlatTreeItem[] {
   const items: FlatTreeItem[] = [];
 
-  // Find the project root (first child of the empty root)
-  const projectRoot = root.children[0];
+  // Detect structure: single-container (typical project) vs multi-root (monorepo/workspace)
+  const singleContainer = root.children.length === 1 && root.children[0].isDirectory;
+  const containerPath = singleContainer ? root.children[0].path : '';
 
-  function traverse(node: TreeNode, depth: number, pathPrefix: string = '') {
-    // Create path relative to project root for file lookup
-    const relativePath = node === projectRoot ? '' : pathPrefix + (pathPrefix ? '/' : '') + node.name;
+  function traverse(node: TreeNode, depth: number) {
+    // Compute the path used for file lookup and expansion state
+    let nodePath: string;
+    if (node === root) {
+      nodePath = ''; // dummy root
+    } else if (singleContainer && node.path.startsWith(containerPath + '/')) {
+      // Strip container prefix (e.g., "project/src" -> "src")
+      nodePath = node.path.slice(containerPath.length + 1);
+    } else if (singleContainer && node.path === containerPath) {
+      // The container itself
+      nodePath = '';
+    } else {
+      // Multi-root or other: use full path as-is
+      nodePath = node.path;
+    }
 
     // Add non-root nodes to flat list
     if (node !== root) {
       items.push({
         node: {
           ...node,
-          path: relativePath // Use relative path for file lookup
+          path: nodePath
         },
-        depth: depth - 1, // Adjust depth so project root is at depth 0
-        isExpanded: expanded.has(relativePath)
+        depth: depth - 1, // Adjust depth so first visible level is at depth 0
+        isExpanded: expanded.has(nodePath)
       });
     }
 
-    // Traverse children if this directory is expanded
-    // Always traverse the dummy root to expose the project root
+    // Traverse children if this directory is expanded (always traverse dummy root)
     const shouldTraverse = node === root
       ? true
-      : node.isDirectory && expanded.has(relativePath);
+      : node.isDirectory && expanded.has(nodePath);
 
     if (shouldTraverse) {
-      const newPrefix = node === projectRoot ? '' : (pathPrefix ? pathPrefix + '/' : '') + node.name;
       for (const child of node.children) {
-        traverse(child, depth + 1, newPrefix);
+        traverse(child, depth + 1);
       }
     }
   }
