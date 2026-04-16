@@ -9,6 +9,7 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Extract** - Unpack specific files, directories, or entire project to filesystem
 - **Query** - Get content of a specific file path (AI-friendly)
 - **Reconstruct** - Dry-run mode to verify if local directory matches snapshot
+- **UI** - Interactive Terminal User Interface for browsing snapshots (mobile-friendly)
 
 ## Target Environments
 
@@ -35,6 +36,9 @@ npm install -g jref
 ```bash
 # Inspect a snapshot
 jref inspect snapshot.json
+
+# Interactive browsing (mobile-friendly)
+jref ui snapshot.json
 
 # Search for patterns
 jref search "function" snapshot.json
@@ -182,6 +186,42 @@ jref reconstruct --verbose snapshot.json
 jref reconstruct --json snapshot.json
 cat snapshot.json | jref reconstruct --directory ./src
 ```
+
+### ui
+
+Interactive Terminal User Interface for browsing project snapshots. Perfect for mobile/Termux users where typing long file paths is tedious.
+
+```bash
+jref ui [file]
+
+Controls:
+  ↑↓ Arrows       Navigate through all files/directories in tree
+  ←→ Arrows       Expand/collapse directories
+  Enter           Select file (view content) or toggle directory
+  /               Search for files by name
+  c               Toggle compact mode (mobile-friendly)
+  Esc             Exit
+
+Compact Mode (auto-enabled on narrow screens < 60 chars):
+- Shorter file paths and headers
+- Simplified instructions
+- Optimized for mobile screens
+```
+
+**Examples:**
+```bash
+jref ui snapshot.json
+cat snapshot.json | jref ui
+```
+
+**Features:**
+- **Full Tree View**: See entire project structure with proper indentation
+- **Expandable Directories**: Expand/collapse folders with arrow keys
+- **File Content Viewer**: View file contents with line numbers and scrolling
+- **Search Functionality**: Quickly find files by name with live filtering
+- **Auto Mobile Detection**: Automatically adapts to narrow screens
+- **Smooth Scrolling**: Selected item always stays visible while navigating
+- **Visual Tree Structure**: Proper tree lines (├──, └──) showing hierarchy
 
 ## Global Options
 

@@ -168,10 +168,12 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { ExtractCommand } = await import('../commands/extract.js');
   const { QueryCommand } = await import('../commands/query.js');
   const { ReconstructCommand } = await import('../commands/reconstruct.js');
+  const { UICommand } = await import('../commands/ui.js');
 
   registry.register(new InspectCommand());
   registry.register(new SearchCommand());
   registry.register(new ExtractCommand());
   registry.register(new QueryCommand());
   registry.register(new ReconstructCommand());
+  registry.register(new UICommand());
 }
