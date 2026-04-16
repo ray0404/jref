@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "file://data/data/com.termux/files/home/Projects/JSON/repomix/project-snapshot-schema.json",
+  "title": "Extended Project Snapshot Schema",
+  "type": "object",
+  "required": [
+    "directoryStructure",
+    "files"
+  ],
+  "properties": {
+    "directoryStructure": {
+      "type": "string",
+      "description": "Visual tree representation of the repository."
+    },
+    "instruction": {
+      "type": "string",
+      "description": "Optional context or AI instructions for the repository."
+    },
+    "fileSummary": {
+      "type": "string",
+      "description": "An optional summary of the files included in this snapshot."
+    },
+    "userProvidedHeader": {
+      "type": "string",
+      "description": "An optional custom header provided by the user."
+    },
+    "files": {
+      "type": "object",
+      "description": "Map of file paths to their full source code.",
+      "patternProperties": {
+        "^.*$": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
+
+
