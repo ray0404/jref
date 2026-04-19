@@ -6,6 +6,10 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { TreeNode } from '../utils/ui.js';
+import { exec, spawnSync } from 'child_process';
+import { writeFileSync, readFileSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 interface SnapshotBrowserProps {
   tree: TreeNode;
@@ -80,6 +84,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [isCompactMode, setIsCompactMode] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   // Initialize expanded directories - include project root (using relative paths)
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['']));
 
@@ -139,7 +144,10 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     return path.split('/').pop() || path;
   };
 
-
+  const showStatus = (msg: string) => {
+    setStatusMessage(msg);
+    setTimeout(() => setStatusMessage(null), 2000);
+  };
 
   // Handle keyboard input
   useInput((input, key) => {
@@ -161,6 +169,38 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
     if (viewMode === 'tree') {
       const visibleLines = isCompactMode ? 15 : 20;
+
+      if (input === 'y' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem && !selectedItem.node.isDirectory) {
+          const content = files[selectedItem.node.path];
+          if (content) {
+            const isTermux = process.env.TERMUX_VERSION !== undefined;
+            const command = isTermux ? 'termux-clipboard-set' : (process.platform === 'darwin' ? 'pbcopy' : 'xclip -selection clipboard');
+            const child = exec(command);
+            child.stdin?.write(content);
+            child.stdin?.end();
+            showStatus('Yanked to clipboard');
+          }
+        }
+        return;
+      }
+
+      if (input === 'e' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem && !selectedItem.node.isDirectory) {
+          const content = files[selectedItem.node.path];
+          if (content !== undefined) {
+            const tempPath = join(tmpdir(), `jref-${Date.now()}-${selectedItem.node.name}`);
+            writeFileSync(tempPath, content);
+            spawnSync(process.env.EDITOR || 'vi', [tempPath], { stdio: 'inherit' });
+            const updatedContent = readFileSync(tempPath, 'utf8');
+            files[selectedItem.node.path] = updatedContent;
+            showStatus('File edited (in-memory)');
+          }
+        }
+        return;
+      }
 
       if (input === '/' && !key.ctrl) {
         setViewMode('search');
@@ -243,6 +283,19 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
        const visibleLines = isCompactMode ? 15 : 20;
        const maxScroll = Math.max(0, lines.length - visibleLines);
 
+       if (input === 'y' && !key.ctrl) {
+          if (selectedFile) {
+            const content = files[selectedFile];
+            const isTermux = process.env.TERMUX_VERSION !== undefined;
+            const command = isTermux ? 'termux-clipboard-set' : (process.platform === 'darwin' ? 'pbcopy' : 'xclip -selection clipboard');
+            const child = exec(command);
+            child.stdin?.write(content);
+            child.stdin?.end();
+            showStatus('Yanked to clipboard');
+          }
+          return;
+       }
+
        if (key.upArrow) {
          setScrollOffset(Math.max(0, scrollOffset - 1));
        } else if (key.downArrow) {
@@ -291,7 +344,12 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
       // Instructions (only show in non-compact mode or simplified)
       !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
-        React.createElement(Text, { color: 'yellow', dimColor: true }, '↑↓ Scroll • Esc Back')
+        React.createElement(Text, { color: 'yellow', dimColor: true }, '↑↓ Scroll • Esc Back • y Yank')
+      ) : null,
+
+      // Status Bar
+      statusMessage ? React.createElement(Box, { key: 'status', paddingX: 1 },
+        React.createElement(Text, { color: 'green', bold: true }, `✨ ${statusMessage}`)
       ) : null,
 
       // Content
@@ -378,10 +436,15 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     React.createElement(Box, { key: 'instructions', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
       React.createElement(Text, { color: 'yellow', dimColor: true },
         isCompactMode
-          ? '↑↓/Enter • ←→:expand • /:search'
-          : '↑↓ Navigate • Enter Select • ←→ Expand/Collapse • / Search • c Compact'
+          ? '↑↓/Enter • ←→:exp • /:src • y:yank • e:edit'
+          : '↑↓ Navigate • Enter Select • ←→ Expand/Collapse • / Search • y Yank • e Edit • c Compact'
       )
     ),
+
+    // Status Bar
+    statusMessage ? React.createElement(Box, { key: 'status', paddingX: 1 },
+      React.createElement(Text, { color: 'green', bold: true }, `✨ ${statusMessage}`)
+    ) : null,
 
     // Content
     React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },

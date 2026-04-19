@@ -181,4 +181,4 @@ export function printHeader(options: CLIOptions = {}): void {
  */
 export function exit(code: number): never {
   process.exit(code);
-}
+}// Modified for demo

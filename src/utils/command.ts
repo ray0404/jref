@@ -169,6 +169,11 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { QueryCommand } = await import('../commands/query.js');
   const { ReconstructCommand } = await import('../commands/reconstruct.js');
   const { UICommand } = await import('../commands/ui.js');
+  const { PatchCommand } = await import('../commands/patch.js');
+  const { ServeCommand } = await import('../commands/serve.js');
+  const { DiffCommand } = await import('../commands/diff.js');
+  const { PackCommand } = await import('../commands/pack.js');
+  const { SummarizeCommand } = await import('../commands/summarize.js');
 
   registry.register(new InspectCommand());
   registry.register(new SearchCommand());
@@ -176,4 +181,9 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new QueryCommand());
   registry.register(new ReconstructCommand());
   registry.register(new UICommand());
+  registry.register(new PatchCommand());
+  registry.register(new ServeCommand());
+  registry.register(new DiffCommand());
+  registry.register(new PackCommand());
+  registry.register(new SummarizeCommand());
 }

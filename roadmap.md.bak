@@ -1,0 +1,29 @@
+# `jref` Project Roadmap
+
+## Planned Features
+
+List if upcomming "planned" features, ordered by priority/order of implementation.
+
+**1. Interactive Snapshot TUI (`ui`)**
+* **Target:** Human Developers (Termux/Mobile Users)
+* **Why:** On mobile (Termux), typing long file paths for `query` is tedious. A lightweight Terminal User Interface (TUI) would allow users to navigate the `directoryStructure` tree and "cat" file contents interactively.
+* **How:** Utilize a lightweight library like `blessed` or `ink`. Leverage the existing `inspect --structure` logic to build a navigable tree view that triggers `query` on selection.
+* **Complexity:** High
+
+**2. Model Context Protocol (MCP) Server Mode (`serve`)**
+* **Target:** AI Tool Builders & Power Users
+* **Why:** While direct CLI calls are token-efficient, the **MCP standard** is the new "operating system" for AI agents (Cursor, Windsurf, Claude). Adding a `jref serve` command would allow any MCP-compatible agent to instantly "see" and "query" snapshots as if they were local files.
+* **How:** Add an `@modelcontextprotocol/sdk` dependency. Create a server entry point that maps `inspect`, `search`, and `query` commands to MCP tools.
+* **Complexity:** Medium
+
+**3. Snapshot-to-Live Diffing (`diff`)**
+* **Target:** AI Agent Developers & DevOps
+* **Why:** AI agents frequently need to "preview" how a snapshot (representing a desired state) differs from the current live filesystem. Current tools like `git diff` require a repository; `jref diff` would provide a structured JSON diff of added, removed, and modified files between a snapshot and a directory.
+* **How:** Implement a new `diff.ts` command using `fs.stat` and content hashing (MD5/SHA) to compare `files` in the snapshot against local files. Output should support `--json` for agentic decision-making.
+* **Complexity:** Medium
+
+**4. Semantic Chunking & Aggregation (`summarize`)**
+* **Target:** AI Agent Developers
+* **Why:** For very large projects, even a "condensed" snapshot can exceed the context window. This feature would "compress" the snapshot by extracting only exports, class signatures, and "TODOs," creating a high-signal "map" of the project.
+* **How:** Add a `summarize.ts` utility that uses basic regex or a lightweight parser (like `tree-sitter` or `regex-based` signature extraction) to strip function bodies while preserving architectural context.
+* **Complexity:** Medium
