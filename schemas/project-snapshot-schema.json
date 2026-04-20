@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "file://data/data/com.termux/files/home/Projects/JSON/repomix/project-snapshot-schema.json",
   "title": "Extended Project Snapshot Schema",
   "type": "object",
   "required": [

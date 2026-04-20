@@ -11,8 +11,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepack": "node scripts/install-man.js"
   },
+  "man": [
+    "./docs/jref.1"
+  ],
   "keywords": [
     "cli",
     "json",
@@ -31,6 +35,7 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/react": "^18.0.0",
+    "repomix": "^1.13.1",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0"
   },
