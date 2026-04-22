@@ -191,7 +191,7 @@ jref inspect [options] [file]
 
 Options:
   --metadata, -m     Show only metadata
-  --structure, -s    Show only directory structure
+  --structure, -t    Show only directory structure
   --files, -f        Show only file list
   --summary          Show instruction/summary/header
 ```

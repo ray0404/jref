@@ -9,9 +9,11 @@ import {
   calculateMetadata,
   validateSnapshot,
   getFilePaths,
-  extractFiles
+  extractFiles,
+  processSnapshot
 } from './streaming-json.js';
 import type { ProjectSnapshot } from '../types/index.js';
+import { Readable } from 'stream';
 
 const validSnapshot: ProjectSnapshot = {
   directoryStructure: 'project/\n├── src/\n│   └── main.ts',
@@ -21,6 +23,41 @@ const validSnapshot: ProjectSnapshot = {
   },
   instruction: 'Test instruction'
 };
+
+describe('processSnapshot', () => {
+  it('should stream metadata and files', async () => {
+    const json = JSON.stringify(validSnapshot);
+    const metadata: Record<string, any> = {};
+    const files: Record<string, string> = {};
+
+    await processSnapshot(json, {
+      onMetadata: (key, value) => {
+        metadata[key] = value;
+      },
+      onFile: (path, content) => {
+        files[path] = content;
+      }
+    });
+
+    expect(metadata.directoryStructure).toBe(validSnapshot.directoryStructure);
+    expect(metadata.instruction).toBe(validSnapshot.instruction);
+    expect(files).toEqual(validSnapshot.files);
+  });
+
+  it('should handle Readable stream input', async () => {
+    const json = JSON.stringify(validSnapshot);
+    const stream = Readable.from([json]);
+    const files: Record<string, string> = {};
+
+    await processSnapshot(stream, {
+      onFile: (path, content) => {
+        files[path] = content;
+      }
+    });
+
+    expect(files).toEqual(validSnapshot.files);
+  });
+});
 
 describe('parseJSON', () => {
   it('should parse valid JSON snapshot', async () => {
@@ -44,6 +81,21 @@ describe('parseJSON', () => {
     const result = await parseJSON(json);
 
     expect(result.instruction).toBeUndefined();
+  });
+
+  it('should coerce missing directoryStructure from files', async () => {
+    const snapshot = {
+      files: {
+        'src/a.ts': 'content a',
+        'src/b.ts': 'content b'
+      }
+    };
+    const json = JSON.stringify(snapshot);
+    const result = await parseJSON(json);
+
+    expect(result.directoryStructure).toContain('src/');
+    expect(result.directoryStructure).toContain('a.ts');
+    expect(result.directoryStructure).toContain('b.ts');
   });
 });
 
@@ -90,9 +142,12 @@ describe('validateSnapshot', () => {
     expect(validateSnapshot(123)).toBe(false);
   });
 
-  it('should reject missing required fields', () => {
+  it('should accept missing directoryStructure (will be coerced)', () => {
+    expect(validateSnapshot({ files: {} })).toBe(true);
+  });
+
+  it('should reject missing files field', () => {
     expect(validateSnapshot({ directoryStructure: 'test' })).toBe(false);
-    expect(validateSnapshot({ files: {} })).toBe(false);
   });
 });
 

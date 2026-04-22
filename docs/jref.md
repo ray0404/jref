@@ -402,7 +402,7 @@ jref inspect [options] [file]
 | Option | Alias | Description |
 |--------|-------|-------------|
 | `--metadata` | `-m` | Show only snapshot metadata (file count, total size, etc.) |
-| `--structure` | `-s` | Show only the ASCII directory tree |
+| `--structure` | `-t` | Show only the ASCII directory tree |
 | `--files` | `-f` | Show only the file list with sizes |
 | `--summary` | | Show `instruction`, `fileSummary`, and `userProvidedHeader` fields |
 

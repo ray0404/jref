@@ -8,6 +8,7 @@ import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { loadSnapshot } from '../utils/streaming-json.js';
 import { parseDirectoryStructure } from '../utils/ui.js';
+import { reestablishTTY } from '../utils/input.js';
 import { render } from 'ink';
 import React from 'react';
 import { SnapshotBrowser } from '../components/TUI.js';
@@ -42,12 +43,16 @@ export class UICommand extends Command {
       }
 
       // Load snapshot from file or stdin
-      const snapshot = await loadSnapshot(
-        filePath ? await this.readFile(filePath) : context.stdin
-      );
+      const input: string | undefined = filePath ? await this.readFile(filePath) : context.stdin;
+      const snapshot = await loadSnapshot(input);
 
       // Parse directory structure into tree
-      const tree = parseDirectoryStructure(snapshot.directoryStructure);
+      const tree = parseDirectoryStructure(snapshot.directoryStructure || '');
+
+      // Re-establish TTY if we were piped, so Ink can handle keyboard input
+      if (context.stdinIsPipe) {
+        reestablishTTY();
+      }
 
       // Start TUI
       return new Promise((resolve) => {

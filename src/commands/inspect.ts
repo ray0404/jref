@@ -6,8 +6,9 @@
 
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, SnapshotMetadata } from '../types/index.js';
-import { loadSnapshot, calculateMetadata } from '../utils/streaming-json.js';
+import { processSnapshot } from '../utils/streaming-json.js';
 import { printTable, printHeader } from '../utils/output.js';
+import { createReadStream } from 'fs';
 
 export class InspectCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -31,12 +32,37 @@ export class InspectCommand extends Command {
     try {
       const { flags, filePath } = this.parseArgs(args);
 
-      // Load snapshot from file or stdin
-      const snapshot = await loadSnapshot(
-        filePath ? await this.readFile(filePath) : context.stdin
+      const snapshot: any = { files: {} };
+      const fileSizes: Record<string, number> = {};
+      let totalSize = 0;
+      let fileCount = 0;
+
+      // Use streaming processor to avoid OOM
+      await processSnapshot(
+        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+        {
+          onMetadata: (key, value) => {
+            snapshot[key] = value;
+          },
+          onFile: (path, content) => {
+            const size = Buffer.byteLength(content, 'utf8');
+            fileSizes[path] = size;
+            totalSize += size;
+            fileCount++;
+          }
+        }
       );
 
-      const metadata = calculateMetadata(snapshot);
+      const metadata: SnapshotMetadata = {
+        fileCount,
+        totalSize,
+        hasInstruction: Boolean(snapshot.instruction),
+        hasFileSummary: Boolean(snapshot.fileSummary),
+        hasUserProvidedHeader: Boolean(snapshot.userProvidedHeader),
+        directoryStructureLines: snapshot.directoryStructure
+          ? snapshot.directoryStructure.split('\n').length
+          : 0
+      };
 
       // Show header in human mode
       if (!options.silent && !options.raw && !options.json) {
@@ -62,7 +88,7 @@ export class InspectCommand extends Command {
           result.directoryStructure = snapshot.directoryStructure;
         }
         if (showAll || showFiles) {
-          result.filePaths = Object.keys(snapshot.files);
+          result.filePaths = Object.keys(fileSizes);
         }
         if (showAll || showSummary) {
           if (snapshot.instruction) result.instruction = snapshot.instruction;
@@ -80,7 +106,7 @@ export class InspectCommand extends Command {
           this.printStructure(snapshot.directoryStructure, options);
         }
         if (showAll || showFiles) {
-          this.printFileList(snapshot, options);
+          this.printFileList(fileSizes, options);
         }
         if (showAll || showSummary) {
           this.printSummary(snapshot, options);
@@ -105,7 +131,7 @@ export class InspectCommand extends Command {
           flags.metadata = true;
           break;
         case '--structure':
-        case '-s':
+        case '-t':
           flags.structure = true;
           break;
         case '--files':
@@ -123,11 +149,6 @@ export class InspectCommand extends Command {
     }
 
     return { flags, filePath };
-  }
-
-  private async readFile(filePath: string): Promise<string> {
-    const { readFileSync } = await import('fs');
-    return readFileSync(filePath, 'utf8');
   }
 
   private printMetadata(metadata: SnapshotMetadata, options: CLIOptions): void {
@@ -165,8 +186,8 @@ export class InspectCommand extends Command {
     console.log();
   }
 
-  private printFileList(snapshot: { files: Record<string, string> }, options: CLIOptions): void {
-    const files = Object.keys(snapshot.files);
+  private printFileList(fileSizes: Record<string, number>, options: CLIOptions): void {
+    const files = Object.keys(fileSizes);
 
     if (options.json) {
       this.print({ filePaths: files }, options);
@@ -181,7 +202,7 @@ export class InspectCommand extends Command {
     } else {
       const fileData = files.map((f) => [
         f,
-        this.formatBytes(Buffer.byteLength(snapshot.files[f], 'utf8'))
+        this.formatBytes(fileSizes[f])
       ]);
       printTable(['Path', 'Size'], fileData, options);
     }
@@ -231,3 +252,5 @@ export class InspectCommand extends Command {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 }
+
+import { Readable } from 'stream';

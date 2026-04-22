@@ -18,6 +18,12 @@ export interface CommandDefinition {
   examples: string[];
 }
 
+export interface JrefPlugin {
+  name: string;
+  version: string;
+  register: (registry: CommandRegistry) => void;
+}
+
 export abstract class Command {
   abstract readonly definition: CommandDefinition;
 
@@ -33,7 +39,7 @@ export abstract class Command {
   /**
    * Parse command-specific arguments
    */
-  protected abstract parseArgs(args: string[]): Record<string, unknown>;
+  protected abstract parseArgs(args: string[], context?: CommandContext): Record<string, unknown>;
 
   /**
    * Get the snapshot from context, loading if necessary
@@ -159,6 +165,36 @@ export class CommandRegistry {
 // Global registry instance
 export const registry = new CommandRegistry();
 
+import { readdirSync, existsSync } from 'fs';
+import { resolve as pathResolve } from 'path';
+import { pathToFileURL } from 'url';
+
+/**
+ * Load plugins from a directory
+ */
+export async function loadPlugins(pluginDir: string): Promise<void> {
+  if (!existsSync(pluginDir)) return;
+
+  const entries = readdirSync(pluginDir);
+  for (const entry of entries) {
+    if (entry.endsWith('.js') || entry.endsWith('.mjs')) {
+      try {
+        const pluginPath = pathResolve(pluginDir, entry);
+        const pluginUrl = pathToFileURL(pluginPath).href;
+        const module = await import(pluginUrl);
+        const plugin = (module.default || module) as JrefPlugin;
+
+        if (plugin.name && typeof plugin.register === 'function') {
+          plugin.register(registry);
+          // console.error(`✅ Plugin loaded: ${plugin.name} v${plugin.version || '0.0.0'}`);
+        }
+      } catch (err) {
+        console.error(`❌ Failed to load plugin ${entry}: ${(err as Error).message}`);
+      }
+    }
+  }
+}
+
 /**
  * Register all built-in commands
  */
@@ -174,6 +210,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { DiffCommand } = await import('../commands/diff.js');
   const { PackCommand } = await import('../commands/pack.js');
   const { SummarizeCommand } = await import('../commands/summarize.js');
+  const { RunCommand } = await import('../commands/run.js');
 
   registry.register(new InspectCommand());
   registry.register(new SearchCommand());
@@ -186,4 +223,5 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new DiffCommand());
   registry.register(new PackCommand());
   registry.register(new SummarizeCommand());
+  registry.register(new RunCommand());
 }

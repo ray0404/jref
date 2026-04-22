@@ -1,24 +1,30 @@
+import { z } from 'zod';
+
 /**
  * Project Snapshot Schema Types
  * Represents the structure of a condensed JSON project snapshot
  */
 
-export interface ProjectSnapshot {
-  directoryStructure: string;
-  files: Record<string, string>;
-  instruction?: string;
-  fileSummary?: string;
-  userProvidedHeader?: string;
-}
+export const ProjectSnapshotSchema = z.object({
+  directoryStructure: z.string().optional(),
+  files: z.record(z.string(), z.string()),
+  instruction: z.string().optional(),
+  fileSummary: z.string().optional(),
+  userProvidedHeader: z.string().optional(),
+});
 
-export interface SnapshotMetadata {
-  fileCount: number;
-  totalSize: number;
-  hasInstruction: boolean;
-  hasFileSummary: boolean;
-  hasUserProvidedHeader: boolean;
-  directoryStructureLines: number;
-}
+export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
+
+export const SnapshotMetadataSchema = z.object({
+  fileCount: z.number(),
+  totalSize: z.number(),
+  hasInstruction: z.boolean(),
+  hasFileSummary: z.boolean(),
+  hasUserProvidedHeader: z.boolean(),
+  directoryStructureLines: z.number(),
+});
+
+export type SnapshotMetadata = z.infer<typeof SnapshotMetadataSchema>;
 
 export interface SearchResult {
   filePath: string;

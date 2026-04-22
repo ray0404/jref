@@ -7,8 +7,8 @@ import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { TreeNode } from '../utils/ui.js';
 import { exec, spawnSync } from 'child_process';
-import { writeFileSync, readFileSync } from 'fs';
-import { join } from 'path';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
+import { join, dirname } from 'path';
 import { tmpdir } from 'os';
 
 interface SnapshotBrowserProps {
@@ -82,6 +82,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'filename' | 'content'>('filename');
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [isCompactMode, setIsCompactMode] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -202,6 +203,38 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         return;
       }
 
+      if (input === 'v' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem && !selectedItem.node.isDirectory) {
+          const content = files[selectedItem.node.path];
+          if (content !== undefined) {
+            const tempPath = join(tmpdir(), `jref-view-${Date.now()}-${selectedItem.node.name}`);
+            writeFileSync(tempPath, content);
+            const pager = process.env.JREF_PAGER || process.env.PAGER || 'less';
+            spawnSync(pager, [tempPath], { stdio: 'inherit' });
+            showStatus('Closed pager');
+          }
+        }
+        return;
+      }
+
+      if (input === 'x' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem && !selectedItem.node.isDirectory) {
+          const content = files[selectedItem.node.path];
+          if (content !== undefined) {
+            const outputPath = join(process.cwd(), selectedItem.node.path);
+            const parentDir = dirname(outputPath);
+            if (!existsSync(parentDir)) {
+              mkdirSync(parentDir, { recursive: true });
+            }
+            writeFileSync(outputPath, content);
+            showStatus(`Extracted: ${selectedItem.node.name}`);
+          }
+        }
+        return;
+      }
+
       if (input === '/' && !key.ctrl) {
         setViewMode('search');
         setSearchQuery('');
@@ -263,15 +296,20 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
           setViewMode('file');
           setScrollOffset(0);
         }
+      } else if (key.tab) {
+        // Toggle search type
+        const newType = searchType === 'filename' ? 'content' : 'filename';
+        setSearchType(newType);
+        updateSearchResults(searchQuery, newType);
       } else if (key.backspace || key.delete) {
         const newQuery = searchQuery.slice(0, -1);
         setSearchQuery(newQuery);
-        updateSearchResults(newQuery);
+        updateSearchResults(newQuery, searchType);
         setSelectedIndex(0);
       } else if (input && !key.ctrl && !key.meta) {
         const newQuery = searchQuery + input;
         setSearchQuery(newQuery);
-        updateSearchResults(newQuery);
+        updateSearchResults(newQuery, searchType);
         setSelectedIndex(0);
       } else if (key.upArrow) {
         setSelectedIndex(Math.max(0, selectedIndex - 1));
@@ -314,16 +352,26 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
   });
 
   // Update search results when query changes
-  const updateSearchResults = (query: string) => {
+  const updateSearchResults = (query: string, type: 'filename' | 'content' = searchType) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
 
     const allFiles = Object.keys(files);
-    const filtered = allFiles.filter(file =>
-      file.toLowerCase().includes(query.toLowerCase())
-    );
+    let filtered: string[];
+    
+    if (type === 'filename') {
+      filtered = allFiles.filter(file =>
+        file.toLowerCase().includes(query.toLowerCase())
+      );
+    } else {
+      // Content search
+      filtered = allFiles.filter(file =>
+        files[file].toLowerCase().includes(query.toLowerCase())
+      );
+    }
+    
     setSearchResults(filtered);
   };
 
@@ -381,7 +429,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
   }
 
   if (viewMode === 'search') {
-    const headerText = isCompactMode ? '🔍' : '🔍 Search Files';
+    const headerText = isCompactMode ? '🔍' : `🔍 Search Files (${searchType})`;
     const queryDisplay = isCompactMode ? `${searchQuery}_` : `Query: ${searchQuery}_`;
 
     return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
@@ -397,14 +445,14 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
       // Instructions (only show in non-compact mode)
       !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
-        React.createElement(Text, { color: 'yellow', dimColor: true }, 'Type to search • ↑↓ Navigate • Enter Select • Esc Back')
+        React.createElement(Text, { color: 'yellow', dimColor: true }, 'Type to search • Tab Toggle Mode • ↑↓ Navigate • Enter Select • Esc Back')
       ) : null,
 
       // Results
       React.createElement(Box, { key: 'results', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
         searchResults.length === 0
           ? React.createElement(Text, { color: 'gray', italic: true },
-              searchQuery ? 'No files' : 'Type to search...'
+              searchQuery ? 'No matches' : 'Type to search...'
             )
           : searchResults.map((file, index) => {
               const color = index === selectedIndex ? 'cyan' : 'white';
@@ -436,8 +484,8 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     React.createElement(Box, { key: 'instructions', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
       React.createElement(Text, { color: 'yellow', dimColor: true },
         isCompactMode
-          ? '↑↓/Enter • ←→:exp • /:src • y:yank • e:edit'
-          : '↑↓ Navigate • Enter Select • ←→ Expand/Collapse • / Search • y Yank • e Edit • c Compact'
+          ? '↑↓/Ent • /:src • y:yank • e:edit • v:view • x:ext'
+          : '↑↓ Navigate • Enter Select • / Search • y Yank • e Edit • v View • x Extract • c Compact'
       )
     ),
 

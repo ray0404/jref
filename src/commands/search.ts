@@ -1,16 +1,19 @@
 /**
  * Search Command
  * High-speed regex or keyword searching across all entries in the files object
+ * Supports streaming for large JSON snapshots
  */
 
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, SearchResult, SearchMatch } from '../types/index.js';
-import { loadSnapshot } from '../utils/streaming-json.js';
+import { processSnapshot } from '../utils/streaming-json.js';
+import { createReadStream } from 'fs';
+import { Readable } from 'stream';
 
 interface SearchFlags {
   regex?: boolean;
   caseInsensitive?: boolean;
-  files?: string[];
+  filesOnly?: boolean;
   maxResults?: number;
   context?: number;
 }
@@ -41,13 +44,32 @@ export class SearchCommand extends Command {
         return this.error('Search pattern is required', options);
       }
 
-      // Load snapshot
-      const snapshot = await loadSnapshot(
-        filePath ? await this.readFile(filePath) : context.stdin
+      const results: SearchResult[] = [];
+      const regex = this.createRegex(pattern, flags);
+      const maxResults = flags.maxResults || 1000;
+
+      // Use streaming processor to avoid OOM
+      await processSnapshot(
+        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+        {
+          onFile: (path, content) => {
+            if (results.length >= maxResults) return;
+
+            const matches = this.searchContent(content, regex, flags.context || 0);
+
+            if (matches.length > 0) {
+              results.push({
+                filePath: path,
+                matches,
+                score: matches.length
+              });
+            }
+          }
+        }
       );
 
-      // Perform search
-      const results = this.performSearch(snapshot, pattern, flags);
+      // Sort by score (most matches first)
+      results.sort((a, b) => b.score - a.score);
 
       // Format and output results
       this.outputResults(results, options, flags);
@@ -76,7 +98,7 @@ export class SearchCommand extends Command {
           break;
         case '--files':
         case '-f':
-          flags.files = [];
+          flags.filesOnly = true;
           break;
         case '--max-results':
         case '-n':
@@ -98,53 +120,15 @@ export class SearchCommand extends Command {
     return { pattern, flags, filePath };
   }
 
-  private async readFile(filePath: string): Promise<string> {
-    const { readFileSync } = await import('fs');
-    return readFileSync(filePath, 'utf8');
-  }
-
-  private performSearch(
-    snapshot: { files: Record<string, string> },
-    pattern: string,
-    flags: SearchFlags
-  ): SearchResult[] {
-    const results: SearchResult[] = [];
-    const regex = this.createRegex(pattern, flags);
-    const maxResults = flags.maxResults || 1000;
-
-    for (const [filePath, content] of Object.entries(snapshot.files)) {
-      const matches = this.searchContent(content, regex, flags.context || 0);
-
-      if (matches.length > 0) {
-        results.push({
-          filePath,
-          matches,
-          score: matches.length
-        });
-
-        // Early termination if we have enough results
-        if (results.length >= maxResults) {
-          break;
-        }
-      }
-    }
-
-    // Sort by score (most matches first)
-    results.sort((a, b) => b.score - a.score);
-
-    return results;
-  }
-
   private createRegex(pattern: string, flags: SearchFlags): RegExp {
-    if (flags.regex) {
-      const flagStr = flags.caseInsensitive ? 'i' : '';
-      return new RegExp(pattern, flagStr);
+    let patternStr = pattern;
+    if (!flags.regex) {
+      // Escape regex special characters for literal search
+      patternStr = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
-
-    // Escape regex special characters for literal search
-    const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const flagStr = flags.caseInsensitive ? 'i' : '';
-    return new RegExp(escaped, flagStr);
+    
+    const flagStr = flags.caseInsensitive ? 'gi' : 'g';
+    return new RegExp(patternStr, flagStr);
   }
 
   private searchContent(content: string, regex: RegExp, _contextLines: number): SearchMatch[] {
@@ -155,7 +139,7 @@ export class SearchCommand extends Command {
       const line = lines[lineNum];
       let match: RegExpExecArray | null;
 
-      // Reset regex lastIndex for global matching
+      // Reset regex lastIndex for global matching per line
       regex.lastIndex = 0;
 
       while ((match = regex.exec(line)) !== null) {
@@ -181,7 +165,7 @@ export class SearchCommand extends Command {
     return matches;
   }
 
-  private outputResults(results: SearchResult[], options: CLIOptions, _flags: SearchFlags): void {
+  private outputResults(results: SearchResult[], options: CLIOptions, flags: SearchFlags): void {
     if (options.json) {
       this.print({ results }, options);
       return;
@@ -192,13 +176,22 @@ export class SearchCommand extends Command {
       return;
     }
 
+    if (flags.filesOnly) {
+      for (const result of results) {
+        console.log(result.filePath);
+      }
+      return;
+    }
+
     console.log(`\n🔍 Found ${results.length} file(s) with matches:\n`);
 
     for (const result of results) {
       console.log(`📄 ${result.filePath} (${result.matches.length} match${result.matches.length !== 1 ? 'es' : ''})`);
 
       // Show match context
-      for (const match of result.matches.slice(0, 5)) {
+      const showCount = Math.min(result.matches.length, 5);
+      for (let i = 0; i < showCount; i++) {
+        const match = result.matches[i];
         const linePrefix = `   ${match.line}: `;
         const content = this.highlightMatch(match.content, match.startIndex, match.endIndex);
         console.log(`${linePrefix}${content}`);

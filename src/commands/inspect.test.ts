@@ -53,6 +53,12 @@ describe('InspectCommand', () => {
     expect(result.success).toBe(true);
   });
 
+  it('should parse -t short flag as structure', async () => {
+    const result = await command.execute(['-t'], { json: true }, mockContext);
+
+    expect(result.success).toBe(true);
+  });
+
   it('should parse --files flag', async () => {
     const result = await command.execute(['--files'], { json: true }, mockContext);
 

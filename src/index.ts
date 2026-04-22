@@ -5,10 +5,11 @@
  * Designed for both human developers and AI agents
  */
 
-import { registerBuiltinCommands, registry } from './utils/command.js';
+import { registerBuiltinCommands, registry, loadPlugins } from './utils/command.js';
 import { readFromInput, isStdinPiped } from './utils/input.js';
 import { printError, printHeader, exit } from './utils/output.js';
 import type { CLIOptions, CommandContext } from './types/index.js';
+import { join } from 'path';
 
 const VERSION = '1.0.0';
 
@@ -135,6 +136,13 @@ async function main(): Promise<void> {
 
   // Register commands
   await registerBuiltinCommands();
+
+  // Load plugins from local directory
+  try {
+    await loadPlugins(join(process.cwd(), '.jref/plugins'));
+  } catch (err) {
+    // Ignore plugin loading errors
+  }
 
   // Handle version flag
   if (options.version) {

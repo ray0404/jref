@@ -2,11 +2,14 @@
  * Query Command
  * Retrieve content of a specific file path from the snapshot
  * Designed for AI agent usage with --raw flag support
+ * Supports streaming for large JSON snapshots
  */
 
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
-import { loadSnapshot } from '../utils/streaming-json.js';
+import { processSnapshot } from '../utils/streaming-json.js';
+import { createReadStream } from 'fs';
+import { Readable } from 'stream';
 
 interface QueryFlags {
   path?: string;
@@ -41,13 +44,21 @@ export class QueryCommand extends Command {
         return this.error('File path is required (--path <path>)', options);
       }
 
-      // Load snapshot
-      const snapshot = await loadSnapshot(
-        filePath ? await this.readFile(filePath) : context.stdin
-      );
+      let fileContent: string | undefined;
 
-      // Find the file
-      const fileContent = snapshot.files[flags.path as string];
+      // Use streaming processor to avoid OOM
+      // We can't easily "early terminate" with the current processSnapshot implementation
+      // but it will still avoid loading all other files into memory
+      await processSnapshot(
+        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+        {
+          onFile: (path, content) => {
+            if (path === flags.path) {
+              fileContent = content;
+            }
+          }
+        }
+      );
 
       if (fileContent === undefined) {
         return this.error(`File not found in snapshot: ${flags.path}`, options, 2);
@@ -101,11 +112,6 @@ export class QueryCommand extends Command {
     }
 
     return { flags, filePath };
-  }
-
-  private async readFile(filePath: string): Promise<string> {
-    const { readFileSync } = await import('fs');
-    return readFileSync(filePath, 'utf8');
   }
 
   private extractLineRange(
