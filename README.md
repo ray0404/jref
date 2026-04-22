@@ -96,14 +96,20 @@ Create a jref-compliant JSON snapshot from a local directory.
 jref pack [directory] [options]
 
 Options:
-  --instruction <text>  Add custom AI instructions
+  --instruction <text>  Add custom AI instructions (auto-generated if omitted)
   --summary <text>      Add a high-level file summary
+  --max-size <bytes>    Split snapshot into multiple chunks if it exceeds this size
 ```
+
+**Features:**
+- **Secret Scanning**: Automatically redacts secrets (API keys, tokens) using `secretlint`.
+- **Auto-Instructions**: Incurs project type (e.g., Node.js, Rust, Go) and drafts system prompts automatically.
+- **Chunking**: Splits large projects into manageable `snapshot.partN.json` files for small context windows.
 
 **Examples:**
 ```bash
 jref pack . > project.json
-jref pack src/utils --instruction "Follow TDD" > utils.json
+jref pack . --max-size 1048576 # 1MB chunks
 ```
 
 ### patch
@@ -182,7 +188,9 @@ Controls:
   ↑↓ Arrows / j,k Navigate tree/file
   ←→ Arrows / h,l Expand/collapse directories
   Enter           Select file (view) or toggle directory
-  /               Search files by name
+  Space           Toggle selection (for multi-extraction)
+  /               Fuzzy search files by name or content
+  x               Extract selected files (or current file if no selection)
   y               Yank (copy) current file content to clipboard
   e               Edit current file in-memory using $EDITOR
   c               Toggle compact mode
@@ -191,6 +199,7 @@ Controls:
 Keybinds for Mobile/Termux:
 - Yank (y): Uses `termux-clipboard-set` if available.
 - Edit (e): Spawns your local editor (vi, nano, etc.) for temporary edits.
+- Selection ([*]): Mark multiple files for batch extraction using `x`.
 ```
 
 ### inspect
