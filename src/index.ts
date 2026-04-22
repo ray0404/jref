@@ -22,49 +22,27 @@ function parseGlobalOptions(args: string[]): {
 } {
   const options: CLIOptions = {};
   const remainingArgs: string[] = [];
-  const commands = registry.getCommandNames();
 
-  let commandSeen = false;
-
-  for (let i = 0; i < args.length; i++) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
-    
-    // Check if this argument is a command
-    if (!arg.startsWith('-') && commands.includes(arg)) {
-      commandSeen = true;
+    if (arg === '--json' || arg === '-j') {
+      options.json = true;
+    } else if (arg === '--silent' || arg === '-s') {
+      options.silent = true;
+    } else if (arg === '--raw' || arg === '-r') {
+      options.raw = true;
+    } else if (arg === '--help' || arg === '-h') {
+      options.help = true;
+    } else if (arg === '--version' || arg === '-v') {
+      options.version = true;
+    } else {
+      break;
     }
-
-    switch (arg) {
-      case '--json':
-      case '-j':
-        options.json = true;
-        break;
-      case '--silent':
-      case '-s':
-        options.silent = true;
-        break;
-      case '--raw':
-      case '-r':
-        options.raw = true;
-        break;
-      case '--help':
-      case '-h':
-        // Only set global help if we haven't seen a command yet
-        if (!commandSeen) {
-          options.help = true;
-        } else {
-          remainingArgs.push(arg);
-        }
-        break;
-      case '--version':
-      case '-v':
-        options.version = true;
-        break;
-      default:
-        remainingArgs.push(arg);
-    }
+    i++;
   }
 
+  remainingArgs.push(...args.slice(i));
   return { remainingArgs, options };
 }
 

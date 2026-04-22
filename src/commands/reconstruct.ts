@@ -22,12 +22,36 @@ export class ReconstructCommand extends Command {
     name: 'reconstruct',
     description: 'Verify if a local directory matches the snapshot (dry-run mode)',
     usage: 'jref reconstruct [options] [file]',
+    options: [
+      {
+        flags: '--directory, -d <dir>',
+        description: 'Target directory to verify (default: current directory)'
+      },
+      {
+        flags: '--verbose, -v',
+        description: 'Show detailed comparison results'
+      },
+      {
+        flags: '--ignore-missing',
+        description: 'Do not fail if files from the snapshot are missing locally'
+      },
+      {
+        flags: '--ignore-extra',
+        description: 'Do not fail if extra local files are found'
+      }
+    ],
     examples: [
       'jref reconstruct snapshot.json',
       'jref reconstruct --directory ./my-project snapshot.json',
       'jref reconstruct --verbose snapshot.json',
       'cat snapshot.json | jref reconstruct --directory ./src',
       'jref reconstruct --json snapshot.json'
+    ],
+    workflows: [
+      'State Validation: Use before extraction to see what changes will be applied.',
+      'Deployment Audit: Verify that a target environment matches the desired snapshot state.',
+      'CI/CD Pipeline: Integrate into automated workflows to ensure file integrity.',
+      'Selective Matching: Use ignore flags when only a partial match is required.'
     ]
   };
 

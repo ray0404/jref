@@ -28,10 +28,22 @@ export class RunCommand extends Command {
     name: 'run',
     description: 'Execute a script directly from the snapshot',
     usage: 'jref run --path <script-path> [file] [script-args...]',
+    options: [
+      {
+        flags: '--path, -p <path>',
+        description: 'Path to the script within the snapshot'
+      }
+    ],
     examples: [
       'jref run --path scripts/setup.ts snapshot.json',
       'jref run --path main.js project.json -- --port 8080',
       'cat snapshot.json | jref run --path index.js'
+    ],
+    workflows: [
+      'Isolated Execution: Files are extracted to a temporary directory and removed after execution.',
+      'Auto-Runner Detection: Automatically detects node, python3, or bash based on file extension.',
+      'TypeScript Support: Uses node with --experimental-strip-types for .ts files (Node 22+).',
+      'Argument Passing: Use -- to separate jref args from script args.'
     ]
   };
 

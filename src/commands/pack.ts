@@ -22,10 +22,30 @@ export class PackCommand extends Command {
     name: 'pack',
     description: 'Create a snapshot from a local directory',
     usage: 'jref pack [directory] [options]',
+    options: [
+      {
+        flags: '--instruction <text>',
+        description: 'Add custom AI instructions to the snapshot'
+      },
+      {
+        flags: '--summary <text>',
+        description: 'Add a high-level file summary to the snapshot'
+      },
+      {
+        flags: '--max-size <bytes>',
+        description: 'Split snapshot into chunks if it exceeds this size'
+      }
+    ],
     examples: [
       'jref pack . > snapshot.json',
       'jref pack ./my-project --instruction "Follow these rules" > snapshot.json',
       'jref pack . --max-size 1048576 > snapshot.json'
+    ],
+    workflows: [
+      'Codebase Snapshotting: Capture the current state of a project for archival or sharing.',
+      'Agent Priming: Create snapshots with custom instructions to guide AI behavior.',
+      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.',
+      'Gitignore Integration: Automatically respects .gitignore patterns for clean snapshots.'
     ]
   };
 

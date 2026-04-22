@@ -23,12 +23,36 @@ export class QueryCommand extends Command {
     name: 'query',
     description: 'Get content of a specific file path from the snapshot',
     usage: 'jref query --path <path> [file]',
+    options: [
+      {
+        flags: '--path, -p <path>',
+        description: 'Path of the file to query within the snapshot'
+      },
+      {
+        flags: '--raw, -r',
+        description: 'Output pure file content without headers or formatting'
+      },
+      {
+        flags: '--line-start <number>',
+        description: 'Start reading from this 1-indexed line'
+      },
+      {
+        flags: '--line-end <number>',
+        description: 'End reading at this 1-indexed line'
+      }
+    ],
     examples: [
       'jref query --path "src/main.ts" snapshot.json',
       'jref query --path "src/main.ts" --raw snapshot.json',
       'jref query --path "README.md" --json snapshot.json',
       'cat snapshot.json | jref query --path "src/index.ts"',
       'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json'
+    ],
+    workflows: [
+      'Targeted Reading: Retrieve specific files from large snapshots for analysis.',
+      'Agent Context Injection: Use --raw to provide pure code content to AI agents.',
+      'Snippet Extraction: Use --line-start and --line-end to read only relevant portions of large files.',
+      'Verification: Quickly check the content of a file within a snapshot without extraction.'
     ]
   };
 

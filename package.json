@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build",
-    "prepack": "node scripts/install-man.js"
+    "prepack": "node scripts/install-man.js",
+    "postinstall": "node scripts/install-man.js"
   },
   "man": [
     "./docs/jref.1"

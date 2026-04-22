@@ -11,11 +11,19 @@ import type {
 } from '../types/index.js';
 import { printError, printOutput } from './output.js';
 
+export interface CommandOption {
+  flags: string;
+  description: string;
+  defaultValue?: any;
+}
+
 export interface CommandDefinition {
   name: string;
   description: string;
   usage: string;
+  options: CommandOption[];
   examples: string[];
+  workflows?: string[];
 }
 
 export interface JrefPlugin {
@@ -95,14 +103,16 @@ export abstract class Command {
    * Print help for this command
    */
   printHelp(options: CLIOptions = {}): void {
-    const { name, description, usage, examples } = this.definition;
+    const { name, description, usage, options: cmdOptions, examples, workflows } = this.definition;
 
     if (options.json) {
       this.print({
         command: name,
         description,
         usage,
-        examples
+        options: cmdOptions,
+        examples,
+        workflows
       }, options);
       return;
     }
@@ -111,6 +121,22 @@ export abstract class Command {
     console.log('='.repeat(50));
     console.log(`\nDescription: ${description}`);
     console.log(`\nUsage: ${usage}`);
+
+    if (cmdOptions && cmdOptions.length > 0) {
+      console.log('\nOptions:');
+      for (const opt of cmdOptions) {
+        const defaultValue = opt.defaultValue !== undefined ? ` (default: ${opt.defaultValue})` : '';
+        console.log(`  ${opt.flags.padEnd(25)} ${opt.description}${defaultValue}`);
+      }
+    }
+
+    if (workflows && workflows.length > 0) {
+      console.log('\nDetailed Workflows:');
+      for (const workflow of workflows) {
+        console.log(`  - ${workflow}`);
+      }
+    }
+
     console.log('\nExamples:');
     for (const example of examples) {
       console.log(`  ${example}`);

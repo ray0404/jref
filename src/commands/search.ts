@@ -23,12 +23,40 @@ export class SearchCommand extends Command {
     name: 'search',
     description: 'High-speed regex or keyword searching across all file entries',
     usage: 'jref search <pattern> [options] [file]',
+    options: [
+      {
+        flags: '--regex, -r',
+        description: 'Interpret pattern as a regular expression'
+      },
+      {
+        flags: '--case-insensitive, -i',
+        description: 'Perform case-insensitive search'
+      },
+      {
+        flags: '--files, -f',
+        description: 'Only output paths of matching files'
+      },
+      {
+        flags: '--max-results, -n <number>',
+        description: 'Limit total number of matches (default: 1000)'
+      },
+      {
+        flags: '--context, -c <lines>',
+        description: 'Show <lines> of context around matches'
+      }
+    ],
     examples: [
       'jref search "function" snapshot.json',
       'jref search "class.*Controller" --regex snapshot.json',
       'jref search "TODO" --case-insensitive snapshot.json',
       'cat snapshot.json | jref search "export"',
       'jref search "async" --json snapshot.json'
+    ],
+    workflows: [
+      'Keyword Discovery: Use literal search to find usages of specific terms.',
+      'Pattern Matching: Use regex to find complex code structures.',
+      'File Filtering: Use --files to generate a list of relevant files for subsequent commands.',
+      'Contextual Analysis: Use --context to understand how a match is used within its file.'
     ]
   };
 

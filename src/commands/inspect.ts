@@ -15,12 +15,36 @@ export class InspectCommand extends Command {
     name: 'inspect',
     description: 'View directoryStructure and metadata without loading entire file',
     usage: 'jref inspect [options] [file]',
+    options: [
+      {
+        flags: '--metadata, -m',
+        description: 'Show only metadata (file count, total size, etc.)'
+      },
+      {
+        flags: '--structure, -t',
+        description: 'Show only directory structure (ASCII tree)'
+      },
+      {
+        flags: '--files, -f',
+        description: 'Show only file list with sizes'
+      },
+      {
+        flags: '--summary',
+        description: 'Show instructions, summary, and custom header'
+      }
+    ],
     examples: [
       'jref inspect snapshot.json',
       'jref inspect --metadata snapshot.json',
       'jref inspect --structure snapshot.json',
       'cat snapshot.json | jref inspect',
       'jref inspect --json snapshot.json'
+    ],
+    workflows: [
+      'Streaming Analysis: Uses a streaming parser to analyze large snapshots without loading them into RAM.',
+      'Metadata Extraction: Quickly verify snapshot contents before performing expensive operations.',
+      'Structure Preview: View the project organization at a glance.',
+      'Context Review: Examine instructions and summaries provided for AI agents.'
     ]
   };
 

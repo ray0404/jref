@@ -7,9 +7,16 @@ export class SummarizeCommand extends Command {
     name: 'summarize',
     description: 'Generate token-efficient architectural map by stripping implementation details',
     usage: 'jref summarize [file.json]',
+    options: [],
     examples: [
       'jref summarize snapshot.json > map.json',
       'cat snapshot.json | jref summarize'
+    ],
+    workflows: [
+      'Context Optimization: Reduce the size of code snapshots to fit within AI token limits.',
+      'Interface Mapping: Generate a high-level overview of project structure and public APIs.',
+      'Dependency Analysis: Inspect imports and exports across the project without the noise of implementation.',
+      'Architectural Review: Use the summary to understand the overall design and flow of the system.'
     ]
   };
 

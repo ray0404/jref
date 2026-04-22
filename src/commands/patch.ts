@@ -8,10 +8,26 @@ export class PatchCommand extends Command {
     name: 'patch',
     description: 'Update/add files and metadata in a snapshot',
     usage: 'jref patch [path] [content] [file.json]',
+    options: [
+      {
+        flags: '--instruction <text>',
+        description: 'Update/add instructions in the snapshot'
+      },
+      {
+        flags: '--summary <text>',
+        description: 'Update/add summary in the snapshot'
+      }
+    ],
     examples: [
       'jref patch src/main.ts "new content" snapshot.json > updated.json',
       'cat fix.ts | jref patch src/main.ts snapshot.json > updated.json',
       'jref patch --instruction "New instructions" snapshot.json'
+    ],
+    workflows: [
+      'In-Place Updates: Modify snapshot content without needing a full extraction/re-pack cycle.',
+      'Metadata Refinement: Update AI context or summaries within an existing snapshot.',
+      'Surgical Fixes: Pipe a bug fix directly into a snapshot using stdin.',
+      'Incremental Building: Build a project snapshot file-by-file through a series of patches.'
     ]
   };
 

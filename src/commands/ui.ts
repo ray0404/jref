@@ -22,10 +22,45 @@ export class UICommand extends Command {
     name: 'ui',
     description: 'Interactive TUI for browsing project snapshots (mobile-friendly)',
     usage: 'jref ui [file]',
+    options: [
+      {
+        flags: '↑↓ / j,k',
+        description: 'Navigate tree/file list'
+      },
+      {
+        flags: '←→ / h,l',
+        description: 'Expand/collapse directories'
+      },
+      {
+        flags: 'Enter',
+        description: 'Select file (view) or toggle directory'
+      },
+      {
+        flags: '/',
+        description: 'Search files by name'
+      },
+      {
+        flags: 'y',
+        description: 'Yank (copy) current file content to clipboard'
+      },
+      {
+        flags: 'e',
+        description: 'Edit current file in-memory using $EDITOR'
+      },
+      {
+        flags: 'Esc',
+        description: 'Back / Exit'
+      }
+    ],
     examples: [
       'jref ui snapshot.json',
-      'cat snapshot.json | jref ui',
-      'jref ui --help'
+      'cat snapshot.json | jref ui'
+    ],
+    workflows: [
+      'Visual Exploration: Browse large codebases without extracting them.',
+      'Mobile Development: Effortlessly navigate files on Termux using simple keybinds.',
+      'Quick Edits: Use the "e" key to perform temporary edits in your preferred editor.',
+      'Snippet Sharing: Use the "y" key to quickly copy code for use elsewhere.'
     ]
   };
 

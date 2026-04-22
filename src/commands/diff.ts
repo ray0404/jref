@@ -10,9 +10,25 @@ export class DiffCommand extends Command {
     name: 'diff',
     description: 'Compare snapshot against local filesystem',
     usage: 'jref diff [options] [file.json]',
+    options: [
+      {
+        flags: '--directory, -d <dir>',
+        description: 'Target directory to compare against (default: current directory)'
+      },
+      {
+        flags: '--all, -a',
+        description: 'Include local files that are missing from the snapshot'
+      }
+    ],
     examples: [
       'jref diff snapshot.json',
-      'jref diff --directory ./another-project snapshot.json'
+      'jref diff --directory ./another-project snapshot.json',
+      'jref diff --all snapshot.json'
+    ],
+    workflows: [
+      'Integrity Check: Verify if the local project files match exactly what is in the snapshot.',
+      'Change Detection: Identify modifications made to local files since the snapshot was created.',
+      'Missing File Audit: Use --all to find files present locally that were not captured in the snapshot.'
     ]
   };
 

@@ -29,12 +29,36 @@ export class ExtractCommand extends Command {
     name: 'extract',
     description: 'Unpack files from snapshot to local filesystem',
     usage: 'jref extract [options] [file] [patterns...]',
+    options: [
+      {
+        flags: '--output, -o <dir>',
+        description: 'Target directory for extraction (default: ./extracted)'
+      },
+      {
+        flags: '--overwrite, -w',
+        description: 'Overwrite existing files'
+      },
+      {
+        flags: '--dry-run',
+        description: 'Show what would be extracted without writing to disk'
+      },
+      {
+        flags: '--flat',
+        description: 'Extract files directly into output dir, ignoring subfolder structure'
+      }
+    ],
     examples: [
       'jref extract snapshot.json',
       'jref extract snapshot.json "src/**/*.ts"',
       'jref extract --output ./output snapshot.json',
       'cat snapshot.json | jref extract "src/*.js"',
       'jref extract --dry-run snapshot.json'
+    ],
+    workflows: [
+      'Full Reconstruction: Extract an entire snapshot to restore a project.',
+      'Selective Extraction: Use glob patterns to extract only specific modules or files.',
+      'Conflict Prevention: Use --dry-run to verify extraction paths before committing changes.',
+      'Structure Flattening: Use --flat to gather scattered files into a single directory for processing.'
     ]
   };
 

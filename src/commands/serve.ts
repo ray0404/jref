@@ -16,8 +16,14 @@ export class ServeCommand extends Command {
     name: 'serve',
     description: 'Start an MCP server to expose snapshot to AI agents',
     usage: 'jref serve snapshot.json',
+    options: [],
     examples: [
       'jref serve snapshot.json'
+    ],
+    workflows: [
+      'Agent Context: Provide AI agents with structured access to the codebase via MCP.',
+      'Live Tooling: Use search and query tools within your agentic workflow.',
+      'Remote Analysis: Expose a snapshot as a service for distributed agent architectures.'
     ]
   };
 
