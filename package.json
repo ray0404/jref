@@ -29,6 +29,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "fast-xml-parser": "^5.7.1",
+    "fuse.js": "^7.3.0",
     "ignore": "^7.0.5",
     "ink": "^5.0.0",
     "json5": "^2.2.3",

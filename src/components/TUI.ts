@@ -10,6 +10,7 @@ import { exec, spawnSync } from 'child_process';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
+import Fuse from 'fuse.js';
 
 interface SnapshotBrowserProps {
   tree: TreeNode;
@@ -88,6 +89,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   // Initialize expanded directories - include project root (using relative paths)
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['']));
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
 
   // Toggle directory expansion
   const toggleExpansion = React.useCallback((nodePath: string) => {
@@ -102,10 +104,41 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     });
   }, []);
 
+  // Toggle path selection
+  const toggleSelection = React.useCallback((nodePath: string) => {
+    setSelectedPaths(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodePath)) {
+        newSet.delete(nodePath);
+      } else {
+        newSet.add(nodePath);
+      }
+      return newSet;
+    });
+  }, []);
+
   // Compute flat tree directly (avoid useEffect timing issues)
   const flatTreeItems = React.useMemo(() => {
     return buildFlatTree(tree, expandedDirs);
   }, [tree, expandedDirs]);
+
+  // Fuzzy Search instance
+  const fuse = React.useMemo(() => {
+    const allFiles = Object.keys(files);
+    if (searchType === 'filename') {
+      return new Fuse(allFiles, {
+        threshold: 0.4,
+        distance: 100,
+      });
+    } else {
+      const data = allFiles.map(path => ({ path, content: files[path] }));
+      return new Fuse(data, {
+        keys: ['content'],
+        threshold: 0.4,
+        distance: 1000,
+      });
+    }
+  }, [files, searchType]);
 
   // Adjust selected index if it's out of bounds
   React.useEffect(() => {
@@ -150,6 +183,21 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     setTimeout(() => setStatusMessage(null), 2000);
   };
 
+  // Update search results when query changes
+  const updateSearchResults = React.useCallback((query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const results = fuse.search(query);
+    if (searchType === 'filename') {
+      setSearchResults(results.map(r => r.item as string));
+    } else {
+      setSearchResults(results.map(r => (r.item as { path: string }).path));
+    }
+  }, [fuse, searchType]);
+
   // Handle keyboard input
   useInput((input, key) => {
     if (key.escape) {
@@ -170,6 +218,14 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
     if (viewMode === 'tree') {
       const visibleLines = isCompactMode ? 15 : 20;
+
+      if (input === ' ' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem) {
+          toggleSelection(selectedItem.node.path);
+        }
+        return;
+      }
 
       if (input === 'y' && !key.ctrl) {
         const selectedItem = flatTreeItems[selectedIndex];
@@ -219,17 +275,34 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
       }
 
       if (input === 'x' && !key.ctrl) {
-        const selectedItem = flatTreeItems[selectedIndex];
-        if (selectedItem && !selectedItem.node.isDirectory) {
-          const content = files[selectedItem.node.path];
-          if (content !== undefined) {
-            const outputPath = join(process.cwd(), selectedItem.node.path);
-            const parentDir = dirname(outputPath);
-            if (!existsSync(parentDir)) {
-              mkdirSync(parentDir, { recursive: true });
+        const extractFile = (path: string, content: string) => {
+          const outputPath = join(process.cwd(), path);
+          const parentDir = dirname(outputPath);
+          if (!existsSync(parentDir)) {
+            mkdirSync(parentDir, { recursive: true });
+          }
+          writeFileSync(outputPath, content);
+        };
+
+        if (selectedPaths.size > 0) {
+          let count = 0;
+          selectedPaths.forEach(path => {
+            const content = files[path];
+            if (content !== undefined) {
+              extractFile(path, content);
+              count++;
             }
-            writeFileSync(outputPath, content);
-            showStatus(`Extracted: ${selectedItem.node.name}`);
+          });
+          showStatus(`Extracted ${count} files`);
+          setSelectedPaths(new Set());
+        } else {
+          const selectedItem = flatTreeItems[selectedIndex];
+          if (selectedItem && !selectedItem.node.isDirectory) {
+            const content = files[selectedItem.node.path];
+            if (content !== undefined) {
+              extractFile(selectedItem.node.path, content);
+              showStatus(`Extracted: ${selectedItem.node.name}`);
+            }
           }
         }
         return;
@@ -300,16 +373,16 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         // Toggle search type
         const newType = searchType === 'filename' ? 'content' : 'filename';
         setSearchType(newType);
-        updateSearchResults(searchQuery, newType);
+        updateSearchResults(searchQuery);
       } else if (key.backspace || key.delete) {
         const newQuery = searchQuery.slice(0, -1);
         setSearchQuery(newQuery);
-        updateSearchResults(newQuery, searchType);
+        updateSearchResults(newQuery);
         setSelectedIndex(0);
       } else if (input && !key.ctrl && !key.meta) {
         const newQuery = searchQuery + input;
         setSearchQuery(newQuery);
-        updateSearchResults(newQuery, searchType);
+        updateSearchResults(newQuery);
         setSelectedIndex(0);
       } else if (key.upArrow) {
         setSelectedIndex(Math.max(0, selectedIndex - 1));
@@ -350,30 +423,6 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
       }
     }
   });
-
-  // Update search results when query changes
-  const updateSearchResults = (query: string, type: 'filename' | 'content' = searchType) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    const allFiles = Object.keys(files);
-    let filtered: string[];
-    
-    if (type === 'filename') {
-      filtered = allFiles.filter(file =>
-        file.toLowerCase().includes(query.toLowerCase())
-      );
-    } else {
-      // Content search
-      filtered = allFiles.filter(file =>
-        files[file].toLowerCase().includes(query.toLowerCase())
-      );
-    }
-    
-    setSearchResults(filtered);
-  };
 
   if (viewMode === 'file' && selectedFile) {
     const content = files[selectedFile] || 'File not found';
@@ -484,8 +533,8 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
     React.createElement(Box, { key: 'instructions', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
       React.createElement(Text, { color: 'yellow', dimColor: true },
         isCompactMode
-          ? '↑↓/Ent • /:src • y:yank • e:edit • v:view • x:ext'
-          : '↑↓ Navigate • Enter Select • / Search • y Yank • e Edit • v View • x Extract • c Compact'
+          ? '↑↓/Ent • Spc:sel • /:src • y:yank • e:edit • v:view • x:ext'
+          : '↑↓ Navigate • Enter Select • Space Toggle Sel • / Search • y Yank • e Edit • v View • x Extract • c Compact'
       )
     ),
 
@@ -501,6 +550,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         : visibleItems.map((item, index) => {
             const actualIndex = scrollOffset + index;
             const node = item.node;
+            const isSelected = selectedPaths.has(node.path);
             const icon = node.isDirectory
               ? (item.isExpanded ? '📂' : '📁')
               : '📄';
@@ -522,6 +572,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
                 indent,
                 prefix,
                 prefix ? ' ' : '',
+                isSelected ? '[*] ' : '',
                 icon,
                 ' ',
                 node.name,
