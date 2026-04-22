@@ -15,12 +15,23 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Diff** - Compare snapshot against local filesystem
 - **Pack** - Native creation of snapshots from local directories (.gitignore support)
 - **Summarize** - Generate token-efficient architectural maps (signatures only)
+- **Run** - Execute scripts directly from a snapshot without extraction
 
 ## Target Environments
 
 - Termux (Android/ARM)
 - Raspberry Pi 4 (Linux/ARM)
 - Standard x86 Linux
+
+## Multi-Format Support
+
+jref natively supports multiple snapshot formats:
+- **JSON / JSON5 / JSONC** (.json, .json5, .jsonc)
+- **YAML / YML** (.yaml, .yml)
+- **TOML** (.toml)
+- **Repomix XML** (.xml)
+
+The tool automatically detects the format from the file extension or content.
 
 ## Installation
 
@@ -210,6 +221,52 @@ Get content of a specific file path. Optimized for AI agents.
 
 ```bash
 jref query --path <path> [file]
+```
+
+### extract
+
+Unpack files from snapshot to local filesystem. Supports wildcards and directory prefixes.
+
+```bash
+jref extract [options] [file] [patterns...]
+
+Options:
+  --output, -o <dir>  Target directory (default: ./extracted)
+  --overwrite, -w     Overwrite existing files
+  --dry-run, -n       Show what would be extracted
+  --flat              Extract files into a single directory (no subfolders)
+```
+
+**Examples:**
+```bash
+# Extract everything
+jref extract project.json
+
+# Extract specific files/dirs with wildcards
+jref extract snapshot.json "src/**/*.ts" "docs/*"
+
+# Extract to specific directory
+jref extract --output ./lib project.json "src/lib/*"
+```
+
+### run
+
+Execute a script directly from the JSON snapshot without permanent extraction.
+
+```bash
+jref run --path <script-path> [file] [script-args...]
+
+Options:
+  --path, -p <path>   Path to the script within the snapshot
+```
+
+**Examples:**
+```bash
+# Run a setup script
+jref run --path scripts/setup.ts project.json
+
+# Run with arguments
+jref run -p main.js snapshot.json -- --port 8080
 ```
 
 ## AI Agent Usage

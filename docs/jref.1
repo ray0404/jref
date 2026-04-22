@@ -22,6 +22,7 @@ The following commands are available:
 .IR search ,
 .IR query ,
 .IR extract ,
+.IR run ,
 .IR reconstruct ,
 .IR diff ,
 .IR patch ,
@@ -248,7 +249,7 @@ jref query --path "src/utils.ts" --raw snapshot.json \e
 .SS EXTRACT
 Unpack files from a snapshot back into the local filesystem.
 .PP
-.B "jref extract [\fIoptions\fR] [\fIfile\fR]"
+.B "jref extract [\fIoptions\fR] [\fIfile\fR] [\fIpatterns...\fR]"
 .PP
 .I Options
 .RS 4
@@ -258,10 +259,6 @@ Destination directory.
 Defaults to
 .B ./extracted
 if not specified.
-.TP
-.B \-\-paths \fIpaths\fR\fB...\fR, \fB\-p \fIpaths\fR\fB...\fR
-Extract only the specified file paths.
-All other files in the snapshot are ignored.
 .TP
 .B \-\-overwrite\fR, \fB\-w
 Overwrite existing files on disk.
@@ -279,10 +276,33 @@ directory with no subdirectory structure.
 .PP
 .EX
 jref extract snapshot.json
+jref extract snapshot.json "src/**/*.ts"
 jref extract --output ./restored snapshot.json
-jref extract --paths src/main.ts src/utils.ts snapshot.json
 jref extract --dry-run snapshot.json
-jref extract --flat --output ./flat snapshot.json
+.EE
+.
+.SS RUN
+Execute a script directly from the JSON snapshot without permanent extraction.
+.PP
+.B "jref run \fB\-\-path\fR \fIpath\fR [\fIfile\fR] [\fIscript-args...\fR]"
+.PP
+.I Options
+.RS 4
+.TP 4
+.B \-\-path \fIpath\fR, \fB\-p \fIpath\fR
+\fBRequired.\fR
+The path to the script within the snapshot.
+.RE
+.PP
+Extracts all files to a unique temporary directory, executes the target
+script using an appropriate runner (node, python3, bash), and cleans up
+the temporary files upon exit.
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref run --path scripts/setup.ts project.json
+jref run -p main.js snapshot.json -- --port 8080
 .EE
 .
 .SS RECONSTRUCT
@@ -544,6 +564,9 @@ Select a tree item (open directory or view file).
 .B /
 Open search mode. Type to filter files by name.
 .TP
+.B Tab
+Toggle search type between Filename and Content in search mode.
+.TP
 .B y
 Yank (copy) the current file's content to the system clipboard.
 .RS 4
@@ -563,6 +586,12 @@ Edit the current file in
 Spawns the editor with file content in a temporary file.
 On exit, the in-memory snapshot is updated;
 changes are \fBnot\fR written to the snapshot file or filesystem.
+.TP
+.B v
+View the current file in your preferred pager ($PAGER).
+.TP
+.B x
+Extract the currently selected file to the local disk.
 .TP
 .B c
 Toggle compact mode (reduces UI elements for narrow terminals).

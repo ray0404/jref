@@ -503,12 +503,47 @@ jref query --path "src/main.ts" --json snapshot.json
 
 ---
 
-### extract
+### run
 
-Unpack files from a snapshot back into the local filesystem.
+Execute a script directly from the JSON snapshot without permanent extraction.
 
 ```
-jref extract [options] [file]
+jref run --path <script-path> [file] [script-args...]
+```
+
+**Options:**
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--path <path>` | `-p` | Path to the script within the snapshot |
+
+**Runner mapping:**
+
+| Extension | Runner |
+|-----------|--------|
+| `.js` | `node` |
+| `.ts` | `node --experimental-strip-types` |
+| `.py` | `python3` |
+| `.sh` | `bash` |
+
+**Examples:**
+
+```bash
+# Run a setup script
+jref run --path scripts/setup.ts project.json
+
+# Run with arguments
+jref run -p main.js snapshot.json -- --port 8080
+```
+
+---
+
+### extract
+
+Unpack files from a snapshot back into the local filesystem. Supports wildcard patterns.
+
+```
+jref extract [options] [file] [patterns...]
 ```
 
 **Options:**
@@ -516,7 +551,6 @@ jref extract [options] [file]
 | Option | Alias | Description |
 |--------|-------|-------------|
 | `--output <dir>` | `-o` | Output directory (default: `./extracted`) |
-| `--paths <paths...>` | `-p` | Extract only these specific file paths |
 | `--overwrite` | `-w` | Overwrite existing files on disk |
 | `--dry-run` | `-n` | Preview what would be extracted without writing files |
 | `--flat` | | Flatten: extract filenames only (no directory structure) |
@@ -527,11 +561,11 @@ jref extract [options] [file]
 # Extract entire project
 jref extract snapshot.json
 
+# Extract with wildcards
+jref extract snapshot.json "src/**/*.ts" "docs/*.md"
+
 # Extract to custom directory
 jref extract --output ./restored snapshot.json
-
-# Extract specific files
-jref extract --paths src/main.ts src/utils.ts snapshot.json
 
 # Flatten output (all files side by side)
 jref extract --flat --output ./flat snapshot.json
@@ -768,8 +802,11 @@ jref ui [file]
 | `→` / `l` | Expand dir | — | — |
 | `Enter` | Select/toggle | Back to tree | Select file |
 | `/` | Open search | — | — |
+| `Tab` | — | — | Toggle Search Type |
 | `y` | Yank content | Yank content | — |
 | `e` | Edit in `$EDITOR` | — | — |
+| `v` | View in `$PAGER` | — | — |
+| `x` | Extract file | — | — |
 | `c` | Toggle compact | Toggle compact | — |
 | `Esc` | Exit | Back to tree | Cancel search |
 
@@ -944,8 +981,8 @@ jref handles JSON snapshot files of any size through automatic streaming:
 | Snapshot Size | Strategy |
 |--------------|----------|
 | < 8 MB | Direct `JSON.parse` — fast, single allocation |
-| ≥ 8 MB | 64KB chunked read + streaming parse — prevents OOM |
-| > ~16 MB | Returns error (`"Snapshot file too large to process safely"`) |
+| ≥ 8 MB | `stream-json` pipeline — prevents heap exhaustion |
+| Up to 1GB+ | Fully supported via streaming callbacks |
 
 The threshold is configurable internally via `MAX_BUFFER_SIZE` in `streaming-json.js` (currently 8MB).
 
