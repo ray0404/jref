@@ -1,0 +1,159 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "array",
+    "items": {
+        "$ref": "#/definitions/GeminiSessionSchemaElement"
+    },
+    "definitions": {
+        "GeminiSessionSchemaElement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "role": {
+                    "$ref": "#/definitions/Role"
+                },
+                "parts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Part"
+                    }
+                }
+            },
+            "required": [
+                "parts",
+                "role"
+            ],
+            "title": "GeminiSessionSchemaElement"
+        },
+        "Part": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "text": {
+                    "type": "string"
+                },
+                "thoughtSignature": {
+                    "type": "string"
+                },
+                "functionCall": {
+                    "$ref": "#/definitions/FunctionCall"
+                },
+                "functionResponse": {
+                    "$ref": "#/definitions/FunctionResponse"
+                }
+            },
+            "required": [],
+            "title": "Part"
+        },
+        "FunctionCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "$ref": "#/definitions/Name"
+                },
+                "args": {
+                    "$ref": "#/definitions/Args"
+                }
+            },
+            "required": [
+                "args",
+                "name"
+            ],
+            "title": "FunctionCall"
+        },
+        "Args": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "dir_path": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "new_string": {
+                    "type": "string"
+                },
+                "instruction": {
+                    "type": "string"
+                },
+                "old_string": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "start_line": {
+                    "type": "integer"
+                },
+                "end_line": {
+                    "type": "integer"
+                },
+                "pattern": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Args"
+        },
+        "FunctionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "$ref": "#/definitions/Name"
+                },
+                "response": {
+                    "$ref": "#/definitions/Response"
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "response"
+            ],
+            "title": "FunctionResponse"
+        },
+        "Response": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "output": {
+                    "type": "string"
+                },
+                "error": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Response"
+        },
+        "Name": {
+            "type": "string",
+            "enum": [
+                "list_directory",
+                "read_file",
+                "replace",
+                "run_shell_command",
+                "write_file",
+                "grep_search"
+            ],
+            "title": "Name"
+        },
+        "Role": {
+            "type": "string",
+            "enum": [
+                "user",
+                "model"
+            ],
+            "title": "Role"
+        }
+    }
+}

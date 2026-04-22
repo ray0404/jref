@@ -4,7 +4,8 @@
  * Supports: cat snapshot.json | jref inspect
  */
 
-import { createReadStream } from 'fs';
+import { openSync } from 'fs';
+import tty from 'tty';
 
 /**
  * Check if stdin is a pipe (non-interactive mode)
@@ -72,22 +73,21 @@ export function reestablishTTY(): boolean {
   try {
     // Try to open the terminal device
     // On Linux/macOS this is /dev/tty
-    const ttyStream = createReadStream('/dev/tty');
+    const fd = openSync('/dev/tty', 'r+');
     
-    // We need to override process.stdin for Ink to pick it up
+    // Create actual TTY streams that support setRawMode
+    const ttyIn = new tty.ReadStream(fd);
+    const ttyOut = new tty.WriteStream(fd);
+
+    // Override global streams so libraries like Ink pick them up
     // @ts-ignore
-    process.stdin = ttyStream;
+    process.stdin = ttyIn;
     // @ts-ignore
-    process.stdin.isTTY = true;
-    // @ts-ignore
-    process.stdin.setRawMode = (mode: boolean) => {
-      // Dummy setRawMode if the real one isn't available
-      // In many environments /dev/tty might not support it directly via createReadStream
-    };
+    process.stdout = ttyOut;
     
     return true;
   } catch (err) {
-    // Silent fail if /dev/tty is not available
+    // Silent fail if /dev/tty is not available (e.g. CI or non-POSIX)
     return false;
   }
 }

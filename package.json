@@ -35,6 +35,7 @@
     "micromatch": "^4.0.8",
     "quicktype": "^23.2.6",
     "react": "^18.0.0",
+    "repomix": "^1.13.1",
     "stream-json": "^2.1.0",
     "toml": "^4.1.1",
     "yaml": "^2.8.3",
@@ -45,7 +46,6 @@
     "@types/node": "^22.0.0",
     "@types/react": "^18.0.0",
     "@types/stream-json": "^1.7.8",
-    "repomix": "^1.13.1",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0"
   },

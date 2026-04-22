@@ -80,7 +80,7 @@ export class PackCommand extends Command {
           enableSecurityCheck: false,
         },
         tokenCount: {
-            encoding: 'cl100k_base'
+          encoding: 'cl100k_base'
         }
       };
 
@@ -88,7 +88,12 @@ export class PackCommand extends Command {
         console.error(`📦 Packing ${rootDir} using Repomix...`);
       }
 
-      const result = await pack([rootDir], config);
+      // Use '.' as input path when cwd is set to rootDir
+      const result = await pack(['.'], config);
+      
+      if (!options.silent) {
+        console.error(`✅ Packed ${result.processedFiles?.length || 0} files.`);
+      }
 
       // Convert repomix result to jref snapshot format
       const files: Record<string, string> = {};
