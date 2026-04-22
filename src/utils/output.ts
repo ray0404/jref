@@ -172,7 +172,7 @@ export function printHeader(options: CLIOptions = {}): void {
   console.log('  ██║     ██║   ██║██╔══╝  ██╔══╝   ██╔██╗ ');
   console.log('  ███████╗╚██████╔╝██║     ███████╗██╔╝ ██╗');
   console.log('  ╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝');
-  console.log(`${RESET}${DIM}JSON Reference CLI - v1.0.0${RESET}`);
+  console.log(`${RESET}${DIM}JSON Reference CLI - v1.2.0${RESET}`);
   console.log();
 }
 

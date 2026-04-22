@@ -45,7 +45,7 @@ A snapshot captures:
 
 | Feature | Description |
 |---------|-------------|
-| **pack** | Create a snapshot from a local directory (respects `.gitignore`) |
+| **pack** | Create a snapshot from a local directory (respects `.gitignore`). Includes **Secret Scanning**, **Auto-Instructions**, and **Chunking**. |
 | **inspect** | View tree and metadata without loading the whole file into memory |
 | **search** | High-speed regex / keyword search across all files in the snapshot |
 | **query** | Pull out a single file's content by path (AI-friendly, supports `--raw`) |
@@ -55,7 +55,7 @@ A snapshot captures:
 | **patch** | Update/add file contents or metadata in a snapshot without extracting |
 | **summarize** | Strip implementation bodies, keep only signatures and imports |
 | **serve** | Start an MCP (Model Context Protocol) stdio server for AI agents |
-| **ui** | Interactive Terminal UI (ink/React) for browsing snapshots |
+| **ui** | Interactive Terminal UI for browsing snapshots with **Fuzzy Search** and **Multi-Selection**. |
 
 ### Global Flags
 
@@ -309,23 +309,31 @@ jref ui project.json
 
 **Keyboard controls:**
 
-| Key | Action |
-|-----|--------|
-| `↑` / `k` | Move up |
-| `↓` / `j` | Move down |
-| `←` / `h` | Collapse directory |
-| `→` / `l` | Expand directory |
-| `Enter` | Select / enter directory / open file |
-| `/` | Open search mode |
-| `y` | Yank (copy) file content to clipboard |
-| `e` | Edit file in `$EDITOR` (in-memory, does not write to disk) |
-| `c` | Toggle compact mode (for narrow terminals) |
-| `Esc` | Back / Exit |
+| Key | Tree View | File View | Search Mode |
+|-----|-----------|-----------|-------------|
+| `↑` / `k` | Move up | Scroll up | Move up |
+| `↓` / `j` | Move down | Scroll down | Move down |
+| `←` / `h` | Collapse dir | — | — |
+| `→` / `l` | Expand dir | — | — |
+| `Enter` | Select/toggle | Back to tree | Select file |
+| `Space` | Toggle selection `[*]` | — | — |
+| `/` | Open fuzzy search | — | — |
+| `Tab` | — | — | Toggle Search Type |
+| `y` | Yank content | Yank content | — |
+| `e` | Edit in `$EDITOR` | — | — |
+| `v` | View in `$PAGER` | — | — |
+| `x` | Extract selected | — | — |
+| `c` | Toggle compact | Toggle compact | — |
+| `Esc` | Exit | Back to tree | Cancel search |
 
 **Mobile/Termux optimizations:**
 - Compact mode auto-detected when terminal width < 60 columns
 - Yank uses `termux-clipboard-set` on Termux, `pbcopy` on macOS, `xclip` on Linux
 - Edit spawns `$EDITOR` (default: `vi`) for temporary in-memory edits
+
+**Multi-Selection ([*]):** Press `Space` on any file or directory to mark it. Press `x` to extract all marked items at once to your local disk.
+
+**Fuzzy Search:** Uses `fuse.js` for fast approximate matching by filename or file content (toggle search type with `Tab`).
 
 ---
 
@@ -343,7 +351,7 @@ jref [--json|-j] [--silent|-s] [--raw|-r] [--help|-h] [--version|-v] <command> [
 | `--silent`, `-s` | Suppress all ASCII art, progress indicators, and decorative output. |
 | `--raw`, `-r` | Emit raw output with no formatting. For `--query`, this means pure file content without headers. For AI agents consuming file content. |
 | `--help`, `-h` | Show global help (all commands). Append to any command for command-specific help: `jref pack --help` |
-| `--version`, `-v` | Print `jref v1.0.0` (or `--json` for `{"version": "1.0.0"}`). |
+| `--version`, `-v` | Print `jref v1.2.0` (or `--json` for `{"version": "1.2.0"}`). |
 
 ---
 
@@ -363,12 +371,16 @@ jref pack [directory] [options]
 
 | Option | Description |
 |--------|-------------|
-| `--instruction <text>` | Add an `instruction` field to the snapshot — AI system prompt context |
+| `--instruction <text>` | Add an `instruction` field to the snapshot — AI system prompt context. **Auto-generated** based on project type if omitted. |
 | `--summary <text>` | Add a `fileSummary` field — human-readable project overview |
+| `--max-size <bytes>` | Split the snapshot into multiple parts (e.g., `snapshot.part1.json`) if the total size exceeds this threshold. |
 
 **Behavior:**
 - Defaults to current working directory if no directory is given
 - Reads `.gitignore` from the root of the target directory and respects its patterns
+- **Secret Scanning**: Automatically redacts secrets (API keys, credentials) using `secretlint`.
+- **Auto-Instructions**: Analyzes the project structure (Node.js, Rust, Go, Python, etc.) and generates context-aware system prompts.
+- **Chunking**: When `--max-size` is provided, the project is partitioned into valid schema-compliant chunks.
 - Always ignores `.git`
 - Reads **all file contents as UTF-8 strings**
 - Generates an ASCII tree representation for `directoryStructure`
@@ -377,14 +389,14 @@ jref pack [directory] [options]
 **Examples:**
 
 ```bash
-# Snapshot current directory
+# Snapshot current directory with auto-instructions and secret scanning
 jref pack . > snapshot.json
 
-# Snapshot src/ with instructions
+# Snapshot src/ with custom instructions
 jref pack ./src --instruction "This module follows TDD" > src.json
 
-# Snapshot entire project with summary
-jref pack . --summary "Full-stack app: React frontend, Express backend" > full.json
+# Snapshot entire project and split into 512KB chunks
+jref pack . --max-size 524288
 ```
 
 ---

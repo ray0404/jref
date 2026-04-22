@@ -11,7 +11,7 @@ import { printError, printHeader, exit } from './utils/output.js';
 import type { CLIOptions, CommandContext } from './types/index.js';
 import { join } from 'path';
 
-const VERSION = '1.0.0';
+const VERSION = '1.2.0';
 
 /**
  * Parse global CLI options
@@ -22,9 +22,18 @@ function parseGlobalOptions(args: string[]): {
 } {
   const options: CLIOptions = {};
   const remainingArgs: string[] = [];
+  const commands = registry.getCommandNames();
+
+  let commandSeen = false;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
+    
+    // Check if this argument is a command
+    if (!arg.startsWith('-') && commands.includes(arg)) {
+      commandSeen = true;
+    }
+
     switch (arg) {
       case '--json':
       case '-j':
@@ -40,7 +49,12 @@ function parseGlobalOptions(args: string[]): {
         break;
       case '--help':
       case '-h':
-        options.help = true;
+        // Only set global help if we haven't seen a command yet
+        if (!commandSeen) {
+          options.help = true;
+        } else {
+          remainingArgs.push(arg);
+        }
         break;
       case '--version':
       case '-v':
@@ -129,13 +143,13 @@ function printVersion(options: CLIOptions = {}): void {
  * Main CLI handler
  */
 async function main(): Promise<void> {
+  // Register commands first so parseGlobalOptions knows what the commands are
+  await registerBuiltinCommands();
+
   const args = process.argv.slice(2);
 
   // Parse global options
   const { remainingArgs, options } = parseGlobalOptions(args);
-
-  // Register commands
-  await registerBuiltinCommands();
 
   // Load plugins from local directory
   try {
@@ -151,7 +165,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Handle help flag
+  // Handle global help flag or no args
   if (options.help || remainingArgs.length === 0) {
     printGlobalHelp(options);
     exit(0);
