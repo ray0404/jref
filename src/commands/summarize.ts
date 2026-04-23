@@ -1,6 +1,7 @@
 
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
+import { stripImplementation } from '../utils/format.js';
 
 export class SummarizeCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -47,7 +48,7 @@ export class SummarizeCommand extends Command {
           continue;
         }
         
-        summarizedFiles[path] = this.stripImplementation(content);
+        summarizedFiles[path] = stripImplementation(content);
       }
 
       const summary: ProjectSnapshot = {
@@ -68,36 +69,6 @@ export class SummarizeCommand extends Command {
     } catch (err) {
       return this.error(`Summarize failed: ${(err as Error).message}`, options);
     }
-  }
-
-  /**
-   * Lightweight implementation stripping using regex
-   * Handles common JS/TS/Python patterns
-   */
-  private stripImplementation(content: string): string {
-    // 1. Strip multi-line function bodies { ... }
-    // This is a naive regex and won't handle nested braces perfectly,
-    // but works for top-level signatures in many cases.
-    // Replace: function name(...) { ... } -> function name(...) { /* implementation stripped */ }
-    
-    // For MVP, we'll use a simpler line-based approach: keep lines with 'function', 'class', 'interface', 'export', 'import'
-    
-    const lines = content.split('\n');
-    const summarizedLines = lines.filter(line => {
-      const trimmed = line.trim();
-      return (
-        trimmed.startsWith('import ') ||
-        trimmed.startsWith('export ') ||
-        trimmed.includes('function ') ||
-        trimmed.includes('class ') ||
-        trimmed.includes('interface ') ||
-        trimmed.includes('type ') ||
-        trimmed.startsWith('@') || // Decorators
-        trimmed.length === 0
-      );
-    });
-
-    return summarizedLines.join('\n') + '\n/* ... implementation details stripped ... */';
   }
 
   protected parseArgs(args: string[]): { snapshotFile?: string } {

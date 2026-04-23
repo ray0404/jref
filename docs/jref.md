@@ -45,7 +45,7 @@ A snapshot captures:
 
 | Feature | Description |
 |---------|-------------|
-| **pack** | Create a snapshot from a local directory (respects `.gitignore`). Includes **Secret Scanning**, **Auto-Instructions**, and **Chunking**. |
+| **pack** | Create a snapshot from a local directory or remote repository (respects `.gitignore`). Includes **Secret Scanning**, **Auto-Instructions**, and **Chunking**. |
 | **inspect** | View tree and metadata without loading the whole file into memory |
 | **search** | High-speed regex / keyword search across all files in the snapshot |
 | **query** | Pull out a single file's content by path (AI-friendly, supports `--raw`) |
@@ -118,8 +118,11 @@ jref --help
 # Snapshot the current working directory
 jref pack . > project.json
 
-# Snapshot with AI instructions
-jref pack ./my-project \
+# Snapshot a remote repository
+jref pack https://github.com/user/repo > remote.json
+
+# Snapshot with branch/tag and AI instructions
+jref pack github:user/repo#dev \
   --instruction "Follow these architectural rules" \
   --summary "REST API server with three route modules" \
   > project.json
@@ -291,13 +294,17 @@ cat project.json | jref summarize | jref inspect --files
 jref serve project.json
 ```
 
-The MCP server exposes three tools over stdio using the Model Context Protocol:
+The MCP server exposes several tools over stdio using the Model Context Protocol:
 
-| Tool | Description |
-|------|-------------|
-| `inspect` | Returns snapshot metadata + directory structure as JSON |
-| `search` | Searches files matching a regex pattern, returns matching file paths |
-| `query` | Returns content of a specific file path |
+| Tool | Input | Output |
+|------|-------|--------|
+| `inspect` | (none) | JSON with `metadata` and `directoryStructure` |
+| `search` | `{ pattern: string }` | JSON array of file paths containing the pattern |
+| `query` | `{ path: string }` | Raw file content as plain text |
+| `jq_query` | `{ filter: string }` | Result of jq filter execution against snapshot |
+| `summarize` | `{ paths: string[] }` | Token-efficient map of requested files |
+| `list_directory` | `{ path: string }` | Flat list of children at specified path |
+| `find_references` | `{ symbol: string }` | Cross-file reference tracing for a symbol |
 
 This enables AI agents (Claude Code, Codex, etc.) to interactively browse and query the snapshot through their native MCP integration.
 
@@ -363,10 +370,10 @@ jref [--json|-j] [--silent|-s] [--raw|-r] [--help|-h] [--version|-v] <command> [
 
 ### pack
 
-Create a jref-compliant JSON snapshot from a local directory.
+Create a jref-compliant JSON snapshot from a local directory or remote repository.
 
 ```
-jref pack [directory] [options]
+jref pack [directory|url] [options]
 ```
 
 **Options:**
@@ -379,6 +386,8 @@ jref pack [directory] [options]
 
 **Behavior:**
 - Defaults to current working directory if no directory is given
+- **Remote Packing**: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
+- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment for private repositories.
 - Reads `.gitignore` from the root of the target directory and respects its patterns
 - **Secret Scanning**: Automatically redacts secrets (API keys, credentials) using `secretlint`.
 - **Auto-Instructions**: Analyzes the project structure (Node.js, Rust, Go, Python, etc.) and generates context-aware system prompts.
@@ -393,6 +402,9 @@ jref pack [directory] [options]
 ```bash
 # Snapshot current directory with auto-instructions and secret scanning
 jref pack . > snapshot.json
+
+# Snapshot a remote repo
+jref pack https://github.com/user/repo > remote.json
 
 # Snapshot src/ with custom instructions
 jref pack ./src --instruction "This module follows TDD" > src.json
@@ -777,6 +789,10 @@ jref serve <file>
 | `inspect` | (none) | JSON with `metadata` and `directoryStructure` |
 | `search` | `{ pattern: string }` | JSON array of file paths containing the pattern |
 | `query` | `{ path: string }` | Raw file content as plain text |
+| `jq_query` | `{ filter: string }` | Result of jq filter execution against snapshot |
+| `summarize` | `{ paths: string[] }` | Token-efficient map of requested files |
+| `list_directory` | `{ path: string }` | Flat list of children at specified path |
+| `find_references` | `{ symbol: string }` | Cross-file reference tracing for a symbol |
 
 **Examples:**
 

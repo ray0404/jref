@@ -10,6 +10,9 @@ import {
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
+import { stripImplementation } from '../utils/format.js';
+import { parseDirectoryStructure, findNodeByPath } from '../utils/ui.js';
+import * as jq from 'jq-wasm';
 
 export class ServeCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -23,7 +26,8 @@ export class ServeCommand extends Command {
     workflows: [
       'Agent Context: Provide AI agents with structured access to the codebase via MCP.',
       'Live Tooling: Use search and query tools within your agentic workflow.',
-      'Remote Analysis: Expose a snapshot as a service for distributed agent architectures.'
+      'Remote Analysis: Expose a snapshot as a service for distributed agent architectures.',
+      'Advanced Queries: Use jq, file summarization, and reference tracing through MCP.'
     ]
   };
 
@@ -47,7 +51,7 @@ export class ServeCommand extends Command {
       const server = new Server(
         {
           name: 'jref-mcp-server',
-          version: '1.0.0',
+          version: '1.2.0',
         },
         {
           capabilities: {
@@ -89,6 +93,54 @@ export class ServeCommand extends Command {
               required: ['path'],
             },
           },
+          {
+            name: 'jq_query',
+            description: 'Execute a jq filter against the loaded snapshot',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                filter: { type: 'string', description: 'jq filter string' },
+              },
+              required: ['filter'],
+            },
+          },
+          {
+            name: 'summarize',
+            description: 'Provide a token-efficient map of specific files by stripping implementation details',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                paths: { 
+                  type: 'array', 
+                  items: { type: 'string' },
+                  description: 'List of file paths to summarize'
+                },
+              },
+              required: ['paths'],
+            },
+          },
+          {
+            name: 'list_directory',
+            description: 'Provide scoped, localized tree inspection to mimic standard ls navigation',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                path: { type: 'string', description: 'Path to the directory (e.g., src/components)' },
+              },
+              required: ['path'],
+            },
+          },
+          {
+            name: 'find_references',
+            description: 'Cross-file reference tracing for a specific symbol',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                symbol: { type: 'string', description: 'Symbol name to trace' },
+              },
+              required: ['symbol'],
+            },
+          },
         ],
       }));
 
@@ -111,14 +163,16 @@ export class ServeCommand extends Command {
 
           case 'search': {
             const { pattern } = request.params.arguments as { pattern: string };
-            
-            // Re-use logic or implement a helper
             const results = [];
-            const regex = new RegExp(pattern, 'i');
-            for (const [filePath, content] of Object.entries(snapshot.files)) {
-              if (regex.test(content)) {
-                results.push(filePath);
+            try {
+              const regex = new RegExp(pattern, 'i');
+              for (const [filePath, content] of Object.entries(snapshot.files)) {
+                if (regex.test(content)) {
+                  results.push(filePath);
+                }
               }
+            } catch (err) {
+              throw new McpError(ErrorCode.InvalidParams, `Invalid regex: ${(err as Error).message}`);
             }
 
             return {
@@ -142,6 +196,110 @@ export class ServeCommand extends Command {
                 {
                   type: 'text',
                   text: content,
+                },
+              ],
+            };
+          }
+
+          case 'jq_query': {
+            const { filter } = request.params.arguments as { filter: string };
+            try {
+              const result = await jq.json(snapshot, filter);
+              return {
+                content: [
+                  {
+                    type: 'text',
+                    text: JSON.stringify(result, null, 2),
+                  },
+                ],
+              };
+            } catch (err) {
+              throw new McpError(ErrorCode.InvalidParams, `jq error: ${(err as Error).message}`);
+            }
+          }
+
+          case 'summarize': {
+            const { paths } = request.params.arguments as { paths: string[] };
+            const summarizedFiles: Record<string, string> = {};
+            
+            for (const path of paths) {
+              const content = snapshot.files[path];
+              if (content !== undefined) {
+                // Skip summarization for non-code files
+                if (path.endsWith('.json') || path.endsWith('.md') || path.endsWith('.txt')) {
+                  summarizedFiles[path] = content;
+                } else {
+                  summarizedFiles[path] = stripImplementation(content);
+                }
+              }
+            }
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(summarizedFiles, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'list_directory': {
+            const { path } = request.params.arguments as { path: string };
+            const tree = parseDirectoryStructure(snapshot.directoryStructure || '');
+            // Normalize path: remove trailing slash and handle empty/root
+            const normalizedPath = path === '.' || path === '/' || path === '' ? '' : path.replace(/\/$/, '');
+            const node = findNodeByPath(tree, normalizedPath);
+            
+            if (!node) {
+              throw new McpError(ErrorCode.InvalidParams, `Path not found: ${path}`);
+            }
+
+            const children = node.children.map(child => ({
+              name: child.name,
+              isDirectory: child.isDirectory,
+              path: child.path,
+              type: child.isDirectory ? 'directory' : 'file'
+            }));
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(children, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'find_references': {
+            const { symbol } = request.params.arguments as { symbol: string };
+            const results = [];
+            
+            for (const [filePath, content] of Object.entries(snapshot.files)) {
+              const lines = content.split('\n');
+              const matches = [];
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].includes(symbol)) {
+                  matches.push({
+                    line: i + 1,
+                    context: lines[i].trim(),
+                  });
+                }
+              }
+              if (matches.length > 0) {
+                results.push({
+                  filePath,
+                  matches,
+                });
+              }
+            }
+
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(results, null, 2),
                 },
               ],
             };

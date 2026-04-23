@@ -44,11 +44,12 @@ npm link
 When interacting with `jref` in this workspace, prefer the following patterns:
 
 - **Analysis:** Use `jref inspect <file>` for a quick overview or `jref summarize <file>` to generate a token-efficient map.
+- **Remote Resolution:** `jref pack <url>` allows snapshotting remote repositories (GitHub/GitLab) directly into jref format.
 - **Data Transformation:** Use the global `--jq <filter>` or `-q <filter>` flag to reshape or filter snapshots before command execution.
 - **Context Injection:** If you need to read specific files from a snapshot without extracting them, use `jref query --path <path> <file>`.
 - **Modification:** Use `jref patch <path> <content> <file>` to surgically update a snapshot.
 - **Testing Changes:** Use `jref diff <file>` to verify if local files match a snapshot's expected state.
-- **Agent Integration:** `jref serve <file>` starts an MCP server (stdio), allowing seamless integration with agentic toolchains.
+- **Agent Integration:** `jref serve <file>` starts an MCP server (stdio) with tools for search, query, jq filtering, summarization, and reference tracing.
 
 ## Development Conventions
 - **TDD:** Write unit tests in `*.test.ts` files alongside the implementation.

@@ -85,9 +85,9 @@ to get
 .SH COMMANDS
 .
 .SS PACK
-Create a jref snapshot from a local directory.
+Create a jref snapshot from a local directory or remote repository.
 .PP
-.B "jref pack [directory] [\fB\-\-instruction\fR \fItext\fR] [\fB\-\-summary\fR \fItext\fR] [\fB\-\-max\-size\fR \fIbytes\fR]"
+.B "jref pack [directory|url] [\fB\-\-instruction\fR \fItext\fR] [\fB\-\-summary\fR \fItext\fR] [\fB\-\-max\-size\fR \fIbytes\fR]"
 .PP
 .B OPTIONS
 .RS 4
@@ -109,6 +109,10 @@ Splits the snapshot into multiple chunk files (e.g., snapshot.part1.json) if the
 .B FEATURES
 .RS 4
 .IP \(bu 2
+\fBRemote Packing\fR: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
+.IP \(bu 2
+\fBToken Authentication\fR: Automatically uses \fBGITHUB_TOKEN\fR or \fBGITLAB_TOKEN\fR from the environment for private repositories.
+.IP \(bu 2
 \fBSecret Scanning\fR: Automatically detects and redacts secrets (API keys, credentials) using \fIsecretlint\fR.
 .IP \(bu 2
 \fBAuto-Instructions\fR: Analyzes the project structure (Node.js, Rust, Go, Python, etc.) to draft appropriate system prompts.
@@ -118,6 +122,8 @@ Splits the snapshot into multiple chunk files (e.g., snapshot.part1.json) if the
 .PP
 Reads
 .I directory
+or clones
+.I url
 recursively and produces a JSON snapshot.
 Defaults to the current working directory if omitted.
 Reads
@@ -133,7 +139,8 @@ All file contents are read as UTF-8.
 .PP
 .EX
 jref pack . > snapshot.json
-jref pack ./src \e
+jref pack https://github.com/user/repo > remote.json
+jref pack github:user/repo#dev \e
   --instruction "Follow TDD" > src.json
 jref pack . --max-size 1048576
 .EE
@@ -535,18 +542,28 @@ JSON-RPC requests from an MCP client.
 Returns snapshot metadata and the full directory structure as JSON.
 .TP 4
 .B search
-Arguments:
-.RS 4
-{ pattern: string }
-.RE
+Arguments: { pattern: string }.
 Returns a JSON array of file paths that contain the pattern.
 .TP 4
 .B query
-Arguments:
-.RS 4
-{ path: string }
-.RE
+Arguments: { path: string }.
 Returns the raw content of the specified file.
+.TP 4
+.B jq_query
+Arguments: { filter: string }.
+Executes a jq filter against the snapshot.
+.TP 4
+.B summarize
+Arguments: { paths: string[] }.
+Returns a token-efficient map of requested files.
+.TP 4
+.B list_directory
+Arguments: { path: string }.
+Returns children of specified directory (ls style).
+.TP 4
+.B find_references
+Arguments: { symbol: string }.
+Cross-file reference tracing for a specific symbol.
 .RE
 .PP
 .B EXAMPLE

@@ -7,7 +7,7 @@ import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { existsSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
-import { pack } from 'repomix';
+import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { generateInstruction } from '../utils/instruction.js';
 
@@ -20,8 +20,8 @@ interface PackFlags {
 export class PackCommand extends Command {
   readonly definition: CommandDefinition = {
     name: 'pack',
-    description: 'Create a snapshot from a local directory',
-    usage: 'jref pack [directory] [options]',
+    description: 'Create a snapshot from a local directory or remote repository',
+    usage: 'jref pack [directory|url] [options]',
     options: [
       {
         flags: '--instruction <text>',
@@ -38,14 +38,15 @@ export class PackCommand extends Command {
     ],
     examples: [
       'jref pack . > snapshot.json',
-      'jref pack ./my-project --instruction "Follow these rules" > snapshot.json',
-      'jref pack . --max-size 1048576 > snapshot.json'
+      'jref pack https://github.com/user/repo > snapshot.json',
+      'jref pack github:user/repo#dev --instruction "Follow these rules" > snapshot.json'
     ],
     workflows: [
       'Codebase Snapshotting: Capture the current state of a project for archival or sharing.',
+      'Remote Packing: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).',
+      'Token Authentication: Uses GITHUB_TOKEN or GITLAB_TOKEN from the environment for private repositories.',
       'Agent Priming: Create snapshots with custom instructions to guide AI behavior.',
-      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.',
-      'Gitignore Integration: Automatically respects .gitignore patterns for clean snapshots.'
+      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.'
     ]
   };
 
@@ -56,69 +57,102 @@ export class PackCommand extends Command {
   ): Promise<CommandResult> {
     try {
       const { flags, targetDir } = this.parseArgs(args);
-      const rootDir = targetDir ? resolve(targetDir) : process.cwd();
+      
+      const isRemote = targetDir && (isExplicitRemoteUrl(targetDir) || isValidShorthand(targetDir));
+      let result: any;
+      let rootDir = process.cwd();
 
-      if (!existsSync(rootDir)) {
-        return this.error(`Directory not found: ${rootDir}`, options);
-      }
-
-      // Prepare repomix configuration with explicit defaults
-      const config: any = {
-        cwd: rootDir,
-        input: {
-          maxFileSize: 10 * 1024 * 1024,
-        },
-        output: {
-          filePath: 'repomix-output.json',
+      if (isRemote && targetDir) {
+        if (!options.silent) {
+          console.error(`📦 Packing remote repository ${targetDir} using Repomix...`);
+        }
+        
+        // Prepare CLI-style options for remote action
+        const cliOptions: any = {
           style: 'json',
-          parsableStyle: true,
+          securityCheck: true,
           fileSummary: !!flags.summary,
           directoryStructure: true,
-          files: true,
-          removeComments: false,
-          removeEmptyLines: false,
-          showLineNumbers: false,
-          copyToClipboard: false,
           includeFullDirectoryStructure: true,
-          compress: false,
-          topFilesLength: 100,
-          truncateBase64: true,
-          git: {
-              sortByChanges: false,
-              sortByChangesMaxCommits: 10,
-              includeDiffs: false,
-              includeLogs: false,
-              includeLogsCount: 10
-          },
-          tokenCountTree: false
-        },
-        include: [],
-        ignore: {
-          useGitignore: true,
-          useDotIgnore: true,
-          useDefaultPatterns: true,
-          customPatterns: [],
-        },
-        security: {
-          enableSecurityCheck: true, // Enabled for Feature 3
-        },
-        tokenCount: {
-          encoding: 'cl100k_base'
+          verbose: !options.silent,
+          quiet: options.silent
+        };
+
+        const actionResult = await runRemoteAction(targetDir, cliOptions);
+        result = actionResult.packResult;
+      } else {
+        rootDir = targetDir ? resolve(targetDir) : process.cwd();
+
+        if (!existsSync(rootDir)) {
+          return this.error(`Directory not found: ${rootDir}`, options);
         }
-      };
 
-      if (!options.silent) {
-        console.error(`📦 Packing ${rootDir} using Repomix...`);
+        // Prepare repomix configuration with explicit defaults
+        const config: any = {
+          cwd: rootDir,
+          input: {
+            maxFileSize: 10 * 1024 * 1024,
+          },
+          output: {
+            filePath: 'repomix-output.json',
+            style: 'json',
+            parsableStyle: true,
+            fileSummary: !!flags.summary,
+            directoryStructure: true,
+            files: true,
+            removeComments: false,
+            removeEmptyLines: false,
+            showLineNumbers: false,
+            copyToClipboard: false,
+            includeFullDirectoryStructure: true,
+            compress: false,
+            topFilesLength: 100,
+            truncateBase64: true,
+            git: {
+                sortByChanges: false,
+                sortByChangesMaxCommits: 10,
+                includeDiffs: false,
+                includeLogs: false,
+                includeLogsCount: 10
+            },
+            tokenCountTree: false
+          },
+          include: [],
+          ignore: {
+            useGitignore: true,
+            useDotIgnore: true,
+            useDefaultPatterns: true,
+            customPatterns: [],
+          },
+          security: {
+            enableSecurityCheck: true,
+          },
+          tokenCount: {
+            encoding: 'cl100k_base'
+          }
+        };
+
+        if (!options.silent) {
+          console.error(`📦 Packing ${rootDir} using Repomix...`);
+        }
+
+        const originalCwd = process.cwd();
+        process.chdir(rootDir);
+        try {
+          // Use relative path '.' and updated config for the new cwd
+          const localConfig = { ...config, cwd: '.' };
+          result = await pack(['.'], localConfig);
+        } finally {
+          process.chdir(originalCwd);
+        }
       }
-
-      const result = await pack(['.'], config);
       
       if (!options.silent) {
         console.error(`✅ Packed ${result.processedFiles?.length || 0} files.`);
       }
 
       // Handle instruction generation
-      const instruction = flags.instruction || await generateInstruction(rootDir);
+      const instruction = flags.instruction || (isRemote ? 'Analyze this codebase snapshot.' : await generateInstruction(rootDir));
 
       // Convert repomix result to jref snapshot format
       const allFiles: Record<string, string> = {};

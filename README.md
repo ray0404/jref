@@ -101,10 +101,10 @@ The following flags can be used with any command:
 
 ### pack
 
-Create a jref-compliant JSON snapshot from a local directory.
+Create a jref-compliant JSON snapshot from a local directory or remote repository.
 
 ```bash
-jref pack [directory] [options]
+jref pack [directory|url] [options]
 
 Options:
   --instruction <text>  Add custom AI instructions (auto-generated if omitted)
@@ -113,14 +113,17 @@ Options:
 ```
 
 **Features:**
+- **Remote Packing**: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
+- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment for private repositories.
 - **Secret Scanning**: Automatically redacts secrets (API keys, tokens) using `secretlint`.
-- **Auto-Instructions**: Incurs project type (e.g., Node.js, Rust, Go) and drafts system prompts automatically.
+- **Auto-Instructions**: Infers project type (e.g., Node.js, Rust, Go) and drafts system prompts automatically.
 - **Chunking**: Splits large projects into manageable `snapshot.partN.json` files for small context windows.
 
 **Examples:**
 ```bash
 jref pack . > project.json
-jref pack . --max-size 1048576 # 1MB chunks
+jref pack https://github.com/user/repo > remote.json
+jref pack github:user/repo#dev --max-size 1048576 # 1MB chunks
 ```
 
 ### patch
@@ -177,6 +180,10 @@ jref serve [file.json]
 - `inspect`: Get metadata and structure
 - `search`: Regex search across files
 - `query`: Read specific file content
+- `jq_query`: Execute jq filter against snapshot
+- `summarize`: Get token-efficient map of specific files
+- `list_directory`: Localized tree inspection (ls style)
+- `find_references`: Cross-file symbol reference tracing
 
 ### summarize
 

@@ -9,7 +9,7 @@ import { join, resolve } from 'path';
 
 describe('PackCommand', () => {
   let command: PackCommand;
-  const testRootDir = './test-pack-root';
+  const testRootDir = './test-pack-target';
 
   beforeEach(() => {
     command = new PackCommand();

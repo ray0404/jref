@@ -130,3 +130,29 @@ function parseRepomixXML(xml: string): any {
     userProvidedHeader: root.userProvidedHeader || root.header
   };
 }
+
+/**
+ * Lightweight implementation stripping using regex
+ * Handles common JS/TS/Python/Zig patterns
+ */
+export function stripImplementation(content: string): string {
+  const lines = content.split('\n');
+  const summarizedLines = lines.filter(line => {
+    const trimmed = line.trim();
+    return (
+      trimmed.startsWith('import ') ||
+      trimmed.startsWith('export ') ||
+      trimmed.includes('function ') ||
+      trimmed.includes('class ') ||
+      trimmed.includes('interface ') ||
+      trimmed.includes('type ') ||
+      trimmed.includes('fn ') || // For Zig/Rust
+      trimmed.includes('pub ') || // For Rust/Zig
+      trimmed.startsWith('def ') || // For Python
+      trimmed.startsWith('@') || // Decorators
+      trimmed.length === 0
+    );
+  });
+
+  return summarizedLines.join('\n') + '\n/* ... implementation details stripped ... */';
+}
