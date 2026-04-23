@@ -41,7 +41,7 @@ export class RunCommand extends Command {
     ],
     workflows: [
       'Isolated Execution: Files are extracted to a temporary directory and removed after execution.',
-      'Auto-Runner Detection: Automatically detects node, python3, or bash based on file extension.',
+      'Auto-Runner Detection: Automatically detects node, python3, or bash based on file extension or shebang (#!) if extension is missing.',
       'TypeScript Support: Uses node with --experimental-strip-types for .ts files (Node 22+).',
       'Argument Passing: Use -- to separate jref args from script args.'
     ]
@@ -166,20 +166,43 @@ export class RunCommand extends Command {
   }
 
   private async spawnProcess(scriptPath: string, args: string[]): Promise<number> {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       // Determine runner
       let command = 'node';
       let spawnArgs = [scriptPath, ...args];
 
+      // Default extension-based inference
       if (scriptPath.endsWith('.py')) {
         command = 'python3';
       } else if (scriptPath.endsWith('.sh')) {
         command = 'bash';
       } else if (scriptPath.endsWith('.ts')) {
         command = 'node';
-        // Use ts-node if available, or just node if it can handle it (node 22+ with flags)
-        // For simplicity, we assume node can handle it or the user has a loader
         spawnArgs = ['--experimental-strip-types', scriptPath, ...args];
+      } else {
+        // No recognizable extension, try shebang detection
+        try {
+          const { readFileSync } = await import('fs');
+          const content = readFileSync(scriptPath, 'utf8');
+          const firstLine = content.split('\n')[0];
+          
+          if (firstLine.startsWith('#!')) {
+            const shebang = firstLine.slice(2).trim();
+            const shebangParts = shebang.split(/\s+/);
+            const interpreter = shebangParts[0];
+            
+            // If it's /usr/bin/env, the real interpreter is the next part
+            if (interpreter.endsWith('/env') && shebangParts.length > 1) {
+              command = shebangParts[1];
+              spawnArgs = [...shebangParts.slice(2), scriptPath, ...args];
+            } else {
+              command = interpreter;
+              spawnArgs = [...shebangParts.slice(1), scriptPath, ...args];
+            }
+          }
+        } catch (err) {
+          // Fallback to node if reading fails
+        }
       }
 
       const child = spawn(command, spawnArgs, {

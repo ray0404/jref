@@ -278,10 +278,11 @@ jref extract --output ./lib project.json "src/lib/*"
 
 ### run
 
-Execute a script directly from the JSON snapshot without permanent extraction.
+Execute a script directly from the JSON snapshot without permanent extraction. Automatically detects the appropriate runner based on file extension or shebang (`#!`).
 
 ```bash
 jref run --path <script-path> [file] [script-args...]
+```
 
 Options:
   --path, -p <path>   Path to the script within the snapshot

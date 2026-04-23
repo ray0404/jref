@@ -531,7 +531,7 @@ jref query --path "src/main.ts" --json snapshot.json
 
 ### run
 
-Execute a script directly from the JSON snapshot without permanent extraction.
+Execute a script directly from the JSON snapshot without permanent extraction. Automatically detects the appropriate runner based on file extension or shebang (`#!`).
 
 ```
 jref run --path <script-path> [file] [script-args...]

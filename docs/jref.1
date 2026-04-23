@@ -311,6 +311,8 @@ jref extract --dry-run snapshot.json
 .
 .SS RUN
 Execute a script directly from the JSON snapshot without permanent extraction.
+Automatically detects the appropriate runner based on file extension or shebang
+.RB ( #! ).
 .PP
 .B "jref run \fB\-\-path\fR \fIpath\fR [\fIfile\fR] [\fIscript-args...\fR]"
 .PP
