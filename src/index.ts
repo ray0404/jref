@@ -23,8 +23,7 @@ function parseGlobalOptions(args: string[]): {
   const options: CLIOptions = {};
   const remainingArgs: string[] = [];
 
-  let i = 0;
-  while (i < args.length) {
+  for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--json' || arg === '-j') {
       options.json = true;
@@ -36,13 +35,15 @@ function parseGlobalOptions(args: string[]): {
       options.help = true;
     } else if (arg === '--version' || arg === '-v') {
       options.version = true;
+    } else if (arg === '--jq' || arg === '-q') {
+      if (i + 1 < args.length) {
+        options.jq = args[++i];
+      }
     } else {
-      break;
+      remainingArgs.push(arg);
     }
-    i++;
   }
 
-  remainingArgs.push(...args.slice(i));
   return { remainingArgs, options };
 }
 
@@ -77,6 +78,7 @@ function printGlobalHelp(options: CLIOptions = {}): void {
   console.log('  --json, -j      Output in JSON format (for AI agents)');
   console.log('  --silent, -s    Suppress all progress and decorative output');
   console.log('  --raw, -r       Raw output mode (no formatting, for AI agents)');
+  console.log('  --jq, -q <f>    Apply a jq filter to reshape the snapshot before execution');
   console.log('  --help, -h      Show this help message');
   console.log('  --version       Show version information');
   console.log();
@@ -187,6 +189,9 @@ async function main(): Promise<void> {
   // Execute command
   try {
     const result = await command.execute(commandArgs, options, context);
+    if (result.output) {
+      process.stdout.write(result.output + '\n');
+    }
     exit(result.exitCode);
   } catch (err) {
     printError(`Fatal error: ${(err as Error).message}`, options);

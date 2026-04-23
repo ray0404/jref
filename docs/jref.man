@@ -10,6 +10,7 @@ jref \- JSON Reference CLI tool for condensed JSON project snapshots
 [\fB\-\-json\fR|\fB\-j\fR]
 [\fB\-\-silent\fR|\fB\-s\fR]
 [\fB\-\-raw\fR|\fB\-r\fR]
+[\fB\-\-jq\fR|\fB\-q\fR \fIfilter\fR]
 [\fB\-\-help\fR|\fB\-h\fR]
 [\fB\-\-version\fR|\fB\-v\fR]
 .IR command
@@ -61,6 +62,12 @@ Raw output mode.
 For the
 .B query
 command this emits pure file content without headers or labels.
+.TP
+.B \-\-jq\fR, \fB\-q \fIfilter
+Apply a
+.B jq
+filter to reshape or filter the snapshot state in memory before any core command receives it.
+Uses \fBjq-wasm\fR for portability across ARM and x86 devices.
 .TP
 .B \-\-help\fR, \fB\-h
 Show global help listing all commands.

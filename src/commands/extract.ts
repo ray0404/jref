@@ -75,29 +75,51 @@ export class ExtractCommand extends Command {
       const patterns = flags.patterns || [];
       const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
 
-      // Use streaming processor to avoid OOM
-      await processSnapshot(
-        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-        {
-          onFile: async (path, content) => {
-            // Check if path matches patterns (wildcard or directory prefix)
-            const isMatch = patterns.length === 0 || 
-                            micromatch.isMatch(path, patterns) ||
-                            patterns.some(p => path.startsWith(p.endsWith('/') ? p : p + '/'));
-            
-            if (!isMatch) return;
+      if (options.jq) {
+        // Use full loading when JQ is active
+        const snapshot = await this.getSnapshot(context, options, filePath);
+        for (const [path, content] of Object.entries(snapshot.files)) {
+          // Check if path matches patterns (wildcard or directory prefix)
+          const isMatch = patterns.length === 0 || 
+                          micromatch.isMatch(path, patterns) ||
+                          patterns.some(p => path.startsWith(p.endsWith('/') ? p : p + '/'));
+          
+          if (!isMatch) continue;
 
-            if (flags.dryRun) {
-              results.push({ path, size: Buffer.byteLength(content, 'utf8'), success: true });
-              return;
-            }
-
-            // Perform extraction
-            const res = await this.extractFile(path, content, outputDir, flags.overwrite as boolean, flags.flat as boolean);
-            results.push(res);
+          if (flags.dryRun) {
+            results.push({ path, size: Buffer.byteLength(content, 'utf8'), success: true });
+            continue;
           }
+
+          // Perform extraction
+          const res = await this.extractFile(path, content, outputDir, flags.overwrite as boolean, flags.flat as boolean);
+          results.push(res);
         }
-      );
+      } else {
+        // Use streaming processor to avoid OOM
+        await processSnapshot(
+          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          {
+            onFile: async (path, content) => {
+              // Check if path matches patterns (wildcard or directory prefix)
+              const isMatch = patterns.length === 0 || 
+                              micromatch.isMatch(path, patterns) ||
+                              patterns.some(p => path.startsWith(p.endsWith('/') ? p : p + '/'));
+              
+              if (!isMatch) return;
+
+              if (flags.dryRun) {
+                results.push({ path, size: Buffer.byteLength(content, 'utf8'), success: true });
+                return;
+              }
+
+              // Perform extraction
+              const res = await this.extractFile(path, content, outputDir, flags.overwrite as boolean, flags.flat as boolean);
+              results.push(res);
+            }
+          }
+        );
+      }
 
       if (results.length === 0) {
         return this.error('No files matched the patterns or snapshot is empty', options);

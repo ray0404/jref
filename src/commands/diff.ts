@@ -46,10 +46,10 @@ export class DiffCommand extends Command {
         snapshot = context.snapshot;
       } else if (snapshotFile) {
         const { loadSnapshotFromFile } = await import('../utils/streaming-json.js');
-        snapshot = await loadSnapshotFromFile(snapshotFile);
+        snapshot = await loadSnapshotFromFile(snapshotFile, options);
       } else {
         const { loadSnapshot } = await import('../utils/streaming-json.js');
-        snapshot = await loadSnapshot(context.stdin);
+        snapshot = await loadSnapshot(context.stdin, options);
       }
 
       const modifiedFiles: string[] = [];

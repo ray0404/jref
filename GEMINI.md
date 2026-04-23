@@ -5,7 +5,7 @@
 ## Core Technology Stack
 - **Language:** TypeScript (Node.js)
 - **UI Framework:** Ink (React for CLI)
-- **Data Handling:** `stream-json` (for large snapshot processing), `fast-xml-parser`, `yaml`, `toml`, `json5`
+- **Data Handling:** `stream-json` (for large snapshot processing), `fast-xml-parser`, `yaml`, `toml`, `json5`, `jq-wasm` (for in-memory filtering)
 - **Validation:** `zod`
 - **Testing:** `vitest`
 - **MCP:** `@modelcontextprotocol/sdk` (Model Context Protocol support)
@@ -44,6 +44,7 @@ npm link
 When interacting with `jref` in this workspace, prefer the following patterns:
 
 - **Analysis:** Use `jref inspect <file>` for a quick overview or `jref summarize <file>` to generate a token-efficient map.
+- **Data Transformation:** Use the global `--jq <filter>` or `-q <filter>` flag to reshape or filter snapshots before command execution.
 - **Context Injection:** If you need to read specific files from a snapshot without extracting them, use `jref query --path <path> <file>`.
 - **Modification:** Use `jref patch <path> <content> <file>` to surgically update a snapshot.
 - **Testing Changes:** Use `jref diff <file>` to verify if local files match a snapshot's expected state.

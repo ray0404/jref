@@ -65,7 +65,8 @@ export class ReconstructCommand extends Command {
 
       // Load snapshot
       const snapshot = await loadSnapshot(
-        filePath ? await this.readFile(filePath) : context.stdin
+        filePath ? await this.readFile(filePath) : context.stdin,
+        options
       );
 
       // Determine directory to check

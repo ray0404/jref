@@ -45,11 +45,11 @@ export class PatchCommand extends Command {
       if (context.snapshot) {
         snapshot = context.snapshot;
       } else if (snapshotFile) {
-        snapshot = await loadSnapshotFromFile(snapshotFile);
+        snapshot = await loadSnapshotFromFile(snapshotFile, options);
       } else if (context.stdinIsPipe && !content && !filePath) {
           // If no file path/content provided as args, the entire stdin might be the snapshot
           const { loadSnapshot } = await import('../utils/streaming-json.js');
-          snapshot = await loadSnapshot(context.stdin);
+          snapshot = await loadSnapshot(context.stdin, options);
       } else {
         return this.error('No snapshot source provided', options);
       }

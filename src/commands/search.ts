@@ -76,25 +76,41 @@ export class SearchCommand extends Command {
       const regex = this.createRegex(pattern, flags);
       const maxResults = flags.maxResults || 1000;
 
-      // Use streaming processor to avoid OOM
-      await processSnapshot(
-        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-        {
-          onFile: (path, content) => {
-            if (results.length >= maxResults) return;
-
-            const matches = this.searchContent(content, regex, flags.context || 0);
-
-            if (matches.length > 0) {
-              results.push({
-                filePath: path,
-                matches,
-                score: matches.length
-              });
-            }
+      if (options.jq) {
+        // Use full loading when JQ is active
+        const snapshot = await this.getSnapshot(context, options, filePath);
+        for (const [path, content] of Object.entries(snapshot.files)) {
+          if (results.length >= maxResults) break;
+          const matches = this.searchContent(content, regex, flags.context || 0);
+          if (matches.length > 0) {
+            results.push({
+              filePath: path,
+              matches,
+              score: matches.length
+            });
           }
         }
-      );
+      } else {
+        // Use streaming processor to avoid OOM
+        await processSnapshot(
+          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          {
+            onFile: (path, content) => {
+              if (results.length >= maxResults) return;
+
+              const matches = this.searchContent(content, regex, flags.context || 0);
+
+              if (matches.length > 0) {
+                results.push({
+                  filePath: path,
+                  matches,
+                  score: matches.length
+                });
+              }
+            }
+          }
+        );
+      }
 
       // Sort by score (most matches first)
       results.sort((a, b) => b.score - a.score);

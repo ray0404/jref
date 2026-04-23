@@ -64,6 +64,7 @@ A snapshot captures:
 | `--json` | `-j` | Output structured JSON (for AI consumption) |
 | `--silent` | `-s` | Suppress all decorative/progress output |
 | `--raw` | `-r` | Raw output — no formatting, pure content |
+| `--jq` | `-q` | Apply a `jq` filter to reshape the snapshot |
 | `--help` | `-h` | Show global help or command-specific help |
 | `--version` | `-v` | Print version string |
 
@@ -350,6 +351,7 @@ jref [--json|-j] [--silent|-s] [--raw|-r] [--help|-h] [--version|-v] <command> [
 | `--json`, `-j` | Emit JSON instead of human-readable text. Every command supports this. |
 | `--silent`, `-s` | Suppress all ASCII art, progress indicators, and decorative output. |
 | `--raw`, `-r` | Emit raw output with no formatting. For `--query`, this means pure file content without headers. For AI agents consuming file content. |
+| `--jq`, `-q <f>` | Apply a `jq` filter to reshape or filter the snapshot state in memory before any core command receives it. Uses `jq-wasm` for portability. |
 | `--help`, `-h` | Show global help (all commands). Append to any command for command-specific help: `jref pack --help` |
 | `--version`, `-v` | Print `jref v1.2.0` (or `--json` for `{"version": "1.2.0"}`). |
 

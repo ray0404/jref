@@ -79,7 +79,7 @@ export class UICommand extends Command {
 
       // Load snapshot from file or stdin
       const input: string | undefined = filePath ? await this.readFile(filePath) : context.stdin;
-      const snapshot = await loadSnapshot(input);
+      const snapshot = await loadSnapshot(input, options);
 
       // Parse directory structure into tree
       const tree = parseDirectoryStructure(snapshot.directoryStructure || '');

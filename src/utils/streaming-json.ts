@@ -7,9 +7,10 @@
 import { readFileSync } from 'fs';
 import { Readable } from 'stream';
 import { readFromInput } from './input.js';
-import { ProjectSnapshotSchema, type ProjectSnapshot, type SnapshotMetadata } from '../types/index.js';
+import { ProjectSnapshotSchema, type ProjectSnapshot, type SnapshotMetadata, type CLIOptions } from '../types/index.js';
 import parser from 'stream-json/parser.js';
 import { sniffFormat, translateSnapshot } from './format.js';
+import jq from 'jq-wasm';
 
 const MAX_BUFFER_SIZE = 8 * 1024 * 1024; // 8MB max buffer before streaming parse
 
@@ -18,13 +19,14 @@ const MAX_BUFFER_SIZE = 8 * 1024 * 1024; // 8MB max buffer before streaming pars
  * Uses native JSON.parse for smaller files, streaming for larger ones
  * Implements schema validation and coercion
  */
-export async function parseJSON(input: string, filePath?: string): Promise<ProjectSnapshot> {
+export async function parseJSON(input: string, filePath?: string, options?: CLIOptions): Promise<ProjectSnapshot> {
   const format = sniffFormat(input, filePath);
 
   if (format !== 'json' && format !== 'json5') {
     // For non-JSON formats, we currently use the translation utility
     // which may not be fully streaming-optimized for 1GB+ but handles reasonable sizes
-    return translateSnapshot(input, format);
+    const snap = await translateSnapshot(input, format);
+    return await applyJQ(snap, options);
   }
 
   const size = Buffer.byteLength(input, 'utf8');
@@ -35,7 +37,8 @@ export async function parseJSON(input: string, filePath?: string): Promise<Proje
       snapshot = JSON.parse(input) as ProjectSnapshot;
     } catch {
       // Try JSON5 as fallback
-      return translateSnapshot(input, 'json5');
+      const snap = await translateSnapshot(input, 'json5');
+      return await applyJQ(snap, options);
     }
   } else {
     // Use streaming parser for large JSON files
@@ -51,22 +54,46 @@ export async function parseJSON(input: string, filePath?: string): Promise<Proje
     snapshot = temp as ProjectSnapshot;
   }
 
-  // Validate schema
-  const result = ProjectSnapshotSchema.safeParse(snapshot);
-  if (!result.success) {
-    throw new Error(`Invalid snapshot schema: ${result.error.message}`);
+  return await applyJQ(snapshot, options);
+}
+
+/**
+ * Apply jq filter to snapshot if options.jq is present
+ * Handles schema drift by printing raw JSON and exiting if validation fails
+ */
+async function applyJQ(snapshot: any, options?: CLIOptions): Promise<ProjectSnapshot> {
+  if (options?.jq) {
+    try {
+      snapshot = await jq.json(snapshot, options.jq);
+    } catch (err) {
+      throw new Error(`JQ Execution Failed: ${(err as Error).message}`);
+    }
+
+    // Validate schema after jq transformation
+    const result = ProjectSnapshotSchema.safeParse(snapshot);
+    if (!result.success) {
+      // If it fails schema check with JQ active, assume user wants raw data extraction
+      console.log(JSON.stringify(snapshot, null, 2));
+      process.exit(0);
+    }
+    snapshot = result.data;
+  } else {
+    // Standard validation
+    const result = ProjectSnapshotSchema.safeParse(snapshot);
+    if (!result.success) {
+      throw new Error(`Invalid snapshot schema: ${result.error.message}`);
+    }
+    snapshot = result.data;
   }
 
-  snapshot = result.data as ProjectSnapshot;
-
   // Coercion logic: if directoryStructure is missing but files exists, generate it
-  if (!snapshot.directoryStructure && Object.keys(snapshot.files).length > 0) {
+  if (!snapshot.directoryStructure && snapshot.files && Object.keys(snapshot.files).length > 0) {
     snapshot.directoryStructure = generateDirectoryStructure(Object.keys(snapshot.files));
   } else if (!snapshot.directoryStructure) {
       snapshot.directoryStructure = '';
   }
 
-  return snapshot;
+  return snapshot as ProjectSnapshot;
 }
 
 /**
@@ -232,15 +259,15 @@ export function generateDirectoryStructure(paths: string[]): string {
 /**
  * Load snapshot from file path
  */
-export async function loadSnapshotFromFile(filePath: string): Promise<ProjectSnapshot> {
+export async function loadSnapshotFromFile(filePath: string, options?: CLIOptions): Promise<ProjectSnapshot> {
   const content = readFileSync(filePath, 'utf8');
-  return parseJSON(content, filePath);
+  return parseJSON(content, filePath, options);
 }
 
 /**
  * Load snapshot from stdin or string input
  */
-export async function loadSnapshot(input: string | undefined = undefined): Promise<ProjectSnapshot> {
+export async function loadSnapshot(input: string | undefined = undefined, options?: CLIOptions): Promise<ProjectSnapshot> {
   let data: string;
 
   if (input) {
@@ -253,7 +280,7 @@ export async function loadSnapshot(input: string | undefined = undefined): Promi
     throw new Error('No input provided');
   }
 
-  return parseJSON(data);
+  return parseJSON(data, undefined, options);
 }
 
 /**

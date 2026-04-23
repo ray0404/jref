@@ -39,7 +39,7 @@ export class ServeCommand extends Command {
       if (context.snapshot) {
         snapshot = context.snapshot;
       } else if (snapshotFile) {
-        snapshot = await loadSnapshotFromFile(snapshotFile);
+        snapshot = await loadSnapshotFromFile(snapshotFile, options);
       } else {
         return this.error('No snapshot file provided', options);
       }

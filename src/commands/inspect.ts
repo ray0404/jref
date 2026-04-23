@@ -56,26 +56,38 @@ export class InspectCommand extends Command {
     try {
       const { flags, filePath } = this.parseArgs(args);
 
-      const snapshot: any = { files: {} };
-      const fileSizes: Record<string, number> = {};
+      let snapshot: any = { files: {} };
+      let fileSizes: Record<string, number> = {};
       let totalSize = 0;
       let fileCount = 0;
 
-      // Use streaming processor to avoid OOM
-      await processSnapshot(
-        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-        {
-          onMetadata: (key, value) => {
-            snapshot[key] = value;
-          },
-          onFile: (path, content) => {
-            const size = Buffer.byteLength(content, 'utf8');
-            fileSizes[path] = size;
-            totalSize += size;
-            fileCount++;
-          }
+      if (options.jq) {
+        // Use full loading when JQ is active
+        const fullSnapshot = await this.getSnapshot(context, options, filePath);
+        snapshot = fullSnapshot;
+        for (const [path, content] of Object.entries(fullSnapshot.files)) {
+          const size = Buffer.byteLength(content, 'utf8');
+          fileSizes[path] = size;
+          totalSize += size;
+          fileCount++;
         }
-      );
+      } else {
+        // Use streaming processor to avoid OOM
+        await processSnapshot(
+          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          {
+            onMetadata: (key, value) => {
+              snapshot[key] = value;
+            },
+            onFile: (path, content) => {
+              const size = Buffer.byteLength(content, 'utf8');
+              fileSizes[path] = size;
+              totalSize += size;
+              fileCount++;
+            }
+          }
+        );
+      }
 
       const metadata: SnapshotMetadata = {
         fileCount,

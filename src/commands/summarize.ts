@@ -33,9 +33,9 @@ export class SummarizeCommand extends Command {
         snapshot = context.snapshot;
       } else if (snapshotFile) {
         const { loadSnapshotFromFile } = await import('../utils/streaming-json.js');
-        snapshot = await loadSnapshotFromFile(snapshotFile);
+        snapshot = await loadSnapshotFromFile(snapshotFile, options);
       } else {
-        snapshot = await this.getSnapshot(context);
+        snapshot = await this.getSnapshot(context, options, snapshotFile);
       }
       
       const summarizedFiles: Record<string, string> = {};

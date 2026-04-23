@@ -86,6 +86,17 @@ jref works with JSON snapshots following this schema:
 }
 ```
 
+## Global Options
+
+The following flags can be used with any command:
+
+- `--json, -j`: Output in JSON format (for AI agents)
+- `--silent, -s`: Suppress all progress and decorative output
+- `--raw, -r`: Raw output mode (no formatting)
+- `--jq, -q <filter>`: Apply a `jq` filter to reshape the snapshot before command execution
+- `--help, -h`: Show help message
+- `--version, -v`: Show version information
+
 ## Commands
 
 ### pack

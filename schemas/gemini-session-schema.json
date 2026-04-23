@@ -1,75 +1,867 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "type": "array",
-    "items": {
-        "$ref": "#/definitions/GeminiSessionSchemaElement"
-    },
     "definitions": {
-        "GeminiSessionSchemaElement": {
+        "Session2026-02-09T2134-28Fbe4Bf": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "role": {
-                    "$ref": "#/definitions/Role"
+                "sessionId": {
+                    "type": "string"
                 },
-                "parts": {
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/Part"
+                        "$ref": "#/definitions/Session2025-10-11T0417-98E7E960Message"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2134-28Fbe4Bf"
+        },
+        "Session2025-10-11T0417-98E7E960Message": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "https"
+                    ],
+                    "qt-uri-extensions": [
+                        ".git"
+                    ]
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PurpleToolCall"
                     }
                 }
             },
-            "required": [
-                "parts",
-                "role"
-            ],
-            "title": "GeminiSessionSchemaElement"
+            "required": [],
+            "title": "Session2025-10-11T0417-98E7E960Message"
         },
-        "Part": {
+        "Thought": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "subject": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Thought"
+        },
+        "Tokens": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "input": {
+                    "type": "integer"
+                },
+                "output": {
+                    "type": "integer"
+                },
+                "cached": {
+                    "type": "integer"
+                },
+                "thoughts": {
+                    "type": "integer"
+                },
+                "tool": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            },
+            "required": [],
+            "title": "Tokens"
+        },
+        "PurpleToolCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "args": {
+                    "$ref": "#/definitions/PurpleArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PurpleResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "$ref": "#/definitions/TentacledResultDisplay"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "PurpleToolCall"
+        },
+        "PurpleArgs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "absolute_path": {
+                    "type": "string"
+                },
+                "paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "new_string": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "http"
+                    ],
+                    "qt-uri-extensions": [
+                        ".3-utility-layer-(contexter_utils)"
+                    ]
+                },
+                "instruction": {
+                    "type": "string"
+                },
+                "old_string": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "http"
+                    ],
+                    "qt-uri-extensions": [
+                        ".3-utility-layer-(contexter_utils"
+                    ]
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "fact": {
+                    "type": "string"
+                },
+                "directory": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "include": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "style": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "complexity": {
+                    "type": "string"
+                },
+                "layout": {
+                    "type": "string"
+                },
+                "annotations": {
+                    "type": "string"
+                },
+                "colors": {
+                    "type": "string"
+                },
+                "outputCount": {
+                    "type": "integer"
+                },
+                "styles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "libraryName": {
+                    "type": "string"
+                },
+                "context7CompatibleLibraryID": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "file_filtering_options": {
+                    "$ref": "#/definitions/FileFilteringOptions"
+                },
+                "todos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Todo"
+                    }
+                },
+                "project_dir": {
+                    "type": "string"
+                },
+                "expected_replacements": {
+                    "type": "integer"
+                },
+                "pattern_2": {
+                    "type": "string"
+                },
+                "objective": {
+                    "type": "string"
+                },
+                "append": {
+                    "type": "boolean"
+                },
+                "mode": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "http",
+                        "https"
+                    ],
+                    "qt-uri-extensions": [
+                        ".1-installation"
+                    ]
+                },
+                "user_task_description": {
+                    "type": "string"
+                },
+                "repo_name": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "snippet": {
+                    "type": "string"
+                },
+                "formats": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "page_size": {
+                    "type": "integer"
+                },
+                "features": {
+                    "$ref": "#/definitions/Features"
+                },
+                "active_project": {
+                    "type": "string"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "sizes": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "format": {
+                    "type": "string"
+                },
+                "background": {
+                    "type": "string"
+                },
+                "replacements": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Replacement"
+                    }
+                },
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "function": {
+                    "type": "string"
+                },
+                "preview": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "lines": {
+                    "type": "integer"
+                },
+                "remote": {
+                    "type": "string"
+                },
+                "compress": {
+                    "type": "boolean"
+                },
+                "contextLines": {
+                    "type": "integer"
+                },
+                "outputId": {
+                    "type": "string"
+                },
+                "endLine": {
+                    "type": "integer"
+                },
+                "startLine": {
+                    "type": "integer"
+                },
+                "end_line": {
+                    "type": "integer"
+                },
+                "start_line": {
+                    "type": "integer"
+                },
+                "density": {
+                    "type": "string"
+                },
+                "text": {
+                    "type": "string"
+                },
+                "skillName": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "PurpleArgs"
+        },
+        "Features": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "hosting": {
+                    "$ref": "#/definitions/Hosting"
+                }
+            },
+            "required": [],
+            "title": "Features"
+        },
+        "Hosting": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "single_page_app": {
+                    "type": "boolean"
+                },
+                "public_directory": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Hosting"
+        },
+        "FileFilteringOptions": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "respect_git_ignore": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "FileFilteringOptions"
+        },
+        "Replacement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "insert_before": {
+                    "type": "string"
+                },
+                "new_content": {
+                    "type": "string"
+                },
+                "insert_after": {
+                    "type": "string"
+                },
+                "old_content": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Replacement"
+        },
+        "Todo": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Todo"
+        },
+        "PurpleResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "functionResponse": {
+                    "$ref": "#/definitions/PurpleFunctionResponse"
+                },
+                "text": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "PurpleResult"
+        },
+        "PurpleFunctionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "response": {
+                    "$ref": "#/definitions/PurpleResponse"
+                }
+            },
+            "required": [],
+            "title": "PurpleFunctionResponse"
+        },
+        "PurpleResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "error": {
+                    "type": "string"
+                },
+                "output": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "http",
+                        "https"
+                    ],
+                    "qt-uri-extensions": [
+                        ".4-binary-file-handling",
+                        ".md"
+                    ]
+                }
+            },
+            "required": [],
+            "title": "PurpleResponse"
+        },
+        "PurpleResultDisplay": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "fileDiff": {
+                    "type": "string"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "originalContent": {
+                    "type": "string"
+                },
+                "newContent": {
+                    "type": "string"
+                },
+                "diffStat": {
+                    "$ref": "#/definitions/DiffStat"
+                },
+                "isNewFile": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "PurpleResultDisplay"
+        },
+        "DiffStat": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "model_added_lines": {
+                    "type": "integer"
+                },
+                "model_removed_lines": {
+                    "type": "integer"
+                },
+                "model_added_chars": {
+                    "type": "integer"
+                },
+                "model_removed_chars": {
+                    "type": "integer"
+                },
+                "user_added_lines": {
+                    "type": "integer"
+                },
+                "user_removed_lines": {
+                    "type": "integer"
+                },
+                "user_added_chars": {
+                    "type": "integer"
+                },
+                "user_removed_chars": {
+                    "type": "integer"
+                }
+            },
+            "required": [],
+            "title": "DiffStat"
+        },
+        "Session2026-04-22T1328-4E33F00B": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2025-10-11T0554-11E1E737Message"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-22T1328-4E33F00B"
+        },
+        "Session2025-10-11T0554-11E1E737Message": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2025-10-11T0554-11E1E737Message"
+        },
+        "Session2026-02-09T2340-3E2F96B8": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2025-10-11T0417-98E7E960Message"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2340-3E2F96B8"
+        },
+        "Session2026-03-01T0303-E05Fde62": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2233-Ccae760CMessage"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-03-01T0303-E05Fde62"
+        },
+        "Session2026-02-09T2233-Ccae760CMessage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/FluffyContent"
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContent"
+                    }
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FluffyToolCall"
+                    }
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2233-Ccae760CMessage"
+        },
+        "DisplayContentElement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "text": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "DisplayContentElement"
+        },
+        "DisplayContent": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "text": {
                     "type": "string"
                 },
-                "thoughtSignature": {
-                    "type": "string"
-                },
-                "functionCall": {
-                    "$ref": "#/definitions/FunctionCall"
-                },
                 "functionResponse": {
-                    "$ref": "#/definitions/FunctionResponse"
+                    "$ref": "#/definitions/DisplayContentFunctionResponse"
                 }
             },
             "required": [],
-            "title": "Part"
+            "title": "DisplayContent"
         },
-        "FunctionCall": {
+        "DisplayContentFunctionResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "response": {
+                    "$ref": "#/definitions/FluffyResponse"
+                }
+            },
+            "required": [],
+            "title": "DisplayContentFunctionResponse"
+        },
+        "FluffyResponse": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "output": {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "https"
+                    ],
+                    "qt-uri-extensions": [
+                        ".md"
+                    ]
+                }
+            },
+            "required": [],
+            "title": "FluffyResponse"
+        },
+        "FluffyToolCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "args": {
+                    "$ref": "#/definitions/FluffyArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FluffyResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "$ref": "#/definitions/StickyResultDisplay"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "FluffyToolCall"
+        },
+        "FluffyArgs": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
                 "name": {
-                    "$ref": "#/definitions/Name"
-                },
-                "args": {
-                    "$ref": "#/definitions/Args"
-                }
-            },
-            "required": [
-                "args",
-                "name"
-            ],
-            "title": "FunctionCall"
-        },
-        "Args": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "dir_path": {
                     "type": "string"
                 },
                 "file_path": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "query": {
                     "type": "string"
                 },
                 "new_string": {
@@ -81,10 +873,402 @@
                 "old_string": {
                     "type": "string"
                 },
-                "command": {
+                "expected_replacements": {
+                    "type": "integer"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "question": {
+                    "type": "string"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "objective": {
+                    "type": "string"
+                },
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "path": {
+                    "type": "string"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "include": {
+                    "type": "string"
+                },
+                "questions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Question"
+                    }
+                },
+                "fact": {
+                    "type": "string"
+                },
+                "allow_multiple": {
+                    "type": "boolean"
+                },
+                "context": {
+                    "type": "integer"
+                },
+                "end_line": {
+                    "type": "integer"
+                },
+                "start_line": {
+                    "type": "integer"
+                },
+                "is_background": {
+                    "type": "boolean"
+                },
+                "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "qt-uri-protocols": [
+                        "http"
+                    ]
+                },
+                "exclude_pattern": {
+                    "type": "string"
+                },
+                "include_pattern": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "FluffyArgs"
+        },
+        "Question": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "question": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "header": {
+                    "type": "string"
+                },
+                "options": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Option"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Question"
+        },
+        "Option": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Option"
+        },
+        "FluffyResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "functionResponse": {
+                    "$ref": "#/definitions/PurpleFunctionResponse"
+                }
+            },
+            "required": [],
+            "title": "FluffyResult"
+        },
+        "FluffyResultDisplay": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "fileDiff": {
+                    "type": "string"
+                },
+                "fileName": {
+                    "type": "string"
+                },
+                "filePath": {
+                    "type": "string"
+                },
+                "originalContent": {
+                    "type": "string"
+                },
+                "newContent": {
+                    "type": "string"
+                },
+                "diffStat": {
+                    "$ref": "#/definitions/DiffStat"
+                },
+                "isNewFile": {
+                    "type": "boolean"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "matches": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Match"
+                    }
+                }
+            },
+            "required": [],
+            "title": "FluffyResultDisplay"
+        },
+        "Match": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "filePath": {
+                    "type": "string"
+                },
+                "absolutePath": {
+                    "type": "string"
+                },
+                "lineNumber": {
+                    "type": "integer"
+                },
+                "line": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Match"
+        },
+        "Session2026-03-09T2340-08288B41": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2234-Ccae760CMessage"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-03-09T2340-08288B41"
+        },
+        "Session2026-02-09T2234-Ccae760CMessage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
                     "type": "string"
                 },
                 "content": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2234-Ccae760CMessage"
+        },
+        "Session2026-02-09T2239-3C0989C9": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2239-3C0989C9Message"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2239-3C0989C9"
+        },
+        "Session2026-02-09T2239-3C0989C9Message": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/FluffyContent"
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TentacledToolCall"
+                    }
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2239-3C0989C9Message"
+        },
+        "TentacledToolCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "args": {
+                    "$ref": "#/definitions/TentacledArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FluffyResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "$ref": "#/definitions/StickyResultDisplay"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "TentacledToolCall"
+        },
+        "TentacledArgs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "old_string": {
+                    "type": "string"
+                },
+                "instruction": {
+                    "type": "string"
+                },
+                "new_string": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "description": {
                     "type": "string"
                 },
                 "start_line": {
@@ -93,14 +1277,286 @@
                 "end_line": {
                     "type": "integer"
                 },
-                "pattern": {
+                "allow_multiple": {
+                    "type": "boolean"
+                },
+                "is_background": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "TentacledArgs"
+        },
+        "Session2026-04-16T1343-3Cb6F71D": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2311-382Fc58CMessage"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "kind": {
                     "type": "string"
                 }
             },
             "required": [],
-            "title": "Args"
+            "title": "Session2026-04-16T1343-3Cb6F71D"
         },
-        "FunctionResponse": {
+        "Session2026-02-09T2311-382Fc58CMessage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/FluffyContent"
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                },
+                "model": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2311-382Fc58CMessage"
+        },
+        "Session2026-04-13T0245-E8355B65": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2337-7441D1BaMessage"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-13T0245-E8355B65"
+        },
+        "Session2026-02-09T2337-7441D1BaMessage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/FluffyContent"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-09T2337-7441D1BaMessage"
+        },
+        "Session2026-03-03T1504-Dca93Fdb": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2233-Ccae760CMessage"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-03-03T1504-Dca93Fdb"
+        },
+        "Session2026-02-13T1728-C5D2Bbe4": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2234-Ccae760CMessage"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-13T1728-C5D2Bbe4"
+        },
+        "Session2026-02-14T0300-1Ea5F6A3": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-14T0300-1Ea5F6A3Message"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-14T0300-1Ea5F6A3"
+        },
+        "Session2026-02-14T0300-1Ea5F6A3Message": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/TentacledContent"
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/StickyToolCall"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-14T0300-1Ea5F6A3Message"
+        },
+        "PurpleContent": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "text": {
+                    "type": "string"
+                },
+                "inlineData": {
+                    "$ref": "#/definitions/InlineData"
+                }
+            },
+            "required": [],
+            "title": "PurpleContent"
+        },
+        "InlineData": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "data": {
+                    "type": "string"
+                },
+                "mimeType": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "InlineData"
+        },
+        "StickyToolCall": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
@@ -108,52 +1564,597 @@
                     "type": "string"
                 },
                 "name": {
-                    "$ref": "#/definitions/Name"
+                    "type": "string"
                 },
-                "response": {
-                    "$ref": "#/definitions/Response"
+                "args": {
+                    "$ref": "#/definitions/StickyArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TentacledResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
                 }
             },
-            "required": [
-                "id",
-                "name",
-                "response"
-            ],
-            "title": "FunctionResponse"
+            "required": [],
+            "title": "StickyToolCall"
         },
-        "Response": {
+        "StickyArgs": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-                "output": {
+                "path": {
                     "type": "string"
                 },
-                "error": {
+                "command": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "include": {
+                    "type": "string"
+                },
+                "exclude_pattern": {
                     "type": "string"
                 }
             },
             "required": [],
-            "title": "Response"
+            "title": "StickyArgs"
         },
-        "Name": {
-            "type": "string",
-            "enum": [
-                "list_directory",
-                "read_file",
-                "replace",
-                "run_shell_command",
-                "write_file",
-                "grep_search"
-            ],
-            "title": "Name"
+        "TentacledResult": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "functionResponse": {
+                    "$ref": "#/definitions/DisplayContentFunctionResponse"
+                }
+            },
+            "required": [],
+            "title": "TentacledResult"
         },
-        "Role": {
-            "type": "string",
-            "enum": [
-                "user",
-                "model"
+        "Session2026-02-20T1734-09E81Bbd": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-20T1734-09E81BbdMessage"
+                    }
+                },
+                "summary": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-20T1734-09E81Bbd"
+        },
+        "Session2026-02-20T1734-09E81BbdMessage": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/TentacledContent"
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IndigoToolCall"
+                    }
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "model": {
+                    "type": "string"
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-02-20T1734-09E81BbdMessage"
+        },
+        "IndigoToolCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "args": {
+                    "$ref": "#/definitions/IndigoArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/TentacledResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "$ref": "#/definitions/StickyResultDisplay"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "IndigoToolCall"
+        },
+        "IndigoArgs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "absolute_path": {
+                    "type": "string"
+                },
+                "content": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                },
+                "instruction": {
+                    "type": "string"
+                },
+                "old_string": {
+                    "type": "string"
+                },
+                "new_string": {
+                    "type": "string"
+                },
+                "paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "command": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "prompt": {
+                    "type": "string"
+                },
+                "objective": {
+                    "type": "string"
+                },
+                "expected_replacements": {
+                    "type": "integer"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "todos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Todo"
+                    }
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "offset": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "pattern": {
+                    "type": "string"
+                },
+                "include": {
+                    "type": "string"
+                },
+                "allow_multiple": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "IndigoArgs"
+        },
+        "Session2026-04-16T1817-C474Cb19": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2233-Ccae760CMessage"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-16T1817-C474Cb19"
+        },
+        "Session2026-04-21T0224-0Ef7C6E3": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2233-Ccae760CMessage"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-21T0224-0Ef7C6E3"
+        },
+        "Session2026-03-05T0656-4C8800D2": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-03-05T0656-4C8800D2Message"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-03-05T0656-4C8800D2"
+        },
+        "Session2026-03-05T0656-4C8800D2Message": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/TentacledContent"
+                },
+                "thoughts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Thought"
+                    }
+                },
+                "tokens": {
+                    "$ref": "#/definitions/Tokens"
+                },
+                "model": {
+                    "type": "string"
+                },
+                "toolCalls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/IndecentToolCall"
+                    }
+                },
+                "displayContent": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                }
+            },
+            "required": [],
+            "title": "Session2026-03-05T0656-4C8800D2Message"
+        },
+        "IndecentToolCall": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "args": {
+                    "$ref": "#/definitions/IndecentArgs"
+                },
+                "result": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/FluffyResult"
+                    }
+                },
+                "status": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "resultDisplay": {
+                    "type": "string"
+                },
+                "displayName": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "renderOutputAsMarkdown": {
+                    "type": "boolean"
+                }
+            },
+            "required": [],
+            "title": "IndecentToolCall"
+        },
+        "IndecentArgs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "query": {
+                    "type": "string"
+                },
+                "command": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "dir_path": {
+                    "type": "string"
+                },
+                "file_path": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "IndecentArgs"
+        },
+        "Session2026-04-21T0234-4E33F00B": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2239-3C0989C9Message"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-21T0234-4E33F00B"
+        },
+        "Session2026-04-17T1302-B562164C": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "sessionId": {
+                    "type": "string"
+                },
+                "projectHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "string"
+                },
+                "lastUpdated": {
+                    "type": "string"
+                },
+                "messages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Session2026-02-09T2239-3C0989C9Message"
+                    }
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "summary": {
+                    "type": "string"
+                }
+            },
+            "required": [],
+            "title": "Session2026-04-17T1302-B562164C"
+        },
+        "TentacledResultDisplay": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/PurpleResultDisplay"
+                },
+                {
+                    "type": "string",
+                    "qt-uri-protocols": [
+                        "https"
+                    ],
+                    "qt-uri-extensions": [
+                        ".2",
+                        ".git"
+                    ]
+                }
             ],
-            "title": "Role"
+            "title": "TentacledResultDisplay"
+        },
+        "FluffyContent": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/DisplayContentElement"
+                    }
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "title": "FluffyContent"
+        },
+        "StickyResultDisplay": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/FluffyResultDisplay"
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "title": "StickyResultDisplay"
+        },
+        "TentacledContent": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/PurpleContent"
+                    }
+                },
+                {
+                    "type": "string"
+                }
+            ],
+            "title": "TentacledContent"
         }
     }
 }

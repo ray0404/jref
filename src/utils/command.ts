@@ -52,13 +52,18 @@ export abstract class Command {
   /**
    * Get the snapshot from context, loading if necessary
    */
-  protected async getSnapshot(context: CommandContext): Promise<ProjectSnapshot> {
+  protected async getSnapshot(context: CommandContext, options?: CLIOptions, filePath?: string): Promise<ProjectSnapshot> {
     if (context.snapshot) {
       return context.snapshot;
     }
 
-    const { loadSnapshot } = await import('./streaming-json.js');
-    const snapshot = await loadSnapshot(context.stdin);
+    const { loadSnapshot, loadSnapshotFromFile } = await import('./streaming-json.js');
+    
+    if (filePath) {
+      return await loadSnapshotFromFile(filePath, options);
+    }
+
+    const snapshot = await loadSnapshot(context.stdin, options);
     return snapshot;
   }
 

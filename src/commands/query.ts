@@ -70,19 +70,25 @@ export class QueryCommand extends Command {
 
       let fileContent: string | undefined;
 
-      // Use streaming processor to avoid OOM
-      // We can't easily "early terminate" with the current processSnapshot implementation
-      // but it will still avoid loading all other files into memory
-      await processSnapshot(
-        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-        {
-          onFile: (path, content) => {
-            if (path === flags.path) {
-              fileContent = content;
+      if (options.jq) {
+        // Use full loading when JQ is active
+        const snapshot = await this.getSnapshot(context, options, filePath);
+        fileContent = snapshot.files[flags.path!];
+      } else {
+        // Use streaming processor to avoid OOM
+        // We can't easily "early terminate" with the current processSnapshot implementation
+        // but it will still avoid loading all other files into memory
+        await processSnapshot(
+          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          {
+            onFile: (path, content) => {
+              if (path === flags.path) {
+                fileContent = content;
+              }
             }
           }
-        }
-      );
+        );
+      }
 
       if (fileContent === undefined) {
         return this.error(`File not found in snapshot: ${flags.path}`, options, 2);

@@ -65,6 +65,7 @@ export interface CLIOptions {
   raw?: boolean;
   help?: boolean;
   version?: boolean;
+  jq?: string;
 }
 
 export interface CommandContext {

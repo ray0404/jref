@@ -72,19 +72,33 @@ export class RunCommand extends Command {
 
       await mkdirAsync(tempDir, { recursive: true });
 
-      await processSnapshot(
-        filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-        {
-          onFile: async (path, content) => {
-            const outputPath = join(tempDir, path);
-            const parentDir = dirname(outputPath);
-            if (!existsSync(parentDir)) {
-              await mkdirAsync(parentDir, { recursive: true });
-            }
-            await writeFileAsync(outputPath, content, 'utf8');
+      if (options.jq) {
+        // Use full loading when JQ is active
+        const snapshot = await this.getSnapshot(context, options, filePath);
+        for (const [path, content] of Object.entries(snapshot.files)) {
+          const outputPath = join(tempDir, path);
+          const parentDir = dirname(outputPath);
+          if (!existsSync(parentDir)) {
+            await mkdirAsync(parentDir, { recursive: true });
           }
+          await writeFileAsync(outputPath, content, 'utf8');
         }
-      );
+      } else {
+        // Use streaming processor to avoid OOM
+        await processSnapshot(
+          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          {
+            onFile: async (path, content) => {
+              const outputPath = join(tempDir, path);
+              const parentDir = dirname(outputPath);
+              if (!existsSync(parentDir)) {
+                await mkdirAsync(parentDir, { recursive: true });
+              }
+              await writeFileAsync(outputPath, content, 'utf8');
+            }
+          }
+        );
+      }
 
       const scriptPath = join(tempDir, flags.path);
       if (!existsSync(scriptPath)) {
