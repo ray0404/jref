@@ -1,7 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "file:///data/data/com.termux/files/home/Projects/CLI_jref/tree-output-schema.json",
-  "title": "Project Snapshot Schema",
+  "title": "Tree -J Command Output Schema",
   "type": "array",
   "items": {
     "oneOf": [

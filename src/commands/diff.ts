@@ -88,7 +88,6 @@ export class DiffCommand extends Command {
 
       if (options.json) {
         const output = JSON.stringify(result, null, 2);
-        this.print(result, options);
         return this.success(output);
       } else {
         this.printHumanDiff(result, options);

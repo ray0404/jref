@@ -1,4 +1,3 @@
-
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { loadSnapshotFromFile } from '../utils/streaming-json.js';
@@ -12,7 +11,6 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { stripImplementation } from '../utils/format.js';
 import { parseDirectoryStructure, findNodeByPath } from '../utils/ui.js';
-import * as jq from 'jq-wasm';
 
 export class ServeCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -44,6 +42,10 @@ export class ServeCommand extends Command {
         snapshot = context.snapshot;
       } else if (snapshotFile) {
         snapshot = await loadSnapshotFromFile(snapshotFile, options);
+      } else if (context.stdin) {
+        // If stdin was somehow pre-read (though we try to avoid it in index.ts for serve)
+        const { parseJSON } = await import('../utils/streaming-json.js');
+        snapshot = await parseJSON(context.stdin, undefined, options);
       } else {
         return this.error('No snapshot file provided', options);
       }
@@ -61,88 +63,90 @@ export class ServeCommand extends Command {
       );
 
       // Register tools
-      server.setRequestHandler(ListToolsRequestSchema, async () => ({
-        tools: [
-          {
-            name: 'inspect',
-            description: 'Get snapshot metadata and directory structure',
-            inputSchema: {
-              type: 'object',
-              properties: {},
-            },
-          },
-          {
-            name: 'search',
-            description: 'Search for a regex pattern in the snapshot',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                pattern: { type: 'string', description: 'Regex pattern to search for' },
+      server.setRequestHandler(ListToolsRequestSchema, async () => {
+        return {
+          tools: [
+            {
+              name: 'inspect',
+              description: 'Get snapshot metadata and directory structure',
+              inputSchema: {
+                type: 'object',
+                properties: {},
               },
-              required: ['pattern'],
             },
-          },
-          {
-            name: 'query',
-            description: 'Read the content of a specific file path',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                path: { type: 'string', description: 'Path to the file' },
-              },
-              required: ['path'],
-            },
-          },
-          {
-            name: 'jq_query',
-            description: 'Execute a jq filter against the loaded snapshot',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                filter: { type: 'string', description: 'jq filter string' },
-              },
-              required: ['filter'],
-            },
-          },
-          {
-            name: 'summarize',
-            description: 'Provide a token-efficient map of specific files by stripping implementation details',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                paths: { 
-                  type: 'array', 
-                  items: { type: 'string' },
-                  description: 'List of file paths to summarize'
+            {
+              name: 'search',
+              description: 'Search for a regex pattern in the snapshot',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  pattern: { type: 'string', description: 'Regex pattern to search for' },
                 },
+                required: ['pattern'],
               },
-              required: ['paths'],
             },
-          },
-          {
-            name: 'list_directory',
-            description: 'Provide scoped, localized tree inspection to mimic standard ls navigation',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                path: { type: 'string', description: 'Path to the directory (e.g., src/components)' },
+            {
+              name: 'query',
+              description: 'Read the content of a specific file path',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  path: { type: 'string', description: 'Path to the file' },
+                },
+                required: ['path'],
               },
-              required: ['path'],
             },
-          },
-          {
-            name: 'find_references',
-            description: 'Cross-file reference tracing for a specific symbol',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                symbol: { type: 'string', description: 'Symbol name to trace' },
+            {
+              name: 'jq_query',
+              description: 'Execute a jq filter against the loaded snapshot',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  filter: { type: 'string', description: 'jq filter string' },
+                },
+                required: ['filter'],
               },
-              required: ['symbol'],
             },
-          },
-        ],
-      }));
+            {
+              name: 'summarize',
+              description: 'Provide a token-efficient map of specific files by stripping implementation details',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  paths: { 
+                    type: 'array', 
+                    items: { type: 'string' },
+                    description: 'List of file paths to summarize'
+                  },
+                },
+                required: ['paths'],
+              },
+            },
+            {
+              name: 'list_directory',
+              description: 'Provide scoped, localized tree inspection to mimic standard ls navigation',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  path: { type: 'string', description: 'Path to the directory (e.g., src/components)' },
+                },
+                required: ['path'],
+              },
+            },
+            {
+              name: 'find_references',
+              description: 'Cross-file reference tracing for a specific symbol',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  symbol: { type: 'string', description: 'Symbol name to trace' },
+                },
+                required: ['symbol'],
+              },
+            },
+          ],
+        };
+      });
 
       server.setRequestHandler(CallToolRequestSchema, async (request) => {
         switch (request.params.name) {
@@ -204,6 +208,7 @@ export class ServeCommand extends Command {
           case 'jq_query': {
             const { filter } = request.params.arguments as { filter: string };
             try {
+              const jq = (await import('jq-wasm')).default;
               const result = await jq.json(snapshot, filter);
               return {
                 content: [
@@ -310,11 +315,28 @@ export class ServeCommand extends Command {
         }
       });
 
+      console.error('MCP: Connecting transport...');
       const transport = new StdioServerTransport();
       await server.connect(transport);
       
-      // In stdio transport, we don't want to log anything else to stdout
-      return this.success('MCP server running');
+      console.error('jref MCP server running on stdio');
+      
+      // Keep alive until transport closes or process is terminated
+      await new Promise<void>((resolve) => {
+        transport.onclose = () => {
+          console.error('MCP: Transport closed');
+          resolve();
+        };
+        
+        const cleanup = () => {
+           console.error('MCP: Process terminating...');
+           transport.close().then(() => resolve());
+        };
+        process.on('SIGINT', cleanup);
+        process.on('SIGTERM', cleanup);
+      });
+
+      return this.success();
 
     } catch (err) {
       return this.error(`Serve failed: ${(err as Error).message}`, options);

@@ -59,11 +59,6 @@ export class SummarizeCommand extends Command {
 
       const output = JSON.stringify(summary, null, 2);
       
-      if (options.json || options.silent) {
-        return this.success(output);
-      }
-
-      console.log(output);
       return this.success(output);
 
     } catch (err) {

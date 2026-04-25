@@ -255,7 +255,6 @@ export class ReconstructCommand extends Command {
     flags: ReconstructFlags
   ): number {
     if (options.json) {
-      this.print(result, options);
       return result.matches ? 0 : 1;
     }
 

@@ -176,7 +176,9 @@ async function main(): Promise<void> {
   const stdinIsPipe = isStdinPiped();
   let stdinData = '';
 
-  if (stdinIsPipe) {
+  // DON'T consume stdin if we're running the serve command, 
+  // as it needs stdin to remain open for the MCP protocol.
+  if (stdinIsPipe && commandName !== 'serve') {
     stdinData = await readFromInput();
   }
 

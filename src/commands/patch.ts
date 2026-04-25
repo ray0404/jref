@@ -87,12 +87,6 @@ export class PatchCommand extends Command {
       // 4. Output the result
       const output = JSON.stringify(snapshot, null, 2);
       
-      if (options.silent) {
-        return this.success(output);
-      }
-
-      // In normal mode, we print the JSON to stdout
-      console.log(output);
       return this.success(output);
 
     } catch (err) {
