@@ -46,7 +46,7 @@ export class RunCommand extends Command {
             }
             // We need to extract the target file AND maybe its dependencies?
             // For now, let's extract ALL files to a temp directory to ensure dependencies work
-            // though for 1GB files this is slow.
+            // though for 1GB files this is slow. 
             // Ideally we'd only extract what's needed, but that's complex (need to parse imports).
             if (!options.silent) {
                 console.log(`⏳ Preparing execution environment in ${tempDir}...`);
