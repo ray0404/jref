@@ -7,7 +7,7 @@
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ReconstructResult } from '../types/index.js';
 import { loadSnapshot } from '../utils/streaming-json.js';
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { readdirSync, readFileSync, statSync, promises as fsPromises } from 'fs';
 import { join, relative } from 'path';
 
 interface ReconstructFlags {
@@ -165,19 +165,25 @@ export class ReconstructCommand extends Command {
       }
     }
 
-    // Check for modified files (content differs)
-    for (const file of snapshotFiles) {
-      if (localFiles.has(file)) {
-        const localPath = join(directory, file);
-        try {
-          const localContent = readFileSync(localPath, 'utf8');
-          if (localContent !== snapshot.files[file]) {
-            modifiedFiles.push(file);
+    // Check for modified files (content differs) - parallel async read
+    const CHUNK_SIZE = 50;
+    const filesToRead = Array.from(snapshotFiles).filter(file => localFiles.has(file));
+
+    for (let i = 0; i < filesToRead.length; i += CHUNK_SIZE) {
+      const chunk = filesToRead.slice(i, i + CHUNK_SIZE);
+      await Promise.all(
+        chunk.map(async (file) => {
+          const localPath = join(directory, file);
+          try {
+            const localContent = await fsPromises.readFile(localPath, 'utf8');
+            if (localContent !== snapshot.files[file]) {
+              modifiedFiles.push(file);
+            }
+          } catch {
+            // File exists but couldn't be read - skip
           }
-        } catch {
-          // File exists but couldn't be read - skip
-        }
-      }
+        })
+      );
     }
 
     const matches =
