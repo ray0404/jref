@@ -98,32 +98,39 @@ The following flags can be used with any command:
 - `--version, -v`: Show version information
 
 ## Commands
-
 ### pack
 
-Create a jref-compliant JSON snapshot from a local directory or remote repository.
+Create a snapshot from a local directory or remote repository (optimized for LLMs).
 
 ```bash
 jref pack [directory|url] [options]
 
 Options:
-  --instruction <text>  Add custom AI instructions (auto-generated if omitted)
-  --summary <text>      Add a high-level file summary
-  --max-size <bytes>    Split snapshot into multiple chunks if it exceeds this size
+  --instruction <text>     Add custom AI instructions (auto-generated if omitted)
+  --summary <text>         Add a high-level file summary
+  --max-size <bytes>       Split snapshot into chunks (JSON only)
+  -s, --output-style <st>  Output format: json, markdown, xml, plain
+  --branch <name>          Target specific branch (remote)
+  --commit <hash>          Target specific commit (remote)
+  --compress               Enable AST-aware whitespace removal
+  --remove-comments        Strip code comments
+  --remove-empty-lines     Strip blank lines
+  --token-limit <n>        Cap the total output tokens
 ```
 
 **Features:**
-- **Remote Packing**: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
-- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment for private repositories.
+- **Remote Packing**: Snapshot public or private repositories by providing a URL.
+- **Optimization**: Use `--compress` and `--remove-comments` to reduce token counts for AI agents.
+- **Multi-Format**: Export to Markdown or XML for better performance with specific LLMs.
 - **Secret Scanning**: Automatically redacts secrets (API keys, tokens) using `secretlint`.
-- **Auto-Instructions**: Infers project type (e.g., Node.js, Rust, Go) and drafts system prompts automatically.
-- **Chunking**: Splits large projects into manageable `snapshot.partN.json` files for small context windows.
+- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment.
 
 **Examples:**
 ```bash
-jref pack . > project.json
-jref pack https://github.com/user/repo > remote.json
-jref pack github:user/repo#dev --max-size 1048576 # 1MB chunks
+jref pack . --compress > project.json
+jref pack https://github.com/user/repo --branch main > remote.json
+jref pack . --output-style xml > snapshot.xml
+jref pack . --max-size 1048576 # 1MB chunks (JSON only)
 ```
 
 ### patch

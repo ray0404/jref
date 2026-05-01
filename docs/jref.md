@@ -118,13 +118,15 @@ jref --help
 # Snapshot the current working directory
 jref pack . > project.json
 
-# Snapshot a remote repository
-jref pack https://github.com/user/repo > remote.json
+# Snapshot a remote repository with branch/tag
+jref pack https://github.com/user/repo --branch main > remote.json
 
-# Snapshot with branch/tag and AI instructions
-jref pack github:user/repo#dev \
-  --instruction "Follow these architectural rules" \
-  --summary "REST API server with three route modules" \
+# Snapshot with XML output and compression
+jref pack . --output-style xml --compress > project.xml
+
+# Snapshot with custom AI instructions and comment stripping
+jref pack . --instruction "Follow these architectural rules" \
+  --remove-comments --remove-empty-lines \
   > project.json
 ```
 
@@ -370,7 +372,7 @@ jref [--json|-j] [--silent|-s] [--raw|-r] [--help|-h] [--version|-v] <command> [
 
 ### pack
 
-Create a jref-compliant JSON snapshot from a local directory or remote repository.
+Create a snapshot from a local directory or remote repository (optimized for LLMs).
 
 ```
 jref pack [directory|url] [options]
@@ -378,38 +380,41 @@ jref pack [directory|url] [options]
 
 **Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--instruction <text>` | Add an `instruction` field to the snapshot — AI system prompt context. **Auto-generated** based on project type if omitted. |
-| `--summary <text>` | Add a `fileSummary` field — human-readable project overview |
-| `--max-size <bytes>` | Split the snapshot into multiple parts (e.g., `snapshot.part1.json`) if the total size exceeds this threshold. |
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--instruction <text>` | | Add an `instruction` field to the snapshot — AI system prompt context. **Auto-generated** if omitted. |
+| `--summary <text>` | | Add a `fileSummary` field — human-readable project overview |
+| `--max-size <bytes>` | | Split the snapshot into multiple parts (e.g., `part1.json`) if it exceeds this threshold. **JSON only.** |
+| `--output-style <style>` | `-s` | Output style: `json`, `markdown`, `xml`, or `plain`. Defaults to `json`. |
+| `--branch <name>` | | Target a specific branch for remote repositories. |
+| `--commit <hash>` | | Target a specific commit hash for remote repositories. |
+| `--compress` | | Enable AST-aware compression (removes unnecessary whitespace). |
+| `--remove-comments` | | Strip code comments from the output files. |
+| `--remove-empty-lines` | | Strip blank lines from the output files. |
+| `--top-files-length <n>` | | Limit the number of top-level files processed (default: 100). |
+| `--token-limit <n>` | | Set a maximum token limit for the output. |
 
 **Behavior:**
 - Defaults to current working directory if no directory is given
 - **Remote Packing**: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
-- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment for private repositories.
-- Reads `.gitignore` from the root of the target directory and respects its patterns
+- **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment.
 - **Secret Scanning**: Automatically redacts secrets (API keys, credentials) using `secretlint`.
-- **Auto-Instructions**: Analyzes the project structure (Node.js, Rust, Go, Python, etc.) and generates context-aware system prompts.
-- **Chunking**: When `--max-size` is provided, the project is partitioned into valid schema-compliant chunks.
-- Always ignores `.git`
-- Reads **all file contents as UTF-8 strings**
-- Generates an ASCII tree representation for `directoryStructure`
-- Non-code files (images, binaries) are stored as empty strings (or skipped if unreadable)
+- **Optimization**: Use `--compress`, `--remove-comments`, and `--remove-empty-lines` to drastically reduce token counts for AI agents.
+- **Multi-Format**: Output to Markdown or XML for better performance with specific LLM context windows.
 
 **Examples:**
 
 ```bash
-# Snapshot current directory with auto-instructions and secret scanning
-jref pack . > snapshot.json
+# Snapshot current directory with compression
+jref pack . --compress > snapshot.json
 
-# Snapshot a remote repo
-jref pack https://github.com/user/repo > remote.json
+# Snapshot a remote repo at a specific commit
+jref pack https://github.com/user/repo --commit abc123def > remote.json
 
-# Snapshot src/ with custom instructions
-jref pack ./src --instruction "This module follows TDD" > src.json
+# Output in Markdown format for immediate use in a LLM chat
+jref pack . --output-style markdown --remove-comments > project.md
 
-# Snapshot entire project and split into 512KB chunks
+# Snapshot and split into 512KB chunks (JSON only)
 jref pack . --max-size 524288
 ```
 

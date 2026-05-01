@@ -145,8 +145,15 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Handle global help flag or no args
-  if (options.help || remainingArgs.length === 0) {
+  // Handle global help flag with no command
+  if (options.help && remainingArgs.length === 0) {
+    printGlobalHelp(options);
+    exit(0);
+    return;
+  }
+
+  // Handle no args
+  if (remainingArgs.length === 0) {
     printGlobalHelp(options);
     exit(0);
     return;
@@ -166,7 +173,7 @@ async function main(): Promise<void> {
   }
 
   // Handle help for specific command
-  if (commandArgs.includes('--help') || commandArgs.includes('-h')) {
+  if (options.help || commandArgs.includes('--help') || commandArgs.includes('-h')) {
     command.printHelp(options);
     exit(0);
     return;

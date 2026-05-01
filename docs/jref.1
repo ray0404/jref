@@ -85,9 +85,9 @@ to get
 .SH COMMANDS
 .
 .SS PACK
-Create a jref snapshot from a local directory or remote repository.
+Create a jref snapshot from a local directory or remote repository (optimized for LLMs).
 .PP
-.B "jref pack [directory|url] [\fB\-\-instruction\fR \fItext\fR] [\fB\-\-summary\fR \fItext\fR] [\fB\-\-max\-size\fR \fIbytes\fR]"
+.B "jref pack [directory|url] [options]"
 .PP
 .B OPTIONS
 .RS 4
@@ -95,7 +95,7 @@ Create a jref snapshot from a local directory or remote repository.
 .B \-\-instruction \fItext\fR
 Set the
 .B instruction
-field in the snapshot (AI system prompt context). If omitted, an instruction is automatically generated based on the project structure.
+field in the snapshot (AI system prompt context). If omitted, an instruction is automatically generated.
 .TP
 .B \-\-summary \fItext\fR
 Set the
@@ -103,28 +103,52 @@ Set the
 field (human-readable project description).
 .TP
 .B \-\-max\-size \fIbytes\fR
-Splits the snapshot into multiple chunk files (e.g., snapshot.part1.json) if the resulting total size exceeds this threshold.
+Splits the snapshot into multiple chunk files (JSON only) if the resulting total size exceeds this threshold.
+.TP
+.B \-s, \-\-output\-style \fIstyle\fR
+Choose output format: \fBjson\fR, \fBmarkdown\fR, \fBxml\fR, or \fBplain\fR (default: \fBjson\fR).
+.TP
+.B \-\-branch \fIname\fR
+Target a specific branch for remote repositories.
+.TP
+.B \-\-commit \fIhash\fR
+Target a specific commit hash for remote repositories.
+.TP
+.B \-\-compress
+Enable AST-aware compression (removes unnecessary whitespace from code).
+.TP
+.B \-\-remove\-comments
+Strip code comments from the output files.
+.TP
+.B \-\-remove\-empty\-lines
+Strip blank lines from the output files.
+.TP
+.B \-\-top\-files\-length \fIn\fR
+Limit the number of top-level files processed (default: 100).
+.TP
+.B \-\-token\-limit \fIn\fR
+Set a maximum token limit for the output.
 .RE
 .PP
 .B FEATURES
 .RS 4
 .IP \(bu 2
-\fBRemote Packing\fR: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
+\fBRemote Packing\fR: Snapshot repositories by providing a URL (GitHub, GitLab, Bitbucket).
 .IP \(bu 2
-\fBToken Authentication\fR: Automatically uses \fBGITHUB_TOKEN\fR or \fBGITLAB_TOKEN\fR from the environment for private repositories.
+\fBToken Authentication\fR: Automatically uses \fBGITHUB_TOKEN\fR or \fBGITLAB_TOKEN\fR from the environment.
 .IP \(bu 2
-\fBSecret Scanning\fR: Automatically detects and redacts secrets (API keys, credentials) using \fIsecretlint\fR.
+\fBSecret Scanning\fR: Automatically redacts secrets (API keys, credentials) using \fIsecretlint\fR.
 .IP \(bu 2
-\fBAuto-Instructions\fR: Analyzes the project structure (Node.js, Rust, Go, Python, etc.) to draft appropriate system prompts.
+\fBOptimization\fR: Drastically reduce context overhead using compression and comment stripping.
 .IP \(bu 2
-\fBChunking\fR: Partitions large projects into valid schema-compliant chunks for smaller context windows.
+\fBMulti-Format\fR: Export to Markdown or XML for better readability in specific AI interfaces.
 .RE
 .PP
 Reads
 .I directory
 or clones
 .I url
-recursively and produces a JSON snapshot.
+recursively and produces a snapshot.
 Defaults to the current working directory if omitted.
 Reads
 .B .gitignore
@@ -138,10 +162,9 @@ All file contents are read as UTF-8.
 .B EXAMPLES
 .PP
 .EX
-jref pack . > snapshot.json
-jref pack https://github.com/user/repo > remote.json
-jref pack github:user/repo#dev \e
-  --instruction "Follow TDD" > src.json
+jref pack . --compress > snapshot.json
+jref pack https://github.com/user/repo --branch main > remote.json
+jref pack . --output-style markdown --remove-comments > project.md
 jref pack . --max-size 1048576
 .EE
 .
