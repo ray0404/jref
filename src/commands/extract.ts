@@ -5,7 +5,7 @@
  */
 
 import { Command, type CommandDefinition } from '../utils/command.js';
-import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
+import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';
@@ -13,6 +13,7 @@ import { promisify } from 'util';
 import { Readable } from 'stream';
 import micromatch from 'micromatch';
 import { decodeBase64 } from '../utils/binary.js';
+import * as readline from 'readline';
 
 const mkdirAsync = promisify(mkdir);
 const writeFileAsync = promisify(writeFile);
@@ -23,6 +24,7 @@ interface ExtractFlags {
   overwrite?: boolean;
   dryRun?: boolean;
   flat?: boolean;
+  listen?: boolean;
 }
 
 export class ExtractCommand extends Command {
@@ -46,6 +48,10 @@ export class ExtractCommand extends Command {
       {
         flags: '--flat',
         description: 'Extract files directly into output dir, ignoring subfolder structure'
+      },
+      {
+        flags: '--listen',
+        description: 'Listen on stdin for continuous stream of snapshots/deltas'
       }
     ],
     examples: [
@@ -53,13 +59,14 @@ export class ExtractCommand extends Command {
       'jref extract snapshot.json "src/**/*.ts"',
       'jref extract --output ./output snapshot.json',
       'cat snapshot.json | jref extract "src/*.js"',
-      'jref extract --dry-run snapshot.json'
+      'jref extract --listen'
     ],
     workflows: [
       'Full Reconstruction: Extract an entire snapshot to restore a project.',
       'Selective Extraction: Use glob patterns to extract only specific modules or files.',
       'Conflict Prevention: Use --dry-run to verify extraction paths before committing changes.',
-      'Structure Flattening: Use --flat to gather scattered files into a single directory for processing.'
+      'Structure Flattening: Use --flat to gather scattered files into a single directory for processing.',
+      'Real-time Mirroring: Use --listen to receive and apply continuous updates from a stream.'
     ]
   };
 
@@ -74,6 +81,15 @@ export class ExtractCommand extends Command {
       // Determine output directory
       const outputDir = flags.outputDir as string || './extracted';
       const patterns = flags.patterns || [];
+
+      if (flags.listen) {
+        if (!options.silent) {
+          console.error(`👂 Listening for snapshots on stdin (Output: ${outputDir})...`);
+        }
+        await this.handleListen(outputDir, flags, options);
+        return this.success();
+      }
+
       const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
       const encodings: Record<string, string> = {};
 
@@ -187,6 +203,9 @@ export class ExtractCommand extends Command {
         case '--flat':
           flags.flat = true;
           break;
+        case '--listen':
+          flags.listen = true;
+          break;
         case '--paths':
         case '-p':
           // Support old --paths flag for backward compatibility
@@ -207,6 +226,87 @@ export class ExtractCommand extends Command {
 
     flags.patterns = patterns;
     return { flags, filePath };
+  }
+
+  private async handleListen(outputDir: string, flags: ExtractFlags, options: CLIOptions): Promise<void> {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      terminal: false
+    });
+
+    let currentPayloadStream: Readable | null = null;
+    let pushToPayload: ((chunk: string) => void) | null = null;
+    const processingPromises: Promise<void>[] = [];
+
+    for await (const line of rl) {
+      if (line.trim() === '--JREF-START--') {
+        currentPayloadStream = new Readable({
+          read() {}
+        });
+        
+        const stream = currentPayloadStream;
+        pushToPayload = (chunk: string) => {
+          stream.push(chunk + '\n');
+        };
+
+        // Start processing the stream
+        const p = this.processProtocolStream(stream, outputDir, flags, options).catch(err => {
+          if (!options.silent) console.error(`❌ Stream processing error: ${err.message}`);
+        });
+        processingPromises.push(p);
+        continue;
+      }
+
+      if (line.trim() === '--JREF-END--') {
+        if (currentPayloadStream) {
+          currentPayloadStream.push(null); // End of stream
+          currentPayloadStream = null;
+          pushToPayload = null;
+        }
+        continue;
+      }
+
+      if (pushToPayload) {
+        pushToPayload(line);
+      }
+    }
+
+    // Wait for all chunks to be processed
+    await Promise.all(processingPromises);
+  }
+
+  private async processProtocolStream(stream: Readable, outputDir: string, flags: ExtractFlags, options: CLIOptions): Promise<void> {
+    const encodings: Record<string, string> = {};
+    const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
+    const patterns = flags.patterns || [];
+
+    await processSnapshot(stream, {
+      onMetadata: (key, value) => {
+        if (key === 'encodings') {
+          Object.assign(encodings, value);
+        } else if (key === 'type' && !options.silent) {
+          console.error(`📦 Received protocol chunk: ${value}`);
+        }
+      },
+      onFile: async (path, content) => {
+        const isMatch = patterns.length === 0 || 
+                        micromatch.isMatch(path, patterns) ||
+                        patterns.some(p => path.startsWith(p.endsWith('/') ? p : p + '/'));
+        
+        if (!isMatch) return;
+
+        const encoding = encodings[path] || 'utf8';
+        const buffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+
+        // Always overwrite in listen mode
+        const res = await this.extractFile(path, buffer, outputDir, true, flags.flat as boolean);
+        results.push(res);
+      }
+    });
+
+    if (!options.silent && results.length > 0) {
+      console.error(`✅ Applied update: ${results.length} files extracted.`);
+    }
   }
 
   private async extractFile(
