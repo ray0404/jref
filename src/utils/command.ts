@@ -242,6 +242,8 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { PackCommand } = await import('../commands/pack.js');
   const { SummarizeCommand } = await import('../commands/summarize.js');
   const { RunCommand } = await import('../commands/run.js');
+  const { BPackCommand } = await import('../commands/bpack.js');
+  const { BExtractCommand } = await import('../commands/bextract.js');
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
@@ -258,4 +260,6 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new PackCommand());
   registry.register(new SummarizeCommand());
   registry.register(new RunCommand());
+  registry.register(new BPackCommand());
+  registry.register(new BExtractCommand());
 }

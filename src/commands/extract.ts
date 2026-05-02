@@ -7,11 +7,12 @@
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
-import { mkdir, writeFile, existsSync, createReadStream } from 'fs';
+import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { promisify } from 'util';
 import { Readable } from 'stream';
 import micromatch from 'micromatch';
+import { decodeBase64 } from '../utils/binary.js';
 
 const mkdirAsync = promisify(mkdir);
 const writeFileAsync = promisify(writeFile);
@@ -74,10 +75,12 @@ export class ExtractCommand extends Command {
       const outputDir = flags.outputDir as string || './extracted';
       const patterns = flags.patterns || [];
       const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
+      const encodings: Record<string, string> = {};
 
       if (options.jq) {
         // Use full loading when JQ is active
         const snapshot = await this.getSnapshot(context, options, filePath);
+        const snapshotEncodings = snapshot.encodings || {};
         for (const [path, content] of Object.entries(snapshot.files)) {
           // Check if path matches patterns (wildcard or directory prefix)
           const isMatch = patterns.length === 0 || 
@@ -86,20 +89,39 @@ export class ExtractCommand extends Command {
           
           if (!isMatch) continue;
 
+          const encoding = snapshotEncodings[path] || 'utf8';
+          const buffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+
           if (flags.dryRun) {
-            results.push({ path, size: Buffer.byteLength(content, 'utf8'), success: true });
+            results.push({ path: path, size: buffer.length, success: true });
             continue;
           }
 
           // Perform extraction
-          const res = await this.extractFile(path, content, outputDir, flags.overwrite as boolean, flags.flat as boolean);
+          const res = await this.extractFile(path, buffer, outputDir, flags.overwrite as boolean, flags.flat as boolean);
           results.push(res);
         }
       } else {
+        // Determine if we should read fully or stream
+        let input: string | NodeJS.ReadableStream;
+        if (filePath) {
+          const stats = statSync(filePath);
+          if (stats.size < 8 * 1024 * 1024) { // 8MB
+            input = readFileSync(filePath, 'utf8');
+          } else {
+            input = createReadStream(filePath);
+          }
+        } else {
+          input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
+        }
+
         // Use streaming processor to avoid OOM
-        await processSnapshot(
-          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
-          {
+        await processSnapshot(input, {
+            onMetadata: (key, value) => {
+              if (key === 'encodings') {
+                Object.assign(encodings, value);
+              }
+            },
             onFile: async (path, content) => {
               // Check if path matches patterns (wildcard or directory prefix)
               const isMatch = patterns.length === 0 || 
@@ -108,13 +130,16 @@ export class ExtractCommand extends Command {
               
               if (!isMatch) return;
 
+              const encoding = encodings[path] || 'utf8';
+              const buffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+
               if (flags.dryRun) {
-                results.push({ path, size: Buffer.byteLength(content, 'utf8'), success: true });
+                results.push({ path: path, size: buffer.length, success: true });
                 return;
               }
 
               // Perform extraction
-              const res = await this.extractFile(path, content, outputDir, flags.overwrite as boolean, flags.flat as boolean);
+              const res = await this.extractFile(path, buffer, outputDir, flags.overwrite as boolean, flags.flat as boolean);
               results.push(res);
             }
           }
@@ -186,7 +211,7 @@ export class ExtractCommand extends Command {
 
   private async extractFile(
     filePath: string,
-    content: string,
+    content: string | Buffer,
     outputDir: string,
     overwrite: boolean,
     flat: boolean | undefined
@@ -211,11 +236,11 @@ export class ExtractCommand extends Command {
       }
 
       // Write file
-      await writeFileAsync(outputPath, content, 'utf8');
+      await writeFileAsync(outputPath, content);
 
       return {
         path: outputPath,
-        size: Buffer.byteLength(content, 'utf8'),
+        size: Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, 'utf8'),
         success: true
       };
     } catch (err) {

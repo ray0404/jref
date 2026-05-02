@@ -45,7 +45,12 @@ export async function parseJSON(input: string, filePath?: string, options?: CLIO
     const temp: any = { files: {} };
     await processSnapshot(input, {
       onMetadata: (key, value) => {
-        temp[key] = value;
+        if (key === 'encodings') {
+          if (!temp.encodings) temp.encodings = {};
+          Object.assign(temp.encodings, value);
+        } else {
+          temp[key] = value;
+        }
       },
       onFile: (path, content) => {
         temp.files[path] = content;
@@ -107,9 +112,36 @@ export async function processSnapshot(
     onFile?: (path: string, content: string) => Promise<void> | void;
   }
 ): Promise<void> {
-  // If input is a string, check format first
+  // If input is a string, check size and format first
   if (typeof input === 'string') {
+    const size = Buffer.byteLength(input, 'utf8');
     const format = sniffFormat(input);
+
+    if (size < MAX_BUFFER_SIZE && (format === 'json' || format === 'json5')) {
+      try {
+        const snapshot = format === 'json' ? JSON.parse(input) : (await translateSnapshot(input, 'json5'));
+        if (callbacks.onMetadata) {
+          if (snapshot.directoryStructure) callbacks.onMetadata('directoryStructure', snapshot.directoryStructure);
+          if (snapshot.instruction) callbacks.onMetadata('instruction', snapshot.instruction);
+          if (snapshot.fileSummary) callbacks.onMetadata('fileSummary', snapshot.fileSummary);
+          if (snapshot.userProvidedHeader) callbacks.onMetadata('userProvidedHeader', snapshot.userProvidedHeader);
+          if (snapshot.encodings) {
+            for (const [path, enc] of Object.entries(snapshot.encodings)) {
+              callbacks.onMetadata('encodings', { [path]: enc });
+            }
+          }
+        }
+        if (callbacks.onFile) {
+          for (const [path, content] of Object.entries(snapshot.files)) {
+            await callbacks.onFile(path, content as string);
+          }
+        }
+        return;
+      } catch {
+        // Fallback to streaming if parse fails
+      }
+    }
+
     if (format !== 'json' && format !== 'json5') {
       const snapshot = await translateSnapshot(input, format);
       if (callbacks.onMetadata) {
@@ -117,10 +149,15 @@ export async function processSnapshot(
         if (snapshot.instruction) callbacks.onMetadata('instruction', snapshot.instruction);
         if (snapshot.fileSummary) callbacks.onMetadata('fileSummary', snapshot.fileSummary);
         if (snapshot.userProvidedHeader) callbacks.onMetadata('userProvidedHeader', snapshot.userProvidedHeader);
+        if (snapshot.encodings) {
+           for (const [path, enc] of Object.entries(snapshot.encodings)) {
+             callbacks.onMetadata('encodings', { [path]: enc });
+           }
+        }
       }
       if (callbacks.onFile) {
         for (const [path, content] of Object.entries(snapshot.files)) {
-          await callbacks.onFile(path, content);
+          await callbacks.onFile(path, content as string);
         }
       }
       return;
@@ -129,79 +166,80 @@ export async function processSnapshot(
 
   return new Promise((resolve, reject) => {
     const inputStream = typeof input === 'string' ? Readable.from([input]) : input;
-    const p = parser.asStream();
+    const p = (parser as any).asStream();
     
-    inputStream.pipe(p);
-
     let currentKey: string | null = null;
     let inFiles = false;
-    let filesLevel = 0;
+    let inEncodings = false;
+    let objectLevel = 0;
     let currentFileKey: string | null = null;
     let pendingOps = 0;
     let finished = false;
+    let isPaused = false;
 
     const checkFinished = () => {
-      if (finished && pendingOps === 0) {
+      if (finished && pendingOps === 0 && !isPaused) {
         resolve();
       }
     };
 
-    p.on('data', (data) => {
+    p.on('data', (data: any) => {
       try {
-        if (data.name === 'keyValue') {
-          if (inFiles && filesLevel === 0) {
-            currentFileKey = data.value;
-          } else if (!inFiles) {
-            currentKey = data.value;
-          }
-          return;
-        }
+        switch (data.name) {
+          case 'keyValue':
+            if (objectLevel === 1) {
+              currentKey = data.value;
+              inFiles = currentKey === 'files';
+              inEncodings = currentKey === 'encodings';
+            } else if (objectLevel === 2) {
+              currentFileKey = data.value;
+            }
+            break;
 
-        if (data.name === 'startObject') {
-          if (currentKey === 'files' && !inFiles) {
-            inFiles = true;
-            filesLevel = 0;
-          } else if (inFiles) {
-            filesLevel++;
-          }
-          return;
-        }
+          case 'startObject':
+            objectLevel++;
+            break;
 
-        if (data.name === 'endObject') {
-          if (inFiles) {
-            if (filesLevel === 0) {
+          case 'endObject':
+            if (objectLevel === 2) {
               inFiles = false;
-              currentKey = null;
-            } else {
-              filesLevel--;
+              inEncodings = false;
+              currentFileKey = null;
             }
-          }
-          return;
-        }
+            objectLevel--;
+            break;
 
-        if (data.name === 'stringValue' || data.name === 'numberValue' || data.name === 'booleanValue' || data.name === 'nullValue') {
-          if (inFiles && filesLevel === 0 && currentFileKey) {
-            if (callbacks.onFile) {
-              const result = callbacks.onFile(currentFileKey, data.value);
-              if (result instanceof Promise) {
-                pendingOps++;
-                p.pause();
-                result.then(() => {
-                  pendingOps--;
-                  p.resume();
-                  checkFinished();
-                }).catch((err) => {
-                  p.destroy(err);
-                });
+          case 'stringValue':
+          case 'numberValue':
+          case 'booleanValue':
+          case 'nullValue':
+            if (objectLevel === 2 && currentFileKey) {
+              if (inFiles && callbacks.onFile) {
+                const result = callbacks.onFile(currentFileKey, data.value);
+                if (result instanceof Promise) {
+                  pendingOps++;
+                  isPaused = true;
+                  p.pause();
+                  result.then(() => {
+                    pendingOps--;
+                    isPaused = false;
+                    p.resume();
+                    checkFinished();
+                  }).catch((err: any) => {
+                    p.destroy(err);
+                  });
+                }
+              } else if (inEncodings && callbacks.onMetadata) {
+                callbacks.onMetadata('encodings', { [currentFileKey]: data.value });
               }
+              currentFileKey = null;
+            } else if (objectLevel === 1 && currentKey) {
+              if (callbacks.onMetadata) {
+                callbacks.onMetadata(currentKey, data.value);
+              }
+              currentKey = null;
             }
-            currentFileKey = null;
-          } else if (!inFiles && currentKey) {
-            if (callbacks.onMetadata) {
-              callbacks.onMetadata(currentKey, data.value);
-            }
-            currentKey = null;
-          }
+            break;
         }
       } catch (err) {
         p.destroy(err as Error);
@@ -214,6 +252,7 @@ export async function processSnapshot(
     });
     
     p.on('error', reject);
+    inputStream.pipe(p);
   });
 }
 
@@ -288,11 +327,17 @@ export async function loadSnapshot(input: string | undefined = undefined, option
  */
 export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
   const files = snapshot.files || {};
+  const encodings = snapshot.encodings || {};
   const fileCount = Object.keys(files).length;
   let totalSize = 0;
 
-  for (const content of Object.values(files)) {
-    totalSize += Buffer.byteLength(content, 'utf8');
+  for (const [path, content] of Object.entries(files)) {
+    if (encodings[path] === 'base64') {
+      // Decoded size is approximately 0.75 * Base64 string length
+      totalSize += Buffer.byteLength(content, 'base64');
+    } else {
+      totalSize += Buffer.byteLength(content, 'utf8');
+    }
   }
 
   return {

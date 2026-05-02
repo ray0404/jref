@@ -5,11 +5,12 @@
 
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync } from 'fs';
+import { resolve, relative, join } from 'path';
 import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { generateInstruction } from '../utils/instruction.js';
+import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
 
 interface PackFlags {
   instruction?: string;
@@ -23,6 +24,8 @@ interface PackFlags {
   removeEmptyLines?: boolean;
   topFilesLength?: number;
   tokenLimit?: number;
+  includeBinaries?: boolean;
+  maxBinarySize?: number;
 }
 
 export class PackCommand extends Command {
@@ -74,10 +77,19 @@ export class PackCommand extends Command {
       {
         flags: '--token-limit <number>',
         description: 'Set a maximum token limit for the output'
+      },
+      {
+        flags: '--include-binaries',
+        description: 'Include binary files encoded as Base64 in the snapshot'
+      },
+      {
+        flags: '--max-binary-size <bytes>',
+        description: 'Maximum size for a single binary file to be included'
       }
     ],
     examples: [
       'jref pack . > snapshot.json',
+      'jref pack . --include-binaries --max-binary-size 1048576 > snapshot.json',
       'jref pack https://github.com/user/repo --branch main > snapshot.json',
       'jref pack . --output-style markdown --compress > project.md',
       'jref pack github:user/repo --remove-comments --top-files-length 50 > snapshot.json'
@@ -85,11 +97,9 @@ export class PackCommand extends Command {
     workflows: [
       'Codebase Snapshotting: Capture the current state of a project for archival or sharing.',
       'Remote Packing: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).',
-      'Token Authentication: Uses GITHUB_TOKEN or GITLAB_TOKEN from the environment for private repositories.',
-      'Agent Priming: Create snapshots with custom instructions to guide AI behavior.',
-      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.',
+      'Hybrid Snapshot: Use --include-binaries to bundle code and assets (images, icons) together.',
       'Token Optimization: Reduce context overhead using compression, comment stripping, and file limits.',
-      'Multi-Format Export: Output to Markdown or XML for better readability in LLM chat interfaces.'
+      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.'
     ]
   };
 
@@ -246,15 +256,53 @@ export class PackCommand extends Command {
 
       // Convert repomix result to jref snapshot format
       const allFiles: Record<string, string> = {};
+      const encodings: Record<string, 'utf8' | 'base64'> = {};
+
       if (result.processedFiles) {
         for (const file of result.processedFiles) {
           allFiles[file.path] = file.content;
         }
       }
 
+      // Hybrid mode: Append binaries
+      if (flags.includeBinaries && !isRemote) {
+        if (!options.silent) {
+          console.error(`🔍 Post-processing: Scanning for binaries to append...`);
+        }
+        const binaryScanWalk = (dir: string) => {
+          const entries = readdirSync(dir, { withFileTypes: true });
+          for (const entry of entries) {
+            const fullPath = join(dir, entry.name);
+            const relPath = relative(rootDir, fullPath);
+
+            // Basic safety/speed ignores for hybrid scan
+            if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'node_modules') continue;
+
+            if (entry.isDirectory()) {
+              binaryScanWalk(fullPath);
+            } else if (entry.isFile()) {
+              // If already in allFiles, we trust repomix unless it's truncated
+              if (allFiles[relPath]) continue;
+
+              const buffer = readFileSync(fullPath);
+              if (isBinaryBuffer(buffer)) {
+                if (flags.maxBinarySize && buffer.length > flags.maxBinarySize) {
+                  if (!options.silent) console.error(`⚠️  Skipping large binary: ${relPath} (${buffer.length} bytes)`);
+                  continue;
+                }
+                allFiles[relPath] = encodeBase64(buffer);
+                encodings[relPath] = 'base64';
+              }
+            }
+          }
+        };
+        binaryScanWalk(rootDir);
+      }
+
       // Helper to create a snapshot object
-      const createSnapshot = (filesMap: Record<string, string>): ProjectSnapshot => ({
+      const createSnapshot = (filesMap: Record<string, string>, encodingMap?: Record<string, any>): ProjectSnapshot => ({
         directoryStructure: generateDirectoryStructure(Object.keys(filesMap)),
+        encodings: encodingMap && Object.keys(encodingMap).length > 0 ? encodingMap : undefined,
         files: filesMap,
         instruction,
         fileSummary: flags.summary
@@ -264,6 +312,7 @@ export class PackCommand extends Command {
       if (flags.maxSize && flags.maxSize > 0) {
         const sortedPaths = Object.keys(allFiles).sort();
         let currentChunkFiles: Record<string, string> = {};
+        let currentChunkEncodings: Record<string, 'base64'> = {};
         let currentChunkSize = 0;
         let chunkIndex = 1;
         const totalFiles = sortedPaths.length;
@@ -275,7 +324,7 @@ export class PackCommand extends Command {
 
           // If adding this file exceeds the limit, emit current chunk
           if (currentChunkSize + fileSize > flags.maxSize && Object.keys(currentChunkFiles).length > 0) {
-            const snapshot = createSnapshot(currentChunkFiles);
+            const snapshot = createSnapshot(currentChunkFiles, currentChunkEncodings);
             const chunkPath = `snapshot.part${chunkIndex}.json`;
             writeFileSync(chunkPath, JSON.stringify(snapshot, null, 2));
             if (!options.silent) {
@@ -284,17 +333,19 @@ export class PackCommand extends Command {
             
             // Reset for next chunk
             currentChunkFiles = {};
+            currentChunkEncodings = {};
             currentChunkSize = 0;
             chunkIndex++;
           }
 
           currentChunkFiles[path] = content;
+          if (encodings[path]) currentChunkEncodings[path] = encodings[path] as any;
           currentChunkSize += fileSize;
         }
 
         // Emit final chunk
         if (Object.keys(currentChunkFiles).length > 0) {
-          const snapshot = createSnapshot(currentChunkFiles);
+          const snapshot = createSnapshot(currentChunkFiles, currentChunkEncodings);
           const chunkPath = `snapshot.part${chunkIndex}.json`;
           writeFileSync(chunkPath, JSON.stringify(snapshot, null, 2));
           if (!options.silent) {
@@ -306,7 +357,7 @@ export class PackCommand extends Command {
       }
 
       // Normal single-file output
-      const snapshot = createSnapshot(allFiles);
+      const snapshot = createSnapshot(allFiles, encodings);
       const output = JSON.stringify(snapshot, null, 2);
       
       if (options.json || options.silent) {
@@ -349,6 +400,10 @@ export class PackCommand extends Command {
         flags.topFilesLength = parseInt(args[++i], 10);
       } else if (arg === '--token-limit') {
         flags.tokenLimit = parseInt(args[++i], 10);
+      } else if (arg === '--include-binaries') {
+        flags.includeBinaries = true;
+      } else if (arg === '--max-binary-size') {
+        flags.maxBinarySize = parseInt(args[++i], 10);
       } else if (!arg.startsWith('-')) {
         targetDir = arg;
       }

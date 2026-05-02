@@ -8,6 +8,7 @@ import { z } from 'zod';
 export const ProjectSnapshotSchema = z.object({
   directoryStructure: z.string().optional(),
   files: z.record(z.string(), z.string()),
+  encodings: z.record(z.string(), z.enum(['utf8', 'base64'])).optional(),
   instruction: z.string().optional(),
   fileSummary: z.string().optional(),
   userProvidedHeader: z.string().optional(),
