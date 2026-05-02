@@ -6,14 +6,17 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 
 - **Inspect** - View directoryStructure and metadata without loading entire file
 - **Search** - High-speed regex or keyword searching across all file entries
-- **Extract** - Unpack specific files, directories, or entire project to filesystem
-- **Query** - Get content of a specific file path (AI-friendly)
+- **Validate** - Analyze git diff blast radius and generate AI validation context
+- **Extract** - Unpack specific files, directories, or entire project to filesystem (supports --stdout piping)
+- **Query** - Get content by path or perform **Semantic Search** (RAG) across chunks
 - **Reconstruct** - Dry-run mode to verify if local directory matches snapshot
 - **UI** - Interactive Terminal User Interface for browsing snapshots (mobile-friendly)
 - **Patch** - Update/add files and metadata in a snapshot via stdin or args
 - **Serve** - Model Context Protocol (MCP) server for agentic interoperability
 - **Diff** - Compare snapshot against local filesystem
 - **Pack** - Native creation of snapshots from local directories (.gitignore support)
+- **BPack** - Specialized binary-first snapshot creation for large assets
+- **BExtract** - Specialized binary-first extraction (supports --stdout piping)
 - **Summarize** - Generate token-efficient architectural maps (signatures only)
 - **OpenAPI** - Transform OpenAPI specs into virtual filesystem snapshots
 - **Run** - Execute scripts directly from a snapshot without extraction
@@ -107,6 +110,7 @@ Create a snapshot from a local directory or remote repository (optimized for LLM
 jref pack [directory|url] [options]
 
 Options:
+  --semantic               Enable AST-aware semantic chunking and local embeddings
   --instruction <text>     Add custom AI instructions (auto-generated if omitted)
   --summary <text>         Add a high-level file summary
   --max-size <bytes>       Split snapshot into chunks (JSON only)
@@ -117,6 +121,9 @@ Options:
   --remove-comments        Strip code comments
   --remove-empty-lines     Strip blank lines
   --token-limit <n>        Cap the total output tokens
+  --hashes                 Output a hash map of the directory instead of a snapshot
+  --delta [remote-hashes]  Create a delta snapshot based on remote hashes
+  --stream                 Enable real-time streaming mode for piped synchronization
 ```
 
 **Features:**
@@ -132,6 +139,33 @@ jref pack . --compress > project.json
 jref pack https://github.com/user/repo --branch main > remote.json
 jref pack . --output-style xml > snapshot.xml
 jref pack . --max-size 1048576 # 1MB chunks (JSON only)
+```
+
+### bpack
+
+Specialized binary-first snapshot creation for large datasets and assets.
+
+```bash
+jref bpack [directory] [options]
+
+Options:
+  --output, -o <file>      Output filename (default: stdout)
+  --exclude <pattern>      Exclude files matching pattern
+  --max-size <bytes>       Limit maximum size of a single binary file
+```
+
+### bextract
+
+Unpack a JSON binary archive back to the filesystem.
+
+```bash
+jref bextract <file> [options] [patterns...]
+
+Options:
+  --output, -o <dir>  Target directory (default: ./extracted)
+  --overwrite, -w     Overwrite existing files
+  --dry-run           Show what would be extracted
+  --stdout            Pipes a single decoded asset directly to stdout
 ```
 
 ### patch
@@ -174,6 +208,29 @@ Options:
 ```bash
 jref diff snapshot.json
 jref diff --directory ./my-app snapshot.json
+```
+
+### validate
+
+Analyze git diff blast radius and generate AI validation context.
+
+```bash
+jref validate <target-branch> [options]
+
+Options:
+  --output, -o <file>  Output the validation snapshot to a file
+  --depth, -d <n>      Maximum depth for dependency traversal (default: 1)
+  --all, -a            Include all tracked files (ignores blast radius)
+```
+
+**Workflows:**
+- **Blast Radius**: Automatically identify which files are affected by a change based on imports (supports TS, JS, Python, Rust, C++).
+- **AI Verification**: Generates a snapshot with specific instructions for an LLM to perform boolean pass/fail validation of the changes.
+
+**Examples:**
+```bash
+jref validate main --output validation.json
+jref validate HEAD~1 --depth 2
 ```
 
 ### openapi
@@ -269,10 +326,25 @@ jref search <pattern> [options] [file]
 
 ### query
 
-Get content of a specific file path. Optimized for AI agents.
+Get content of a specific file path or perform natural language **Semantic Search** (RAG) across code chunks.
 
 ```bash
-jref query --path <path> [file]
+jref query [options] [file]
+
+Options:
+  --path, -p <path>        Path of the file to query
+  --semantic, -s <query>   Perform natural language search across code chunks
+  --top-k <n>              Number of results for semantic search (default: 5)
+  --raw, -r                Emit pure content without headers
+```
+
+**Examples:**
+```bash
+# Targeted reading
+jref query --path "src/main.ts" snapshot.json
+
+# Semantic RAG (requires snapshot packed with --semantic)
+jref query --semantic "How are authentication tokens handled?" snapshot.json
 ```
 
 ### extract
@@ -287,6 +359,8 @@ Options:
   --overwrite, -w     Overwrite existing files
   --dry-run, -n       Show what would be extracted
   --flat              Extract files into a single directory (no subfolders)
+  --stdout            Pipe a single decoded asset directly to stdout
+  --listen            Listen on stdin for continuous stream of snapshots/deltas
 ```
 
 **Examples:**
@@ -297,8 +371,11 @@ jref extract project.json
 # Extract specific files/dirs with wildcards
 jref extract snapshot.json "src/**/*.ts" "docs/*"
 
-# Extract to specific directory
-jref extract --output ./lib project.json "src/lib/*"
+# Pipe asset to another tool
+jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
+
+# Continuous sync (RPC mode)
+jref extract --listen --output ./mirror
 ```
 
 ### run

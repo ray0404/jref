@@ -9,10 +9,13 @@
 5. [Global Options](#global-options)
 6. [Command Reference](#command-reference)
    - [pack — Create Snapshots](#pack)
+   - [bpack — Binary Snapshotting](#bpack)
+   - [bextract — Binary Unpacking](#bextract)
    - [inspect — View Snapshot Metadata](#inspect)
    - [search — Regex Search Within Snapshots](#search)
    - [query — Retrieve Specific File Content](#query)
    - [extract — Unpack Files to Filesystem](#extract)
+   - [validate — Analyze Blast Radius](#validate)
    - [reconstruct — Verify Local vs Snapshot](#reconstruct)
    - [diff — Compare Snapshot to Local Filesystem](#diff)
    - [patch — Modify Snapshots Without Extraction](#patch)
@@ -47,10 +50,13 @@ A snapshot captures:
 | Feature | Description |
 |---------|-------------|
 | **pack** | Create a snapshot from a local directory or remote repository (respects `.gitignore`). Includes **Secret Scanning**, **Auto-Instructions**, and **Chunking**. |
+| **bpack** | Specialized binary-first snapshot creation for large datasets and assets. |
+| **bextract** | Unpack a JSON binary archive back to the filesystem (supports `--stdout`). |
 | **inspect** | View tree and metadata without loading the whole file into memory |
 | **search** | High-speed regex / keyword search across all files in the snapshot |
 | **query** | Pull out a single file's content by path (AI-friendly, supports `--raw`) |
-| **extract** | Unpack specific files, directories, or the entire project to disk |
+| **extract** | Unpack specific files, directories, or the entire project to disk (supports `--stdout`) |
+| **validate** | Analyze git diff blast radius and generate AI validation context |
 | **reconstruct** | Dry-run check: does the local directory match the snapshot? |
 | **diff** | Compare snapshot contents against the live filesystem |
 | **patch** | Update/add file contents or metadata in a snapshot without extracting |
@@ -395,6 +401,10 @@ jref pack [directory|url] [options]
 | `--remove-empty-lines` | | Strip blank lines from the output files. |
 | `--top-files-length <n>` | | Limit the number of top-level files processed (default: 100). |
 | `--token-limit <n>` | | Set a maximum token limit for the output. |
+| `--semantic` | | Enable AST-aware semantic chunking and local embeddings. |
+| `--hashes` | | Output a hash map of the directory files instead of a snapshot. |
+| `--delta [remote-hashes]` | | Create a delta snapshot based on remote hashes. |
+| `--stream` | | Enable real-time streaming mode (wraps in protocol markers). |
 
 **Behavior:**
 - Defaults to current working directory if no directory is given
@@ -402,6 +412,8 @@ jref pack [directory|url] [options]
 - **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment.
 - **Secret Scanning**: Automatically redacts secrets (API keys, credentials) using `secretlint`.
 - **Optimization**: Use `--compress`, `--remove-comments`, and `--remove-empty-lines` to drastically reduce token counts for AI agents.
+- **Semantic RAG**: Use `--semantic` to generate local vector embeddings for code chunks, enabling natural language search in `jref query`.
+- **Delta Sync**: Combine `--hashes` and `--delta` to transfer only modified files between environments.
 - **Multi-Format**: Output to Markdown or XML for better performance with specific LLM context windows.
 
 **Examples:**
@@ -410,15 +422,49 @@ jref pack [directory|url] [options]
 # Snapshot current directory with compression
 jref pack . --compress > snapshot.json
 
-# Snapshot a remote repo at a specific commit
-jref pack https://github.com/user/repo --commit abc123def > remote.json
+# Snapshot with semantic embeddings for RAG
+jref pack . --semantic > snapshot.json
 
-# Output in Markdown format for immediate use in a LLM chat
-jref pack . --output-style markdown --remove-comments > project.md
-
-# Snapshot and split into 512KB chunks (JSON only)
-jref pack . --max-size 524288
+# Generate delta snapshot against remote hashes
+ssh remote "jref pack . --hashes" | jref pack . --delta --stream | ssh remote "jref extract --listen"
 ```
+
+---
+
+### bpack
+
+Specialized binary-first snapshot creation for large datasets and assets. Optimized for packing non-text files encoded as Base64.
+
+```
+jref bpack [directory] [options]
+```
+
+**Options:**
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--output <file>` | `-o` | Output filename (default: stdout) |
+| `--exclude <pattern>` | | Exclude files matching a glob pattern |
+| `--max-size <bytes>` | | Limit the maximum size of a single binary file |
+
+---
+
+### bextract
+
+Unpack a JSON binary archive back to the filesystem. Designed to complement `bpack`.
+
+```
+jref bextract <file> [options] [patterns...]
+```
+
+**Options:**
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--output <dir>` | `-o` | Target directory for extraction (default: `./extracted`) |
+| `--overwrite` | `-w` | Overwrite existing files on disk |
+| `--dry-run` | | Show what would be extracted without writing |
+| `--stdout` | | Pipe a single decoded asset directly to stdout |
 
 ---
 
@@ -445,7 +491,7 @@ Without any flag, all sections are displayed.
 
 - **Snapshot Metadata** — file count, total byte size, number of tree lines, presence of instruction/summary/header
 - **Directory Structure** — the ASCII tree string
-- **File List** — all file paths with human-readable sizes
+- **File List** — all file paths with human-readable sizes and **detected MIME types** for binary assets
 - **Summary** — custom header, file summary, and AI instructions
 
 **Examples:**
@@ -499,17 +545,19 @@ cat snapshot.json | jref search "TODO"
 
 ### query
 
-Retrieve the raw content of a specific file path from the snapshot. Designed for AI agent workflows.
+Retrieve the raw content of a specific file path or perform natural language **Semantic Search** (RAG) across the snapshot.
 
 ```
-jref query --path <path> [file]
+jref query [options] [file]
 ```
 
 **Options:**
 
 | Option | Alias | Description |
 |--------|-------|-------------|
-| `--path <path>` | `-p` | **Required.** Path of the file to retrieve. |
+| `--path <path>` | `-p` | Path of the file to retrieve. |
+| `--semantic <query>` | `-s` | Perform a natural language search across code chunks. |
+| `--top-k <n>` | | Number of results for semantic search (default: 5). |
 | `--raw` | `-r` | Emit pure file content (no header, no formatting). Ideal for piping. |
 | `--line-start <n>` | | Start reading from line `n` (1-indexed) |
 | `--line-end <n>` | | Stop reading at line `n` (1-indexed, inclusive) |
@@ -520,18 +568,11 @@ jref query --path <path> [file]
 # Human-readable with header
 jref query --path "src/main.ts" snapshot.json
 
+# Semantic Search (requires --semantic during pack)
+jref query --semantic "How are authentication tokens handled?" snapshot.json
+
 # Pure content for AI parsing
 jref query --path "src/main.ts" --raw snapshot.json
-
-# Pipe query output to patch another snapshot
-jref query --path "src/utils.ts" --raw snapshot.json | \
-  jref patch src/utils.ts snapshot.json > updated.json
-
-# Line range
-jref query --path "src/main.ts" --line-start 10 --line-end 50 snapshot.json
-
-# JSON structured output
-jref query --path "src/main.ts" --json snapshot.json
 ```
 
 ---
@@ -587,6 +628,8 @@ jref extract [options] [file] [patterns...]
 | `--overwrite` | `-w` | Overwrite existing files on disk |
 | `--dry-run` | `-n` | Preview what would be extracted without writing files |
 | `--flat` | | Flatten: extract filenames only (no directory structure) |
+| `--stdout` | | Pipe a single decoded asset directly to stdout |
+| `--listen` | | Listen on stdin for a continuous stream of snapshots/deltas |
 
 **Examples:**
 
@@ -594,20 +637,47 @@ jref extract [options] [file] [patterns...]
 # Extract entire project
 jref extract snapshot.json
 
-# Extract with wildcards
-jref extract snapshot.json "src/**/*.ts" "docs/*.md"
+# Pipe decoded asset to another tool
+jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
 
-# Extract to custom directory
-jref extract --output ./restored snapshot.json
+# Listen for continuous synchronization
+jref extract --listen --output ./mirror
+```
 
-# Flatten output (all files side by side)
-jref extract --flat --output ./flat snapshot.json
+---
 
-# Dry run preview
-jref extract --dry-run snapshot.json
+### validate
 
-# Overwrite existing
-jref extract --overwrite snapshot.json
+Analyze git diff blast radius and generate AI validation context. This command identifies changed files relative to a target branch and identifies their affected dependents through import analysis.
+
+```
+jref validate <target-branch> [options]
+```
+
+**Options:**
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--output <file>` | `-o` | Output the validation snapshot to a specific file |
+| `--depth <n>` | `-d` | Maximum depth for dependency traversal (default: 1) |
+| `--all` | `-a` | Include all tracked files in the snapshot (ignores blast radius) |
+
+**Workflows:**
+- **Blast Radius Analysis**: Automatically identifies which files in the project need to be re-verified when a specific file is changed.
+- **Import Mapping**: Supports dependency resolution for TypeScript, JavaScript, Python, Rust, and C++.
+- **Autonomous Guardrails**: The generated snapshot includes a specialized `instruction` that forces an LLM into a rigorous "pass/fail" verification mode.
+
+**Examples:**
+
+```bash
+# Analyze changes against main
+jref validate main
+
+# Analyze against a specific commit with deep dependency tracing
+jref validate HEAD~3 --depth 3 --output validation.json
+
+# Analyze all files regardless of dependency
+jref validate origin/develop --all
 ```
 
 ---
