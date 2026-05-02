@@ -1,6 +1,6 @@
 /**
  * Query Command
- * Retrieve content of a specific file path from the snapshot
+ * Retrieve content of a specific file path or perform semantic search from the snapshot
  * Designed for AI agent usage with --raw flag support
  * Supports streaming for large JSON snapshots
  */
@@ -10,6 +10,7 @@ import type { CLIOptions, CommandResult, CommandContext } from '../types/index.j
 import { processSnapshot } from '../utils/streaming-json.js';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
+import { generateEmbedding, cosineSimilarity } from '../utils/embeddings.js';
 
 interface QueryFlags {
   path?: string;
@@ -17,14 +18,24 @@ interface QueryFlags {
   lineStart?: number;
   lineEnd?: number;
   searchBinaries?: boolean;
+  semantic?: string;
+  topK?: number;
 }
 
 export class QueryCommand extends Command {
   readonly definition: CommandDefinition = {
     name: 'query',
-    description: 'Get content of a specific file path from the snapshot',
-    usage: 'jref query --path <path> [file]',
+    description: 'Get content of a specific file path or perform semantic search from the snapshot',
+    usage: 'jref query [options] [file]',
     options: [
+      {
+        flags: '--semantic, -s <query>',
+        description: 'Perform a natural language semantic search across code chunks'
+      },
+      {
+        flags: '--top-k <number>',
+        description: 'Number of top semantic results to return (default: 5)'
+      },
       {
         flags: '--path, -p <path>',
         description: 'Path of the file to query within the snapshot'
@@ -47,19 +58,19 @@ export class QueryCommand extends Command {
       }
     ],
     examples: [
+      'jref query --semantic "How is authentication handled?" snapshot.json',
       'jref query --path "src/main.ts" snapshot.json',
       'jref query --path "src/main.ts" --raw snapshot.json',
       'jref query --path "README.md" --json snapshot.json',
       'cat snapshot.json | jref query --path "src/index.ts"',
-      'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json',
-      'jref query --path "logo.png" --search-binaries snapshot.json'
+      'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json'
     ],
     workflows: [
+      'Semantic Search: Find relevant code blocks using natural language queries.',
       'Targeted Reading: Retrieve specific files from large snapshots for analysis.',
       'Agent Context Injection: Use --raw to provide pure code content to AI agents.',
       'Snippet Extraction: Use --line-start and --line-end to read only relevant portions of large files.',
-      'Verification: Quickly check the content of a file within a snapshot without extraction.',
-      'Binary Access: Use --search-binaries to see the raw Base64 content of assets.'
+      'Verification: Quickly check the content of a file within a snapshot without extraction.'
     ]
   };
 
@@ -71,8 +82,12 @@ export class QueryCommand extends Command {
     try {
       const { flags, filePath } = this.parseArgs(args);
 
-      if (!flags.path) {
-        return this.error('File path is required (--path <path>)', options);
+      if (!flags.path && !flags.semantic) {
+        return this.error('Either --path <path> or --semantic <query> is required', options);
+      }
+
+      if (flags.semantic) {
+        return this.executeSemanticQuery(flags.semantic, flags.topK || 5, filePath, options, context);
       }
 
       let fileContent: string | undefined;
@@ -138,6 +153,13 @@ export class QueryCommand extends Command {
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
       switch (arg) {
+        case '--semantic':
+        case '-s':
+          flags.semantic = args[++i];
+          break;
+        case '--top-k':
+          flags.topK = parseInt(args[++i], 10);
+          break;
         case '--path':
         case '-p':
           flags.path = args[++i];
@@ -165,6 +187,100 @@ export class QueryCommand extends Command {
     return { flags, filePath };
   }
 
+  private async executeSemanticQuery(
+    query: string,
+    topK: number,
+    snapshotPath: string | undefined,
+    options: CLIOptions,
+    context: CommandContext
+  ): Promise<CommandResult> {
+    const snapshot = await this.getSnapshot(context, options, snapshotPath);
+    
+    if (!snapshot.chunks || snapshot.chunks.length === 0) {
+      return this.error('Snapshot does not contain semantic chunks. Repack with --semantic flag.', options);
+    }
+
+    if (!options.silent) {
+      console.error(`🧠 Embedding query: "${query}"...`);
+    }
+
+    const queryEmbedding = await generateEmbedding(query);
+    
+    const results = snapshot.chunks
+      .map(chunk => ({
+        chunk,
+        score: cosineSimilarity(queryEmbedding, chunk.embedding || [])
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topK);
+
+    if (options.json) {
+      return this.success(JSON.stringify(results, null, 2));
+    }
+
+    // Create a micro-snapshot for the results
+    const microSnapshot: any = {
+      query,
+      results: results.map(r => {
+        // Extract imports from the original file
+        const fileContent = snapshot.files[r.chunk.filePath];
+        const imports = this.extractImports(fileContent || '');
+        
+        return {
+          filePath: r.chunk.filePath,
+          lines: `${r.chunk.startLine}-${r.chunk.endLine}`,
+          type: r.chunk.type,
+          name: r.chunk.name,
+          score: r.score.toFixed(4),
+          imports: imports.length > 0 ? imports : undefined,
+          content: r.chunk.content
+        };
+      })
+    };
+
+    if (options.raw) {
+      process.stdout.write(JSON.stringify(microSnapshot, null, 2));
+      return this.success();
+    }
+
+    console.log(`\n🔍 Semantic Search Results for: "${query}"`);
+    console.log('─'.repeat(50));
+    
+    results.forEach((res, i) => {
+      const imports = this.extractImports(snapshot.files[res.chunk.filePath] || '');
+      console.log(`[${i+1}] ${res.chunk.filePath} (${res.chunk.type}${res.chunk.name ? ': ' + res.chunk.name : ''}) - Score: ${res.score.toFixed(4)}`);
+      console.log(`Lines: ${res.chunk.startLine}-${res.chunk.endLine}`);
+      if (imports.length > 0) {
+        console.log(`Imports: ${imports.length} found`);
+      }
+      console.log('─'.repeat(20));
+      console.log(res.chunk.content);
+      console.log('─'.repeat(50));
+    });
+
+    return this.success();
+  }
+
+  private extractImports(content: string): string[] {
+    const importPatterns = [
+      /^import\s+.*from\s+['"].*['"]/gm,
+      /^import\s+['"].*['"]/gm,
+      /^from\s+.*\s+import\s+.*/gm,
+      /^const\s+.*\s+=\s+require\(['"].*['"]\)/gm,
+      /^extern\s+crate\s+.*/gm,
+      /^use\s+.*/gm
+    ];
+
+    const imports: string[] = [];
+    for (const pattern of importPatterns) {
+      const matches = content.match(pattern);
+      if (matches) {
+        imports.push(...matches);
+      }
+    }
+    return [...new Set(imports)];
+  }
+
   private extractLineRange(
     content: string,
     start?: number,
@@ -182,7 +298,6 @@ export class QueryCommand extends Command {
     flags: QueryFlags,
     options: CLIOptions
   ): void {
-    // --raw or --json flag for AI agents
     if (options.json) {
       this.print(
         {
@@ -197,12 +312,10 @@ export class QueryCommand extends Command {
     }
 
     if (flags.raw || options.raw) {
-      // Pure content output for AI parsing
       process.stdout.write(content);
       return;
     }
 
-    // Human-readable with header
     console.log(`\n📄 ${flags.path}`);
     console.log('─'.repeat(50));
     console.log(content);

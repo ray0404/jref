@@ -11,6 +11,8 @@ import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand } from 're
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { generateInstruction } from '../utils/instruction.js';
 import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
+import { chunkCode } from '../utils/chunking.js';
+import { generateEmbedding } from '../utils/embeddings.js';
 
 interface PackFlags {
   instruction?: string;
@@ -26,6 +28,7 @@ interface PackFlags {
   tokenLimit?: number;
   includeBinaries?: boolean;
   maxBinarySize?: number;
+  semantic?: boolean;
 }
 
 export class PackCommand extends Command {
@@ -34,6 +37,10 @@ export class PackCommand extends Command {
     description: 'Create a snapshot from a local directory or remote repository',
     usage: 'jref pack [directory|url] [options]',
     options: [
+      {
+        flags: '--semantic',
+        description: 'Enable AST-aware semantic chunking and local embeddings'
+      },
       {
         flags: '--instruction <text>',
         description: 'Add custom AI instructions to the snapshot'
@@ -251,6 +258,34 @@ export class PackCommand extends Command {
         console.error(`✅ Packed ${result.processedFiles?.length || 0} files.`);
       }
 
+      // Handle semantic chunking and embeddings
+      const allChunks: any[] = [];
+      if (flags.semantic) {
+        if (!options.silent) {
+          console.error(`🧠 Generating semantic embeddings for code chunks...`);
+        }
+        if (result.processedFiles) {
+          for (const file of result.processedFiles) {
+            // Only chunk text files that look like code
+            const isCode = /\.(ts|tsx|js|jsx|py|zig|rs|c|cpp|h|hpp)$/.test(file.path);
+            if (isCode) {
+              const chunks = chunkCode(file.path, file.content);
+              for (const chunk of chunks) {
+                try {
+                  chunk.embedding = await generateEmbedding(chunk.content);
+                  allChunks.push(chunk);
+                } catch (err) {
+                  if (!options.silent) console.error(`⚠️  Failed to embed chunk in ${file.path}: ${(err as Error).message}`);
+                }
+              }
+            }
+          }
+        }
+        if (!options.silent) {
+          console.error(`✅ Generated ${allChunks.length} semantic chunks.`);
+        }
+      }
+
       // Handle instruction generation (JSON style only beyond this point)
       const instruction = flags.instruction || (isRemote ? 'Analyze this codebase snapshot.' : await generateInstruction(rootDir));
 
@@ -305,7 +340,8 @@ export class PackCommand extends Command {
         encodings: encodingMap && Object.keys(encodingMap).length > 0 ? encodingMap : undefined,
         files: filesMap,
         instruction,
-        fileSummary: flags.summary
+        fileSummary: flags.summary,
+        chunks: allChunks.length > 0 ? allChunks : undefined
       });
 
       // Handle Chunking (Feature 4)
@@ -402,6 +438,8 @@ export class PackCommand extends Command {
         flags.tokenLimit = parseInt(args[++i], 10);
       } else if (arg === '--include-binaries') {
         flags.includeBinaries = true;
+      } else if (arg === '--semantic') {
+        flags.semantic = true;
       } else if (arg === '--max-binary-size') {
         flags.maxBinarySize = parseInt(args[++i], 10);
       } else if (!arg.startsWith('-')) {

@@ -30,7 +30,7 @@ describe('DiffCommand', () => {
     const result = await command.execute([], { json: true }, context);
     
     const output = JSON.parse(result.output!);
-    expect(output.modifiedFiles).toContain('src/main.ts');
+    expect(output.modifiedFiles.some((f: any) => f.path === 'src/main.ts')).toBe(true);
   });
 
   it('should identify a missing local file (Added to snapshot)', async () => {

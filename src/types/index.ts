@@ -5,6 +5,16 @@ import { z } from 'zod';
  * Represents the structure of a condensed JSON project snapshot
  */
 
+export interface CodeChunk {
+  filePath: string;
+  startLine: number;
+  endLine: number;
+  type: 'function' | 'class' | 'method' | 'block';
+  name?: string;
+  content: string;
+  embedding?: number[];
+}
+
 export const ProjectSnapshotSchema = z.object({
   directoryStructure: z.string().optional(),
   files: z.record(z.string(), z.string()),
@@ -12,6 +22,7 @@ export const ProjectSnapshotSchema = z.object({
   instruction: z.string().optional(),
   fileSummary: z.string().optional(),
   userProvidedHeader: z.string().optional(),
+  chunks: z.array(z.custom<CodeChunk>()).optional(),
 });
 
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
