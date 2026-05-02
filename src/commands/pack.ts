@@ -13,6 +13,8 @@ import { generateInstruction } from '../utils/instruction.js';
 import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
 import { chunkCode } from '../utils/chunking.js';
 import { generateEmbedding } from '../utils/embeddings.js';
+import { generateFileHashMap, getDeltaPaths, type FileHashMap } from '../utils/hashing.js';
+import { readFromInput } from '../utils/input.js';
 
 interface PackFlags {
   instruction?: string;
@@ -29,6 +31,9 @@ interface PackFlags {
   includeBinaries?: boolean;
   maxBinarySize?: number;
   semantic?: boolean;
+  hashes?: boolean;
+  delta?: string | boolean;
+  stream?: boolean;
 }
 
 export class PackCommand extends Command {
@@ -82,6 +87,10 @@ export class PackCommand extends Command {
         description: 'Limit the number of top-level files processed'
       },
       {
+        flags: '--top-files-length <number>',
+        description: 'Limit the number of top-level files processed'
+      },
+      {
         flags: '--token-limit <number>',
         description: 'Set a maximum token limit for the output'
       },
@@ -92,6 +101,18 @@ export class PackCommand extends Command {
       {
         flags: '--max-binary-size <bytes>',
         description: 'Maximum size for a single binary file to be included'
+      },
+      {
+        flags: '--hashes',
+        description: 'Output a hash map of the directory files instead of a snapshot'
+      },
+      {
+        flags: '--delta [remote-hashes]',
+        description: 'Create a delta snapshot based on remote hashes (reads from stdin if no file given)'
+      },
+      {
+        flags: '--stream',
+        description: 'Enable real-time streaming mode for piped synchronization'
       }
     ],
     examples: [
@@ -99,28 +120,72 @@ export class PackCommand extends Command {
       'jref pack . --include-binaries --max-binary-size 1048576 > snapshot.json',
       'jref pack https://github.com/user/repo --branch main > snapshot.json',
       'jref pack . --output-style markdown --compress > project.md',
-      'jref pack github:user/repo --remove-comments --top-files-length 50 > snapshot.json'
+      'jref pack . --hashes > local.hashes.json',
+      'jref pack . --delta remote.hashes.json > delta.json',
+      'ssh remote "jref pack . --hashes" | jref pack . --delta --stream | ssh remote "jref extract --listen"'
     ],
     workflows: [
       'Codebase Snapshotting: Capture the current state of a project for archival or sharing.',
       'Remote Packing: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).',
       'Hybrid Snapshot: Use --include-binaries to bundle code and assets (images, icons) together.',
       'Token Optimization: Reduce context overhead using compression, comment stripping, and file limits.',
-      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.'
+      'Chunked Packing: Manage large projects by splitting them into smaller, manageable snapshots.',
+      'Delta Syncing: Minimize transfer size by sending only changed files between environments.'
     ]
   };
 
   async execute(
     args: string[],
     options: CLIOptions,
-    _context: CommandContext
+    context: CommandContext
   ): Promise<CommandResult> {
     try {
       const { flags, targetDir } = this.parseArgs(args);
       
       const isRemote = targetDir && (isExplicitRemoteUrl(targetDir) || isValidShorthand(targetDir));
       let result: any;
-      let rootDir = process.cwd();
+      let rootDir = targetDir ? resolve(targetDir) : process.cwd();
+
+      if (!existsSync(rootDir) && !isRemote) {
+        return this.error(`Directory not found: ${rootDir}`, options);
+      }
+
+      // Handle --hashes flag
+      if (flags.hashes) {
+        const hashMap = generateFileHashMap(rootDir);
+        const output = JSON.stringify(hashMap, null, 2);
+        if (options.json || options.silent) {
+          return this.success(output);
+        }
+        process.stdout.write(output + '\n');
+        return this.success();
+      }
+
+      // Handle --delta flag
+      let deltaPaths: string[] | undefined;
+      if (flags.delta) {
+        let remoteHashMap: FileHashMap;
+        if (typeof flags.delta === 'string' && existsSync(flags.delta)) {
+          remoteHashMap = JSON.parse(readFileSync(flags.delta, 'utf8'));
+        } else {
+          // Read from stdin
+          if (!options.silent) console.error('📥 Reading remote hashes from stdin...');
+          const input = await readFromInput();
+          remoteHashMap = JSON.parse(input);
+        }
+        
+        const localHashMap = generateFileHashMap(rootDir);
+        deltaPaths = getDeltaPaths(localHashMap, remoteHashMap);
+        
+        if (!options.silent) {
+          console.error(`🔍 Delta analysis: ${deltaPaths.length} files changed/new.`);
+        }
+
+        if (deltaPaths.length === 0) {
+          if (!options.silent) console.error('✅ No changes detected.');
+          return this.success(options.json ? JSON.stringify({ message: 'No changes detected', files: [] }) : 'No changes detected.');
+        }
+      }
 
       // Validate flag combinations
       if (flags.maxSize && flags.outputStyle && flags.outputStyle !== 'json') {
@@ -177,15 +242,9 @@ export class PackCommand extends Command {
         }
 
       } else {
-        rootDir = targetDir ? resolve(targetDir) : process.cwd();
-
-        if (!existsSync(rootDir)) {
-          return this.error(`Directory not found: ${rootDir}`, options);
-        }
-
         const outputFileName = `repomix-output.${outputStyle === 'json' ? 'json' : outputStyle === 'markdown' ? 'md' : outputStyle === 'xml' ? 'xml' : 'txt'}`;
 
-        // Prepare repomix configuration with explicit defaults
+        // Prepare repomix configuration
         const config: any = {
           cwd: rootDir,
           input: {
@@ -215,9 +274,9 @@ export class PackCommand extends Command {
             },
             tokenCountTree: !!flags.tokenLimit
           },
-          include: [],
+          include: deltaPaths || [],
           ignore: {
-            useGitignore: false, // Set to false to avoid interference in tests
+            useGitignore: false,
             useDotIgnore: true,
             useDefaultPatterns: true,
             customPatterns: [],
@@ -311,13 +370,16 @@ export class PackCommand extends Command {
             const relPath = relative(rootDir, fullPath);
 
             // Basic safety/speed ignores for hybrid scan
-            if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist' || entry.name === 'node_modules') continue;
+            if (entry.name === '.git' || entry.name === 'node_modules' || entry.name === 'dist') continue;
 
             if (entry.isDirectory()) {
               binaryScanWalk(fullPath);
             } else if (entry.isFile()) {
               // If already in allFiles, we trust repomix unless it's truncated
               if (allFiles[relPath]) continue;
+              
+              // If in delta mode, only include if it was in deltaPaths
+              if (deltaPaths && !deltaPaths.includes(relPath)) continue;
 
               const buffer = readFileSync(fullPath);
               if (isBinaryBuffer(buffer)) {
@@ -344,7 +406,7 @@ export class PackCommand extends Command {
         chunks: allChunks.length > 0 ? allChunks : undefined
       });
 
-      // Handle Chunking (Feature 4)
+      // Handle Chunking
       if (flags.maxSize && flags.maxSize > 0) {
         const sortedPaths = Object.keys(allFiles).sort();
         let currentChunkFiles: Record<string, string> = {};
@@ -394,6 +456,22 @@ export class PackCommand extends Command {
 
       // Normal single-file output
       const snapshot = createSnapshot(allFiles, encodings);
+      
+      // If streaming mode, wrap in protocol markers
+      if (flags.stream) {
+        const payload = JSON.stringify({
+            jref_protocol: '1.0',
+            type: deltaPaths ? 'delta' : 'snapshot',
+            timestamp: Date.now(),
+            ...snapshot
+        });
+        // Use a clear boundary marker
+        process.stdout.write('\n--JREF-START--\n');
+        process.stdout.write(payload + '\n');
+        process.stdout.write('--JREF-END--\n');
+        return this.success();
+      }
+
       const output = JSON.stringify(snapshot, null, 2);
       
       if (options.json || options.silent) {
@@ -404,6 +482,9 @@ export class PackCommand extends Command {
       return this.success();
 
     } catch (err) {
+      if ((err as any).code === 'EPIPE') {
+        return this.success(); // Silent exit on broken pipe
+      }
       return this.error(`Pack failed: ${(err as Error).message}`, options);
     }
   }
@@ -442,6 +523,16 @@ export class PackCommand extends Command {
         flags.semantic = true;
       } else if (arg === '--max-binary-size') {
         flags.maxBinarySize = parseInt(args[++i], 10);
+      } else if (arg === '--hashes') {
+        flags.hashes = true;
+      } else if (arg === '--delta') {
+        if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+            flags.delta = args[++i];
+        } else {
+            flags.delta = true;
+        }
+      } else if (arg === '--stream') {
+        flags.stream = true;
       } else if (!arg.startsWith('-')) {
         targetDir = arg;
       }
