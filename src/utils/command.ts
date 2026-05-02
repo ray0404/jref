@@ -243,6 +243,9 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { SummarizeCommand } = await import('../commands/summarize.js');
   const { RunCommand } = await import('../commands/run.js');
 
+  // Load plugins/built-ins that register themselves
+  await import('../plugins/openapi.js');
+
   registry.register(new InspectCommand());
   registry.register(new SearchCommand());
   registry.register(new ExtractCommand());

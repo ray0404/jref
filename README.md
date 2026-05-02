@@ -15,6 +15,7 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Diff** - Compare snapshot against local filesystem
 - **Pack** - Native creation of snapshots from local directories (.gitignore support)
 - **Summarize** - Generate token-efficient architectural maps (signatures only)
+- **OpenAPI** - Transform OpenAPI specs into virtual filesystem snapshots
 - **Run** - Execute scripts directly from a snapshot without extraction
 
 ## Target Environments
@@ -173,6 +174,23 @@ Options:
 ```bash
 jref diff snapshot.json
 jref diff --directory ./my-app snapshot.json
+```
+
+### openapi
+
+Transform an OpenAPI/RESTful specification into a queryable jref snapshot.
+
+```bash
+jref openapi <spec.json>
+```
+
+**Examples:**
+```bash
+# Transform and save
+jref openapi api.json > snapshot.json
+
+# Browse the virtual API structure
+jref openapi api.json | jref ui
 ```
 
 ### serve

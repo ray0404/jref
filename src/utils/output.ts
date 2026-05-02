@@ -178,7 +178,17 @@ export function printHeader(options: CLIOptions = {}): void {
 
 /**
  * Exit with code
+ * Ensures stdout is flushed before exiting (essential for pipes)
  */
-export function exit(code: number): never {
-  process.exit(code);
-}// Modified for demo
+export function exit(code: number): void {
+  process.exitCode = code;
+  
+  // If stdout is not empty, wait for it to flush
+  if (!process.stdout.writableLength) {
+    process.exit(code);
+  }
+
+  process.stdout.once('drain', () => {
+    process.exit(code);
+  });
+}

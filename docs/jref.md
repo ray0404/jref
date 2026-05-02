@@ -17,6 +17,7 @@
    - [diff — Compare Snapshot to Local Filesystem](#diff)
    - [patch — Modify Snapshots Without Extraction](#patch)
    - [summarize — Generate Architectural Maps](#summarize)
+   - [openapi — Transform OpenAPI Specifications](#openapi)
    - [serve — MCP Server for AI Agents](#serve)
    - [ui — Interactive TUI Browser](#ui)
 7. [Snapshot Schema](#snapshot-schema)
@@ -54,6 +55,7 @@ A snapshot captures:
 | **diff** | Compare snapshot contents against the live filesystem |
 | **patch** | Update/add file contents or metadata in a snapshot without extracting |
 | **summarize** | Strip implementation bodies, keep only signatures and imports |
+| **openapi** | Transform an OpenAPI spec into a virtual filesystem snapshot |
 | **serve** | Start an MCP (Model Context Protocol) stdio server for AI agents |
 | **ui** | Interactive Terminal UI for browsing snapshots with **Fuzzy Search** and **Multi-Selection**. |
 
@@ -103,7 +105,7 @@ npm install -g .
 
 ```bash
 jref --version
-# jref v1.0.0
+# jref v1.2.0
 
 jref --help
 ```
@@ -776,6 +778,43 @@ jref summarize --json snapshot.json
 | `type ...` | ✅ |
 | `@decorator` | ✅ |
 | Everything else | ❌ (replaced with `/* ... implementation details stripped ... */`) |
+
+---
+
+### openapi
+
+Transform an OpenAPI/Swagger/RESTful specification into a queryable jref snapshot. This "unpacks" a monolithic API spec into a virtual filesystem, splitting paths and schemas into discrete files.
+
+```
+jref openapi <spec.json>
+```
+
+**Metadata Mapping:**
+
+| Source | Virtual Path | Content |
+|--------|--------------|---------|
+| `.servers` | `metadata/servers.json` | JSON list of API base URLs |
+| `.components.schemas` | `components/schemas/*.json` | Reusable data model definitions |
+| `.paths` | `paths/{path}/{METHOD}.json` | Endpoint definitions (params, responses, etc.) |
+
+**Header Integration:** All server URLs found in the specification are added to the snapshot's `userProvidedHeader` for quick reference during `jref inspect`.
+
+**Primary use cases:**
+- **API Exploration**: Navigate complex API specs using `jref ui`.
+- **Agentic Routing**: Provide AI agents with small, relevant file-like chunks of an API rather than one giant JSON file.
+
+**Examples:**
+
+```bash
+# Transform a spec and save to file
+jref openapi tailscale-api.json > tailscale.json
+
+# Transform and query a specific endpoint immediately
+jref openapi api.json | jref query --path "paths/users/{id}/GET.json"
+
+# View the virtual API structure
+jref openapi api.json | jref ui
+```
 
 ---
 
