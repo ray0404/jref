@@ -87,10 +87,6 @@ export class PackCommand extends Command {
         description: 'Limit the number of top-level files processed'
       },
       {
-        flags: '--top-files-length <number>',
-        description: 'Limit the number of top-level files processed'
-      },
-      {
         flags: '--token-limit <number>',
         description: 'Set a maximum token limit for the output'
       },
