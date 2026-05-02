@@ -65,6 +65,29 @@ describe('InspectCommand', () => {
     expect(result.success).toBe(true);
   });
 
+  it('should detect binary MIME types', async () => {
+    const binarySnapshot = {
+      files: {
+        'image.png': Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]).toString('base64')
+      },
+      encodings: {
+        'image.png': 'base64'
+      }
+    };
+    const context: CommandContext = {
+      stdin: JSON.stringify(binarySnapshot),
+      stdinIsPipe: true
+    };
+
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const result = await command.execute(['--files'], { json: true }, context);
+
+    expect(result.success).toBe(true);
+    const output = JSON.parse(spy.mock.calls[0][0]);
+    expect(output.mimeTypes['image.png']).toBe('image/png');
+    spy.mockRestore();
+  });
+
   it('should handle invalid JSON input', async () => {
     const context: CommandContext = {
       stdin: 'invalid json',

@@ -53,6 +53,31 @@ describe('ExtractCommand', () => {
     expect(existsSync(join(testOutputDir, 'package.json'))).toBe(false);
   });
 
+  it('should pipe decoded content to stdout when --stdout is used', async () => {
+    const binarySnapshot = {
+      encodings: {
+        'data.bin': 'base64'
+      },
+      files: {
+        'data.bin': Buffer.from('binary content').toString('base64')
+      }
+    };
+    const context: CommandContext = {
+      stdin: JSON.stringify(binarySnapshot),
+      stdinIsPipe: true
+    };
+
+    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const result = await command.execute(['--stdout', 'data.bin'], {}, context);
+
+    expect(result.success).toBe(true);
+    expect(stdoutSpy).toHaveBeenCalled();
+    const pipedData = stdoutSpy.mock.calls[0][0] as Buffer;
+    expect(pipedData.toString()).toBe('binary content');
+    
+    stdoutSpy.mockRestore();
+  });
+
   it('should handle dry-run mode', async () => {
     const result = await command.execute(['--dry-run', '--output', testOutputDir], { json: true }, mockContext);
 
