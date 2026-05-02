@@ -19,10 +19,11 @@ interface BExtractFlags {
   outputDir?: string;
   overwrite?: boolean;
   dryRun?: boolean;
+  stdout?: boolean;
+  patterns?: string[];
 }
 
 export class BExtractCommand extends Command {
-  // ...
   readonly definition: CommandDefinition = {
     name: 'bextract',
     description: 'Unpack a JSON binary archive',
@@ -39,11 +40,16 @@ export class BExtractCommand extends Command {
       {
         flags: '--dry-run',
         description: 'Show what would be extracted'
+      },
+      {
+        flags: '--stdout',
+        description: 'Pipes a single decoded asset directly to stdout'
       }
     ],
     examples: [
       'jref bextract archive.json',
-      'jref bextract archive.json -o ./restore'
+      'jref bextract archive.json -o ./restore',
+      'jref bextract archive.json --stdout "kick.wav" | ./dsp_tool'
     ]
   };
 
@@ -54,6 +60,52 @@ export class BExtractCommand extends Command {
   ): Promise<CommandResult> {
     try {
       const { flags, filePath } = this.parseArgs(args, context);
+      const patterns = flags.patterns || [];
+
+      // Handle --stdout piping
+      if (flags.stdout) {
+        if (patterns.length === 0) {
+          return this.error('--stdout requires at least one file pattern', options);
+        }
+        
+        options.silent = true;
+        let pipedBuffer: Buffer | null = null;
+        let pipedPath: string | null = null;
+        const encodings: Record<string, string> = {};
+
+        const onFilePipe = async (path: string, content: string) => {
+          if (pipedBuffer) return;
+          if (patterns.length > 0 && !patterns.some(p => path === p || path.endsWith('/' + p))) return;
+
+          pipedPath = path;
+          pipedBuffer = Buffer.from(content, 'utf8');
+        };
+
+        let input: string | NodeJS.ReadableStream;
+        if (filePath) {
+          input = createReadStream(filePath);
+        } else {
+          input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
+        }
+
+        await processSnapshot(input, {
+          onMetadata: (key, value) => {
+            if (key === 'encodings') Object.assign(encodings, value);
+          },
+          onFile: onFilePipe
+        });
+
+        if (pipedBuffer && pipedPath) {
+          const encoding = encodings[pipedPath] || 'utf8';
+          const content = pipedBuffer.toString('utf8');
+          const finalBuffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+          process.stdout.write(finalBuffer);
+          return this.success();
+        }
+
+        return this.error('No binary files matched for piping', { ...options, silent: false });
+      }
+
       const outputDir = flags.outputDir || './extracted';
       const encodings: Record<string, string> = {};
       const results: { path: string; size: number; success: boolean }[] = [];
@@ -121,6 +173,7 @@ export class BExtractCommand extends Command {
   protected parseArgs(args: string[], context?: CommandContext): { flags: BExtractFlags; filePath?: string } {
     const flags: BExtractFlags = {};
     let filePath: string | undefined;
+    const patterns: string[] = [];
     const isPipe = context?.stdinIsPipe || false;
 
     for (let i = 0; i < args.length; i++) {
@@ -131,13 +184,18 @@ export class BExtractCommand extends Command {
         flags.overwrite = true;
       } else if (arg === '--dry-run') {
         flags.dryRun = true;
+      } else if (arg === '--stdout') {
+        flags.stdout = true;
       } else if (!arg.startsWith('-')) {
         if (!filePath && !isPipe) {
           filePath = arg;
+        } else {
+          patterns.push(arg);
         }
       }
     }
 
+    flags.patterns = patterns;
     return { flags, filePath };
   }
 }

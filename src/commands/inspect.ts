@@ -10,6 +10,7 @@ import { processSnapshot } from '../utils/streaming-json.js';
 import { printTable, printHeader } from '../utils/output.js';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
+import { getMagicNumbers, detectMimeType } from '../utils/binary.js';
 
 export class InspectCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -61,6 +62,8 @@ export class InspectCommand extends Command {
       let fileSizes: Record<string, number> = {};
       let decodedSizes: Record<string, number> = {};
       let encodings: Record<string, string> = {};
+      let mimeTypes: Record<string, string> = {};
+      let filePreviews: Record<string, string> = {};
       let totalSize = 0;
       let totalDecodedSize = 0;
       let binarySize = 0;
@@ -76,8 +79,8 @@ export class InspectCommand extends Command {
         const snapshotEncodings = fullSnapshot.encodings || {};
         for (const [path, content] of Object.entries(fullSnapshot.files)) {
           const isBinary = snapshotEncodings[path] === 'base64';
-          const size = Buffer.byteLength(content, 'utf8');
-          const decodedSize = isBinary ? Buffer.byteLength(content, 'base64') : size;
+          const size = Buffer.byteLength(content as string, 'utf8');
+          const decodedSize = isBinary ? Buffer.byteLength(content as string, 'base64') : size;
           
           fileSizes[path] = size;
           decodedSizes[path] = decodedSize;
@@ -89,6 +92,7 @@ export class InspectCommand extends Command {
             binaryCount++;
             binarySize += decodedSize;
             encodings[path] = 'base64';
+            mimeTypes[path] = detectMimeType(getMagicNumbers(content as string));
           } else {
             textCount++;
             textSize += size;
@@ -121,13 +125,25 @@ export class InspectCommand extends Command {
               if (isBinary) {
                 binaryCount++;
                 binarySize += decodedSize;
+                mimeTypes[path] = detectMimeType(getMagicNumbers(content));
               } else {
                 textCount++;
                 textSize += size;
+                // Store preview in case it's actually binary but encodings hasn't arrived
+                filePreviews[path] = content.slice(0, 32);
               }
             }
           }
         );
+      }
+
+      // Post-process: handle files where encodings metadata arrived AFTER the file content
+      for (const [path, encoding] of Object.entries(encodings)) {
+          if (encoding === 'base64' && !mimeTypes[path] && filePreviews[path]) {
+              mimeTypes[path] = detectMimeType(getMagicNumbers(filePreviews[path]));
+              // Note: summary metadata counts might be slightly off in this streaming edge case
+              // but MIME identification will be correct.
+          }
       }
 
       const metadata = {
@@ -171,6 +187,7 @@ export class InspectCommand extends Command {
         if (showAll || showFiles) {
           result.filePaths = Object.keys(fileSizes);
           result.encodings = encodings;
+          result.mimeTypes = mimeTypes;
         }
         if (showAll || showSummary) {
           if (snapshot.instruction) result.instruction = snapshot.instruction;
@@ -188,7 +205,7 @@ export class InspectCommand extends Command {
           this.printStructure(snapshot.directoryStructure, options);
         }
         if (showAll || showFiles) {
-          this.printFileList(decodedSizes, options, encodings);
+          this.printFileList(decodedSizes, options, encodings, mimeTypes);
         }
         if (showAll || showSummary) {
           this.printSummary(snapshot, options);
@@ -270,7 +287,7 @@ export class InspectCommand extends Command {
     console.log();
   }
 
-  private printFileList(fileSizes: Record<string, number>, options: CLIOptions, encodings: Record<string, string> = {}): void {
+  private printFileList(fileSizes: Record<string, number>, options: CLIOptions, encodings: Record<string, string> = {}, mimeTypes: Record<string, string> = {}): void {
     const files = Object.keys(fileSizes);
 
     if (options.json) {
@@ -287,9 +304,10 @@ export class InspectCommand extends Command {
       const fileData = files.map((f) => [
         encodings[f] === 'base64' ? 'B' : 'T',
         f,
-        this.formatBytes(fileSizes[f])
+        this.formatBytes(fileSizes[f]),
+        mimeTypes[f] || (encodings[f] === 'base64' ? 'application/octet-stream' : 'text/plain')
       ]);
-      printTable(['Type', 'Path', 'Size'], fileData, options);
+      printTable(['Type', 'Path', 'Size', 'MIME Type'], fileData, options);
     }
     console.log();
   }

@@ -23,6 +23,7 @@ interface ExtractFlags {
   overwrite?: boolean;
   dryRun?: boolean;
   flat?: boolean;
+  stdout?: boolean;
 }
 
 export class ExtractCommand extends Command {
@@ -46,6 +47,10 @@ export class ExtractCommand extends Command {
       {
         flags: '--flat',
         description: 'Extract files directly into output dir, ignoring subfolder structure'
+      },
+      {
+        flags: '--stdout',
+        description: 'Pipes a single decoded asset directly to stdout'
       }
     ],
     examples: [
@@ -53,7 +58,8 @@ export class ExtractCommand extends Command {
       'jref extract snapshot.json "src/**/*.ts"',
       'jref extract --output ./output snapshot.json',
       'cat snapshot.json | jref extract "src/*.js"',
-      'jref extract --dry-run snapshot.json'
+      'jref extract --dry-run snapshot.json',
+      'jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool'
     ],
     workflows: [
       'Full Reconstruction: Extract an entire snapshot to restore a project.',
@@ -70,12 +76,71 @@ export class ExtractCommand extends Command {
   ): Promise<CommandResult> {
     try {
       const { flags, filePath } = this.parseArgs(args, context);
-
-      // Determine output directory
-      const outputDir = flags.outputDir as string || './extracted';
       const patterns = flags.patterns || [];
       const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
       const encodings: Record<string, string> = {};
+
+      // Handle --stdout piping
+      if (flags.stdout) {
+        if (patterns.length === 0) {
+          return this.error('--stdout requires at least one file pattern', options);
+        }
+        
+        options.silent = true;
+        let pipedBuffer: Buffer | null = null;
+        let pipedPath: string | null = null;
+
+        const onFilePipe = async (path: string, content: string) => {
+          if (pipedBuffer) return;
+          const isMatch = micromatch.isMatch(path, patterns);
+          if (!isMatch) return;
+
+          // We found a match, but we might not know the encoding yet.
+          // Store it as a string for now, and we'll decode at the end.
+          pipedPath = path;
+          pipedBuffer = Buffer.from(content, 'utf8'); // Store raw string as buffer for now
+        };
+
+        if (options.jq) {
+          const snapshot = await this.getSnapshot(context, options, filePath);
+          const snapshotEncodings = snapshot.encodings || {};
+          const file = Object.entries(snapshot.files).find(([path]) => micromatch.isMatch(path, patterns));
+          if (file) {
+            const [path, content] = file;
+            const encoding = snapshotEncodings[path] || 'utf8';
+            const buffer = encoding === 'base64' ? decodeBase64(content as string) : Buffer.from(content as string, 'utf8');
+            process.stdout.write(buffer);
+            return this.success();
+          }
+        } else {
+          let input: string | NodeJS.ReadableStream;
+          if (filePath) {
+            input = createReadStream(filePath);
+          } else {
+            input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
+          }
+
+          await processSnapshot(input, {
+            onMetadata: (key, value) => {
+              if (key === 'encodings') Object.assign(encodings, value);
+            },
+            onFile: onFilePipe
+          });
+
+          if (pipedBuffer && pipedPath) {
+            const encoding = encodings[pipedPath] || 'utf8';
+            const content = pipedBuffer.toString('utf8');
+            const finalBuffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+            process.stdout.write(finalBuffer);
+            return this.success();
+          }
+        }
+
+        return this.error('No files matched the patterns for piping', { ...options, silent: false });
+      }
+
+      // Determine output directory
+      const outputDir = flags.outputDir as string || './extracted';
 
       if (options.jq) {
         // Use full loading when JQ is active
@@ -90,7 +155,7 @@ export class ExtractCommand extends Command {
           if (!isMatch) continue;
 
           const encoding = snapshotEncodings[path] || 'utf8';
-          const buffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
+          const buffer = encoding === 'base64' ? decodeBase64(content as string) : Buffer.from(content as string, 'utf8');
 
           if (flags.dryRun) {
             results.push({ path: path, size: buffer.length, success: true });
@@ -187,6 +252,9 @@ export class ExtractCommand extends Command {
         case '--flat':
           flags.flat = true;
           break;
+        case '--stdout':
+          flags.stdout = true;
+          break;
         case '--paths':
         case '-p':
           // Support old --paths flag for backward compatibility
@@ -240,7 +308,7 @@ export class ExtractCommand extends Command {
 
       return {
         path: outputPath,
-        size: Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content, 'utf8'),
+        size: Buffer.isBuffer(content) ? content.length : Buffer.byteLength(content as string, 'utf8'),
         success: true
       };
     } catch (err) {
