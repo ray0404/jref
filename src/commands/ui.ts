@@ -95,6 +95,7 @@ export class UICommand extends Command {
           React.createElement(SnapshotBrowser, {
             tree,
             files: snapshot.files,
+            encodings: snapshot.encodings || {},
             onExit: () => {
               unmount();
               resolve(this.success());

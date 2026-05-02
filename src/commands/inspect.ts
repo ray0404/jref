@@ -5,10 +5,11 @@
  */
 
 import { Command, type CommandDefinition } from '../utils/command.js';
-import type { CLIOptions, CommandResult, CommandContext, SnapshotMetadata } from '../types/index.js';
+import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { printTable, printHeader } from '../utils/output.js';
 import { createReadStream } from 'fs';
+import { Readable } from 'stream';
 
 export class InspectCommand extends Command {
   readonly definition: CommandDefinition = {
@@ -58,40 +59,84 @@ export class InspectCommand extends Command {
 
       let snapshot: any = { files: {} };
       let fileSizes: Record<string, number> = {};
+      let decodedSizes: Record<string, number> = {};
+      let encodings: Record<string, string> = {};
       let totalSize = 0;
+      let totalDecodedSize = 0;
+      let binarySize = 0;
+      let textSize = 0;
       let fileCount = 0;
+      let binaryCount = 0;
+      let textCount = 0;
 
       if (options.jq) {
         // Use full loading when JQ is active
         const fullSnapshot = await this.getSnapshot(context, options, filePath);
         snapshot = fullSnapshot;
+        const snapshotEncodings = fullSnapshot.encodings || {};
         for (const [path, content] of Object.entries(fullSnapshot.files)) {
+          const isBinary = snapshotEncodings[path] === 'base64';
           const size = Buffer.byteLength(content, 'utf8');
+          const decodedSize = isBinary ? Buffer.byteLength(content, 'base64') : size;
+          
           fileSizes[path] = size;
+          decodedSizes[path] = decodedSize;
           totalSize += size;
+          totalDecodedSize += decodedSize;
           fileCount++;
+
+          if (isBinary) {
+            binaryCount++;
+            binarySize += decodedSize;
+            encodings[path] = 'base64';
+          } else {
+            textCount++;
+            textSize += size;
+          }
         }
       } else {
         // Use streaming processor to avoid OOM
+        const inputStream = filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin);
         await processSnapshot(
-          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          inputStream,
           {
             onMetadata: (key, value) => {
-              snapshot[key] = value;
+              if (key === 'encodings') {
+                Object.assign(encodings, value);
+              } else {
+                snapshot[key] = value;
+              }
             },
             onFile: (path, content) => {
+              const isBinary = encodings[path] === 'base64';
               const size = Buffer.byteLength(content, 'utf8');
+              const decodedSize = isBinary ? Buffer.byteLength(content, 'base64') : size;
+
               fileSizes[path] = size;
+              decodedSizes[path] = decodedSize;
               totalSize += size;
+              totalDecodedSize += decodedSize;
               fileCount++;
+
+              if (isBinary) {
+                binaryCount++;
+                binarySize += decodedSize;
+              } else {
+                textCount++;
+                textSize += size;
+              }
             }
           }
         );
       }
 
-      const metadata: SnapshotMetadata = {
+      const metadata = {
         fileCount,
-        totalSize,
+        totalSize: totalDecodedSize,
+        binaryCount,
+        textCount,
+        binarySize,
+        textSize,
         hasInstruction: Boolean(snapshot.instruction),
         hasFileSummary: Boolean(snapshot.fileSummary),
         hasUserProvidedHeader: Boolean(snapshot.userProvidedHeader),
@@ -125,6 +170,7 @@ export class InspectCommand extends Command {
         }
         if (showAll || showFiles) {
           result.filePaths = Object.keys(fileSizes);
+          result.encodings = encodings;
         }
         if (showAll || showSummary) {
           if (snapshot.instruction) result.instruction = snapshot.instruction;
@@ -142,7 +188,7 @@ export class InspectCommand extends Command {
           this.printStructure(snapshot.directoryStructure, options);
         }
         if (showAll || showFiles) {
-          this.printFileList(fileSizes, options);
+          this.printFileList(decodedSizes, options, encodings);
         }
         if (showAll || showSummary) {
           this.printSummary(snapshot, options);
@@ -187,7 +233,7 @@ export class InspectCommand extends Command {
     return { flags, filePath };
   }
 
-  private printMetadata(metadata: SnapshotMetadata, options: CLIOptions): void {
+  private printMetadata(metadata: any, options: CLIOptions): void {
     if (options.json) {
       this.print(metadata, options);
       return;
@@ -195,18 +241,20 @@ export class InspectCommand extends Command {
 
     console.log('\n📊 SNAPSHOT METADATA');
     console.log('─'.repeat(40));
-    printTable(
-      ['Property', 'Value'],
-      [
-        ['Files', metadata.fileCount.toString()],
-        ['Total Size', this.formatBytes(metadata.totalSize)],
-        ['Directory Structure Lines', metadata.directoryStructureLines.toString()],
-        ['Has Instructions', metadata.hasInstruction ? 'Yes' : 'No'],
-        ['Has File Summary', metadata.hasFileSummary ? 'Yes' : 'No'],
-        ['Has Custom Header', metadata.hasUserProvidedHeader ? 'Yes' : 'No']
-      ],
-      options
-    );
+    
+    const rows = [
+      ['Total Files', metadata.fileCount.toString()],
+      ['Source Files', metadata.textCount.toString()],
+      ['Binary Assets', metadata.binaryCount.toString()],
+      ['Total Size (decoded)', this.formatBytes(metadata.totalSize)],
+      ['Text Payload', this.formatBytes(metadata.textSize)],
+      ['Binary Payload', this.formatBytes(metadata.binarySize)],
+      ['Tree Lines', metadata.directoryStructureLines.toString()],
+      ['Has Instructions', metadata.hasInstruction ? 'Yes' : 'No'],
+      ['Has File Summary', metadata.hasFileSummary ? 'Yes' : 'No']
+    ];
+
+    printTable(['Property', 'Value'], rows, options);
     console.log();
   }
 
@@ -222,7 +270,7 @@ export class InspectCommand extends Command {
     console.log();
   }
 
-  private printFileList(fileSizes: Record<string, number>, options: CLIOptions): void {
+  private printFileList(fileSizes: Record<string, number>, options: CLIOptions, encodings: Record<string, string> = {}): void {
     const files = Object.keys(fileSizes);
 
     if (options.json) {
@@ -237,10 +285,11 @@ export class InspectCommand extends Command {
       console.log('(no files)');
     } else {
       const fileData = files.map((f) => [
+        encodings[f] === 'base64' ? 'B' : 'T',
         f,
         this.formatBytes(fileSizes[f])
       ]);
-      printTable(['Path', 'Size'], fileData, options);
+      printTable(['Type', 'Path', 'Size'], fileData, options);
     }
     console.log();
   }
@@ -288,5 +337,3 @@ export class InspectCommand extends Command {
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 }
-
-import { Readable } from 'stream';

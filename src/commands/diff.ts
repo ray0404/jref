@@ -4,8 +4,10 @@ import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from 
 import { existsSync, readFileSync, readdirSync, lstatSync } from 'fs';
 import { join, relative } from 'path';
 import { printTable } from '../utils/output.js';
+import { createHash } from 'crypto';
 
 export class DiffCommand extends Command {
+  // ... (definition remains same)
   readonly definition: CommandDefinition = {
     name: 'diff',
     description: 'Compare snapshot against local filesystem',
@@ -52,13 +54,15 @@ export class DiffCommand extends Command {
         snapshot = await loadSnapshot(context.stdin, options);
       }
 
-      const modifiedFiles: string[] = [];
+      const modifiedFiles: { path: string; isBinary: boolean; oldSize?: number; newSize?: number }[] = [];
       const missingFiles: string[] = [];
       const extraFiles: string[] = [];
+      const encodings = snapshot.encodings || {};
 
       // 1. Check files from snapshot
       for (const [filePath, content] of Object.entries(snapshot.files)) {
         const localPath = join(targetDir, filePath);
+        const isBinary = encodings[filePath] === 'base64';
         
         if (!existsSync(localPath)) {
           missingFiles.push(filePath);
@@ -66,15 +70,23 @@ export class DiffCommand extends Command {
           // Path in snapshot is a file, but on disk is a directory (unlikely but possible)
           missingFiles.push(filePath);
         } else {
-          const localContent = readFileSync(localPath, 'utf8');
-          if (localContent !== content) {
-            modifiedFiles.push(filePath);
+          if (isBinary) {
+            const localBuffer = readFileSync(localPath);
+            const snapshotBuffer = Buffer.from(content, 'base64');
+            
+            if (localBuffer.length !== snapshotBuffer.length || this.computeHash(localBuffer) !== this.computeHash(snapshotBuffer)) {
+              modifiedFiles.push({ path: filePath, isBinary: true, oldSize: snapshotBuffer.length, newSize: localBuffer.length });
+            }
+          } else {
+            const localContent = readFileSync(localPath, 'utf8');
+            if (localContent !== content) {
+              modifiedFiles.push({ path: filePath, isBinary: false });
+            }
           }
         }
       }
 
-      // 2. Check for extra local files (optional, we could walker here)
-      // This is more expensive, so we might make it an optional flag --all
+      // 2. Check for extra local files
       if (flags.all) {
           this.findExtraFiles(targetDir, snapshot.files, extraFiles);
       }
@@ -97,6 +109,10 @@ export class DiffCommand extends Command {
     } catch (err) {
       return this.error(`Diff failed: ${(err as Error).message}`, options);
     }
+  }
+
+  private computeHash(buffer: Buffer): string {
+    return createHash('sha256').update(buffer).digest('hex');
   }
 
   private findExtraFiles(dir: string, snapshotFiles: Record<string, string>, extraFiles: string[], baseDir?: string): void {
@@ -124,7 +140,13 @@ export class DiffCommand extends Command {
 
     const tableData: string[][] = [];
 
-    for (const f of result.modifiedFiles) tableData.push(['M', f]);
+    for (const f of result.modifiedFiles) {
+      if (f.isBinary) {
+        tableData.push(['M (bin)', `${f.path} (${this.formatBytes(f.oldSize!)} -> ${this.formatBytes(f.newSize!)})`]);
+      } else {
+        tableData.push(['M', f.path]);
+      }
+    }
     for (const f of result.missingFiles) tableData.push(['A', f + ' (missing locally)']);
     for (const f of result.extraFiles) tableData.push(['D', f + ' (not in snapshot)']);
 
@@ -134,6 +156,14 @@ export class DiffCommand extends Command {
       printTable(['Status', 'Path'], tableData, options);
     }
     console.log();
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 
   protected parseArgs(args: string[]): { flags: Record<string, unknown>; snapshotFile?: string } {

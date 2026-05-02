@@ -40,9 +40,18 @@ export class SummarizeCommand extends Command {
       }
       
       const summarizedFiles: Record<string, string> = {};
+      const encodings = snapshot.encodings || {};
       
       for (const [path, content] of Object.entries(snapshot.files)) {
-        // Skip non-code files
+        const isBinary = encodings[path] === 'base64';
+
+        if (isBinary) {
+          const decodedSize = Buffer.byteLength(content, 'base64');
+          summarizedFiles[path] = `<binary_asset name="${path}" size="${this.formatBytes(decodedSize)}" />`;
+          continue;
+        }
+
+        // Skip non-code files for implementation stripping
         if (path.endsWith('.json') || path.endsWith('.md') || path.endsWith('.txt')) {
           summarizedFiles[path] = content;
           continue;
@@ -54,6 +63,7 @@ export class SummarizeCommand extends Command {
       const summary: ProjectSnapshot = {
         ...snapshot,
         files: summarizedFiles,
+        encodings: undefined, // Clear encodings map as they are now text placeholders
         fileSummary: `Summarized architectural map of ${Object.keys(snapshot.files).length} files.`
       };
 
@@ -64,6 +74,14 @@ export class SummarizeCommand extends Command {
     } catch (err) {
       return this.error(`Summarize failed: ${(err as Error).message}`, options);
     }
+  }
+
+  private formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   }
 
   protected parseArgs(args: string[]): { snapshotFile?: string } {

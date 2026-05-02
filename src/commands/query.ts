@@ -16,6 +16,7 @@ interface QueryFlags {
   raw?: boolean;
   lineStart?: number;
   lineEnd?: number;
+  searchBinaries?: boolean;
 }
 
 export class QueryCommand extends Command {
@@ -39,6 +40,10 @@ export class QueryCommand extends Command {
       {
         flags: '--line-end <number>',
         description: 'End reading at this 1-indexed line'
+      },
+      {
+        flags: '--search-binaries',
+        description: 'Allow querying raw content of binary files'
       }
     ],
     examples: [
@@ -46,13 +51,15 @@ export class QueryCommand extends Command {
       'jref query --path "src/main.ts" --raw snapshot.json',
       'jref query --path "README.md" --json snapshot.json',
       'cat snapshot.json | jref query --path "src/index.ts"',
-      'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json'
+      'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json',
+      'jref query --path "logo.png" --search-binaries snapshot.json'
     ],
     workflows: [
       'Targeted Reading: Retrieve specific files from large snapshots for analysis.',
       'Agent Context Injection: Use --raw to provide pure code content to AI agents.',
       'Snippet Extraction: Use --line-start and --line-end to read only relevant portions of large files.',
-      'Verification: Quickly check the content of a file within a snapshot without extraction.'
+      'Verification: Quickly check the content of a file within a snapshot without extraction.',
+      'Binary Access: Use --search-binaries to see the raw Base64 content of assets.'
     ]
   };
 
@@ -69,18 +76,21 @@ export class QueryCommand extends Command {
       }
 
       let fileContent: string | undefined;
+      let encodings: Record<string, string> = {};
 
       if (options.jq) {
         // Use full loading when JQ is active
         const snapshot = await this.getSnapshot(context, options, filePath);
         fileContent = snapshot.files[flags.path!];
+        encodings = snapshot.encodings || {};
       } else {
         // Use streaming processor to avoid OOM
-        // We can't easily "early terminate" with the current processSnapshot implementation
-        // but it will still avoid loading all other files into memory
         await processSnapshot(
           filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
           {
+            onMetadata: (key, value) => {
+              if (key === 'encodings') Object.assign(encodings, value);
+            },
             onFile: (path, content) => {
               if (path === flags.path) {
                 fileContent = content;
@@ -92,6 +102,14 @@ export class QueryCommand extends Command {
 
       if (fileContent === undefined) {
         return this.error(`File not found in snapshot: ${flags.path}`, options, 2);
+      }
+
+      const isBinary = encodings[flags.path!] === 'base64';
+      if (isBinary && !flags.searchBinaries && !options.json) {
+        const decodedSize = Buffer.byteLength(fileContent, 'base64');
+        const placeholder = `[ Binary Asset | ${flags.path} | ${this.formatBytes(decodedSize)} ]\n(Use --search-binaries to see raw Base64 content)`;
+        this.outputContent(placeholder, flags, options);
+        return this.success();
       }
 
       // Apply line range if specified
@@ -133,6 +151,9 @@ export class QueryCommand extends Command {
           break;
         case '--line-end':
           flags.lineEnd = parseInt(args[++i], 10);
+          break;
+        case '--search-binaries':
+          flags.searchBinaries = true;
           break;
         default:
           if (!arg.startsWith('-')) {

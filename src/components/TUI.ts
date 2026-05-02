@@ -15,6 +15,7 @@ import Fuse from 'fuse.js';
 interface SnapshotBrowserProps {
   tree: TreeNode;
   files: Record<string, string>;
+  encodings: Record<string, string>;
   onExit: () => void;
 }
 
@@ -77,7 +78,7 @@ export function buildFlatTree(root: TreeNode, expanded: Set<string>): FlatTreeIt
   return items;
 }
 
-export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
+export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrowserProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [viewMode, setViewMode] = useState<'tree' | 'file' | 'search'>('tree');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -176,6 +177,14 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
   const getFileName = (path: string): string => {
     return path.split('/').pop() || path;
+  };
+
+  const formatBytes = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
   };
 
   const showStatus = (msg: string) => {
@@ -390,6 +399,16 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         setSelectedIndex(Math.min(searchResults.length - 1, selectedIndex + 1));
       }
     } else if (viewMode === 'file') {
+       if (key.return || input === 'q' || key.escape) {
+          setViewMode('tree');
+          setSelectedFile(null);
+          setScrollOffset(0);
+          return;
+       }
+
+       const isBinary = encodings[selectedFile!] === 'base64';
+       if (isBinary) return; // Binary view is static
+
        const lines = (selectedFile ? files[selectedFile] : '').split('\n');
        const visibleLines = isCompactMode ? 15 : 20;
        const maxScroll = Math.max(0, lines.length - visibleLines);
@@ -415,20 +434,37 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
          setScrollOffset(Math.max(0, scrollOffset - visibleLines));
        } else if (key.pageDown) {
          setScrollOffset(Math.min(maxScroll, scrollOffset + visibleLines));
-       } else if (input || key.return) {
-        // Any other input returns to tree view
-        setViewMode('tree');
-        setSelectedFile(null);
-        setScrollOffset(0);
-      }
+       }
     }
   });
 
   if (viewMode === 'file' && selectedFile) {
+    const isBinary = encodings[selectedFile] === 'base64';
+    const fileName = getFileName(selectedFile);
+
+    if (isBinary) {
+      const decodedSize = Buffer.byteLength(files[selectedFile], 'base64');
+      return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
+        React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'magenta', paddingX: 1 },
+          React.createElement(Text, { color: 'magenta', bold: true }, `📦 BINARY ASSET: ${selectedFile}`)
+        ),
+        React.createElement(Box, { key: 'content', flexGrow: 1, alignItems: 'center', justifyContent: 'center', borderStyle: 'single', borderColor: 'gray' },
+          React.createElement(Box, { flexDirection: 'column', alignItems: 'center' }, [
+            React.createElement(Text, { key: 'msg', color: 'yellow', bold: true }, '[ Binary Data Placeholder ]'),
+            React.createElement(Text, { key: 'name', color: 'white' }, `Filename: ${fileName}`),
+            React.createElement(Text, { key: 'size', color: 'cyan' }, `Decoded Size: ${formatBytes(decodedSize)}`),
+            React.createElement(Box, { key: 'pad', marginY: 1 }),
+            React.createElement(Text, { key: 'hint', color: 'gray', dimColor: true }, 'Rendering Base64 strings is disabled to maintain performance.'),
+            React.createElement(Text, { key: 'esc', color: 'green' }, 'Press any key to return')
+          ])
+        )
+      ]);
+    }
+
     const content = files[selectedFile] || 'File not found';
     const lines = content.split('\n');
-    const visibleLines = lines.slice(scrollOffset, scrollOffset + (isCompactMode ? 15 : 20));
-    const fileName = getFileName(selectedFile);
+    const visibleLinesCount = isCompactMode ? 15 : 20;
+    const slicedLines = lines.slice(scrollOffset, scrollOffset + visibleLinesCount);
     const headerText = isCompactMode
       ? `${fileName} (${lines.length})`
       : `📄 ${truncatePath(selectedFile)} (${lines.length} lines)`;
@@ -439,7 +475,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         React.createElement(Text, { color: 'green', bold: true }, headerText)
       ),
 
-      // Instructions (only show in non-compact mode or simplified)
+      // Instructions
       !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
         React.createElement(Text, { color: 'yellow', dimColor: true }, '↑↓ Scroll • Esc Back • y Yank')
       ) : null,
@@ -451,7 +487,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
 
       // Content
       React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
-        visibleLines.map((line, index) => {
+        slicedLines.map((line, index) => {
           const lineNum = scrollOffset + index + 1;
           const lineNumText = isCompactMode
             ? lineNum.toString().padStart(2, ' ')
@@ -464,12 +500,12 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
             isCompactMode ? '' : ' ',
             line || ' '
           ]);
-        }).concat(lines.length > (isCompactMode ? 15 : 20) ? [
+        }).concat(lines.length > visibleLinesCount ? [
           React.createElement(Box, { key: 'scroll-info', paddingTop: 1 },
             React.createElement(Text, { color: 'gray', dimColor: true },
               isCompactMode
-                ? `${scrollOffset + 1}-${Math.min(scrollOffset + 15, lines.length)}/${lines.length}`
-                : `Lines ${scrollOffset + 1}-${Math.min(scrollOffset + 20, lines.length)} of ${lines.length}`
+                ? `${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)}/${lines.length}`
+                : `Lines ${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)} of ${lines.length}`
             )
           )
         ] : [])
@@ -492,7 +528,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
         React.createElement(Text, { color: 'cyan' }, queryDisplay)
       ),
 
-      // Instructions (only show in non-compact mode)
+      // Instructions
       !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
         React.createElement(Text, { color: 'yellow', dimColor: true }, 'Type to search • Tab Toggle Mode • ↑↓ Navigate • Enter Select • Esc Back')
       ) : null,
@@ -503,7 +539,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
           ? React.createElement(Text, { color: 'gray', italic: true },
               searchQuery ? 'No matches' : 'Type to search...'
             )
-          : searchResults.map((file, index) => {
+          : searchResults.slice(0, 10).map((file, index) => {
               const color = index === selectedIndex ? 'cyan' : 'white';
               const bgColor = index === selectedIndex ? 'gray' : undefined;
               const displayName = isCompactMode ? getFileName(file) : truncatePath(file);
@@ -529,7 +565,7 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
       React.createElement(Text, { color: 'blue', bold: true }, headerText)
     ),
 
-    // Instructions (compact version for mobile)
+    // Instructions
     React.createElement(Box, { key: 'instructions', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
       React.createElement(Text, { color: 'yellow', dimColor: true },
         isCompactMode
@@ -551,17 +587,17 @@ export function SnapshotBrowser({ tree, files, onExit }: SnapshotBrowserProps) {
             const actualIndex = scrollOffset + index;
             const node = item.node;
             const isSelected = selectedPaths.has(node.path);
+            const isBinary = encodings[node.path] === 'base64';
             const icon = node.isDirectory
               ? (item.isExpanded ? '📂' : '📁')
-              : '📄';
-            const color = actualIndex === selectedIndex ? 'cyan' : 'white';
+              : (isBinary ? '📦' : '📄');
+            const color = actualIndex === selectedIndex ? 'cyan' : (isBinary ? 'magenta' : 'white');
             const bgColor = actualIndex === selectedIndex ? 'gray' : undefined;
 
             // Create indentation and tree prefix
             const indent = '  '.repeat(item.depth);
             let prefix = '';
             if (item.depth > 0) {
-              // Check if this is the last item at this depth
               const nextItem = flatTreeItems[actualIndex + 1];
               const isLast = !nextItem || nextItem.depth < item.depth;
               prefix = isLast ? '└──' : '├──';

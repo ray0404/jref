@@ -16,6 +16,7 @@ interface SearchFlags {
   filesOnly?: boolean;
   maxResults?: number;
   context?: number;
+  searchBinaries?: boolean;
 }
 
 export class SearchCommand extends Command {
@@ -43,20 +44,27 @@ export class SearchCommand extends Command {
       {
         flags: '--context, -c <lines>',
         description: 'Show <lines> of context around matches'
+      },
+      {
+        flags: '--search-binaries',
+        description: 'Include binary file content in search'
       }
     ],
+    // ... examples and workflows
     examples: [
       'jref search "function" snapshot.json',
       'jref search "class.*Controller" --regex snapshot.json',
       'jref search "TODO" --case-insensitive snapshot.json',
       'cat snapshot.json | jref search "export"',
-      'jref search "async" --json snapshot.json'
+      'jref search "async" --json snapshot.json',
+      'jref search "PNG" --search-binaries snapshot.json'
     ],
     workflows: [
       'Keyword Discovery: Use literal search to find usages of specific terms.',
       'Pattern Matching: Use regex to find complex code structures.',
       'File Filtering: Use --files to generate a list of relevant files for subsequent commands.',
-      'Contextual Analysis: Use --context to understand how a match is used within its file.'
+      'Contextual Analysis: Use --context to understand how a match is used within its file.',
+      'Binary Search: Use --search-binaries to look for patterns inside Base64 encoded assets.'
     ]
   };
 
@@ -75,13 +83,27 @@ export class SearchCommand extends Command {
       const results: SearchResult[] = [];
       const regex = this.createRegex(pattern, flags);
       const maxResults = flags.maxResults || 1000;
+      const encodings: Record<string, string> = {};
 
       if (options.jq) {
         // Use full loading when JQ is active
         const snapshot = await this.getSnapshot(context, options, filePath);
+        const snapshotEncodings = snapshot.encodings || {};
         for (const [path, content] of Object.entries(snapshot.files)) {
           if (results.length >= maxResults) break;
-          const matches = this.searchContent(content, regex, flags.context || 0);
+
+          const isBinary = snapshotEncodings[path] === 'base64';
+          
+          // Filename search
+          const pathMatches = this.searchContent(path, regex, 0);
+          
+          // Content search (skip binary unless flag)
+          let matches = [...pathMatches];
+          if (!isBinary || flags.searchBinaries) {
+            const contentMatches = this.searchContent(content, regex, flags.context || 0);
+            matches = [...matches, ...contentMatches];
+          }
+
           if (matches.length > 0) {
             results.push({
               filePath: path,
@@ -92,13 +114,27 @@ export class SearchCommand extends Command {
         }
       } else {
         // Use streaming processor to avoid OOM
+        const inputStream = filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin);
         await processSnapshot(
-          filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin),
+          inputStream,
           {
+            onMetadata: (key, value) => {
+              if (key === 'encodings') Object.assign(encodings, value);
+            },
             onFile: (path, content) => {
               if (results.length >= maxResults) return;
 
-              const matches = this.searchContent(content, regex, flags.context || 0);
+              const isBinary = encodings[path] === 'base64';
+
+              // Filename search
+              const pathMatches = this.searchContent(path, regex, 0);
+
+              // Content search (skip binary unless flag)
+              let matches = [...pathMatches];
+              if (!isBinary || flags.searchBinaries) {
+                const contentMatches = this.searchContent(content, regex, flags.context || 0);
+                matches = [...matches, ...contentMatches];
+              }
 
               if (matches.length > 0) {
                 results.push({
@@ -151,6 +187,9 @@ export class SearchCommand extends Command {
         case '--context':
         case '-c':
           flags.context = parseInt(args[++i], 10) || 0;
+          break;
+        case '--search-binaries':
+          flags.searchBinaries = true;
           break;
         default:
           if (!pattern && !arg.startsWith('-')) {
