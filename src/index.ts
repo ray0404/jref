@@ -8,7 +8,8 @@
 import { registerBuiltinCommands, registry, loadPlugins } from './utils/command.js';
 import { readFromInput, isStdinPiped } from './utils/input.js';
 import { printError, printHeader, exit } from './utils/output.js';
-import type { CLIOptions, CommandContext } from './types/index.js';
+import { loadConfig } from './utils/config.js';
+import type { CLIOptions, CommandContext, JrefConfig } from './types/index.js';
 import { join, basename } from 'path';
 
 const VERSION = '1.2.0';
@@ -16,21 +17,30 @@ const VERSION = '1.2.0';
 /**
  * Parse global CLI options
  */
-function parseGlobalOptions(args: string[]): {
+function parseGlobalOptions(args: string[], config: JrefConfig): {
   remainingArgs: string[];
   options: CLIOptions;
 } {
-  const options: CLIOptions = {};
+  const options: CLIOptions = {
+    json: config.defaultOutput === 'json',
+    raw: config.defaultOutput === 'raw',
+    silent: config.silent,
+    jq: config.defaultJq,
+  };
   const remainingArgs: string[] = [];
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === '--json' || arg === '-j') {
       options.json = true;
+      options.raw = false;
     } else if (arg === '--silent' || arg === '-s') {
       options.silent = true;
     } else if (arg === '--raw' || arg === '-r') {
       options.raw = true;
+      options.json = false;
+    } else if (arg === '--ui' || arg === '-u') {
+      options.ui = true;
     } else if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--version' || arg === '-v') {
@@ -123,13 +133,16 @@ function printVersion(options: CLIOptions = {}): void {
  * Main CLI handler
  */
 async function main(): Promise<void> {
-  // Register commands first so parseGlobalOptions knows what the commands are
+  // Load configuration first
+  const config = loadConfig();
+
+  // Register commands
   await registerBuiltinCommands();
 
   const args = process.argv.slice(2);
 
   // Parse global options
-  const { remainingArgs: initialRemainingArgs, options } = parseGlobalOptions(args);
+  const { remainingArgs: initialRemainingArgs, options } = parseGlobalOptions(args, config);
 
   // Expand aliases
   let remainingArgs = initialRemainingArgs;
