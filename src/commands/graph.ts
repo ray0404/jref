@@ -29,12 +29,9 @@ export class GraphCommand extends Command {
     ],
     examples: [
       'jref graph build .',
-<<<<<<< HEAD
-      'jref graph wasm-update',
-=======
       'jref graph build snapshot.json',
+      'jref graph wasm-update',
       'jref graph ui',
->>>>>>> visulize
       'jref graph query "concept"'
     ]
   };
@@ -284,17 +281,6 @@ export class GraphCommand extends Command {
       if (fs.statSync(name).isDirectory()) {
         const basename = path.basename(file);
         if (basename !== 'node_modules' && basename !== '.git' && basename !== 'dist') {
-          this.getAllFiles(name, fileList);
-        }
-      } else {
-        fileList.push(name);
-      }
-    }
-    return fileList;
-  }
-}
-
-.git' && basename !== 'dist') {
           this.getAllFiles(name, fileList);
         }
       } else {
