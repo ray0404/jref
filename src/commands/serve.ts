@@ -25,7 +25,8 @@ export class ServeCommand extends Command {
       'Agent Context: Provide AI agents with structured access to the codebase via MCP.',
       'Live Tooling: Use search and query tools within your agentic workflow.',
       'Remote Analysis: Expose a snapshot as a service for distributed agent architectures.',
-      'Advanced Queries: Use jq, file summarization, and reference tracing through MCP.'
+      'Advanced Queries: Use jq, file summarization, and reference tracing through MCP.',
+      'Graph Analytics: Query blast radius, dependency chains, and modular communities.'
     ]
   };
 
@@ -50,26 +51,31 @@ export class ServeCommand extends Command {
         return this.error('No snapshot file provided', options);
       }
 
-      // Load graph if exists
-      const fs = await import('fs');
-      let graph: any = undefined;
-      const possibleGraphPaths = [
-        'graph-snapshot.json',
-        snapshotFile ? snapshotFile.replace('.json', '-graph.json') : null,
-        snapshotFile ? snapshotFile.replace('.json', '.graph.json') : null
-      ].filter(Boolean) as string[];
+      // Lazy loader for graph
+      let graphData: any = undefined;
+      const loadGraph = async () => {
+        if (graphData) return graphData;
+        
+        const fs = await import('fs');
+        const possibleGraphPaths = [
+          'graph-snapshot.json',
+          snapshotFile ? snapshotFile.replace('.json', '-graph.json') : null,
+          snapshotFile ? snapshotFile.replace('.json', '.graph.json') : null
+        ].filter(Boolean) as string[];
 
-      for (const p of possibleGraphPaths) {
-        if (fs.existsSync(p)) {
-          try {
-            graph = JSON.parse(fs.readFileSync(p, 'utf8'));
-            console.error(`MCP: Loaded graph from ${p}`);
-            break;
-          } catch (e) {
-            // ignore
+        for (const p of possibleGraphPaths) {
+          if (fs.existsSync(p)) {
+            try {
+              graphData = JSON.parse(fs.readFileSync(p, 'utf8'));
+              console.error(`MCP: Loaded graph from ${p}`);
+              return graphData;
+            } catch (e) {
+              // ignore
+            }
           }
         }
-      }
+        return null;
+      };
 
       const server = new Server(
         {
@@ -189,6 +195,41 @@ export class ServeCommand extends Command {
               },
             },
             {
+              name: 'get_dependency_chain',
+              description: 'Find the shortest path of imports/calls between two files in the knowledge graph',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  sourcePath: { type: 'string', description: 'Source file path' },
+                  targetPath: { type: 'string', description: 'Target file path' },
+                },
+                required: ['sourcePath', 'targetPath'],
+              },
+            },
+            {
+              name: 'get_blast_radius',
+              description: 'Traverses outbound edges from the specified file to see what downstream modules are affected by it',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  filePath: { type: 'string', description: 'Path to the starting file' },
+                  depth: { type: 'number', description: 'Maximum traversal depth', default: 1 },
+                },
+                required: ['filePath'],
+              },
+            },
+            {
+              name: 'get_module_community',
+              description: 'Returns all nodes sharing a specific Louvain community ID',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  communityId: { type: 'number', description: 'The community ID' },
+                },
+                required: ['communityId'],
+              },
+            },
+            {
               name: 'get_community_context',
               description: 'Get all symbols belonging to the same modular community as the given node',
               inputSchema: {
@@ -204,6 +245,20 @@ export class ServeCommand extends Command {
       });
 
       server.setRequestHandler(CallToolRequestSchema, async (request) => {
+        const checkGraph = async () => {
+          const g = await loadGraph();
+          if (!g) {
+            return {
+              content: [{
+                type: 'text',
+                text: 'Directive: No knowledge graph snapshot found. Please instruct the user to run "jref graph build" first to enable graph analytics tools.'
+              }],
+              isError: true
+            };
+          }
+          return g;
+        };
+
         switch (request.params.name) {
           case 'inspect': {
             const { calculateMetadata } = await import('../utils/streaming-json.js');
@@ -366,12 +421,13 @@ export class ServeCommand extends Command {
           }
 
           case 'query_graph_node': {
-            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
+            const g = await checkGraph();
+            if (g.isError) return g;
             const { nodeId } = request.params.arguments as { nodeId: string };
-            const node = graph.nodes.find((n: any) => n.id === nodeId);
+            const node = g.nodes.find((n: any) => n.id === nodeId);
             if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
             
-            const edges = graph.edges.filter((e: any) => e.source === nodeId || e.target === nodeId);
+            const edges = g.edges.filter((e: any) => e.source === nodeId || e.target === nodeId);
             
             return {
               content: [
@@ -383,18 +439,16 @@ export class ServeCommand extends Command {
             };
           }
 
-          case 'get_shortest_path': {
-            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
-            const { source, target } = request.params.arguments as { source: string, target: string };
+          case 'get_shortest_path': 
+          case 'get_dependency_chain': {
+            const graphRes = await checkGraph();
+            if (graphRes.isError) return graphRes;
             
-            const { DirectedGraph } = await import('graphology');
-            const g = new DirectedGraph();
-            graph.nodes.forEach((n: any) => { if (!g.hasNode(n.id)) g.addNode(n.id); });
-            graph.edges.forEach((e: any) => {
-              if (g.hasNode(e.source) && g.hasNode(e.target)) {
-                if (!g.hasEdge(e.source, e.target)) g.addEdge(e.source, e.target);
-              }
-            });
+            const source = (request.params.arguments as any).source || (request.params.arguments as any).sourcePath;
+            const target = (request.params.arguments as any).target || (request.params.arguments as any).targetPath;
+            
+            const { createGraph } = await import('../utils/graph-analysis.js');
+            const g = createGraph(graphRes);
 
             const { bidirectional } = await import('graphology-shortest-path');
             const path = bidirectional(g, source, target);
@@ -409,10 +463,48 @@ export class ServeCommand extends Command {
             };
           }
 
+          case 'get_blast_radius': {
+            const graphRes = await checkGraph();
+            if (graphRes.isError) return graphRes;
+            const { filePath, depth } = request.params.arguments as { filePath: string, depth?: number };
+            
+            const { createGraph, getBlastRadius } = await import('../utils/graph-analysis.js');
+            const g = createGraph(graphRes);
+            const radius = getBlastRadius(g, filePath, depth || 1);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ radius }, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'get_module_community': {
+            const graphRes = await checkGraph();
+            if (graphRes.isError) return graphRes;
+            const { communityId } = request.params.arguments as { communityId: number };
+            
+            const { getCommunityNodes } = await import('../utils/graph-analysis.js');
+            const nodes = getCommunityNodes(graphRes, communityId);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ communityId, nodes }, null, 2),
+                },
+              ],
+            };
+          }
+
           case 'get_community_context': {
-            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
+            const g = await checkGraph();
+            if (g.isError) return g;
             const { nodeId } = request.params.arguments as { nodeId: string };
-            const node = graph.nodes.find((n: any) => n.id === nodeId);
+            const node = g.nodes.find((n: any) => n.id === nodeId);
             if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
             
             const communityId = node.community;
@@ -420,7 +512,7 @@ export class ServeCommand extends Command {
                return { content: [{ type: 'text', text: 'Node does not belong to a community' }] };
             }
             
-            const communityNodes = graph.nodes.filter((n: any) => n.community === communityId);
+            const communityNodes = g.nodes.filter((n: any) => n.community === communityId);
             
             return {
               content: [

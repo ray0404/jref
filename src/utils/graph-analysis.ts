@@ -17,27 +17,7 @@ export interface AnalysisResult {
  * Analyzes the graph topology to detect communities and central nodes.
  */
 export function analyzeGraph(snapshot: GraphSnapshot): AnalysisResult {
-  const graph = new DirectedGraph();
-
-  // Add nodes
-  for (const node of snapshot.nodes) {
-    if (!graph.hasNode(node.id)) {
-      graph.addNode(node.id, { ...node });
-    }
-  }
-
-  // Add edges
-  for (const edge of snapshot.edges) {
-    if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
-      if (!graph.hasEdge(edge.source, edge.target)) {
-        graph.addEdge(edge.source, edge.target, { 
-          relation: edge.relation,
-          weight: edge.weight || 1.0,
-          confidence: edge.confidence
-        });
-      }
-    }
-  }
+  const graph = createGraph(snapshot);
 
   // Louvain Community Detection
   const communities = (louvain as any)(graph) as Record<string, number>;
@@ -72,6 +52,71 @@ export function analyzeGraph(snapshot: GraphSnapshot): AnalysisResult {
     godNodes,
     communities: communityGroups
   };
+}
+
+/**
+ * Creates a graphology instance from a snapshot.
+ */
+export function createGraph(snapshot: GraphSnapshot): DirectedGraph {
+  const graph = new DirectedGraph();
+
+  // Add nodes
+  for (const node of snapshot.nodes) {
+    if (!graph.hasNode(node.id)) {
+      graph.addNode(node.id, { ...node });
+    }
+  }
+
+  // Add edges
+  for (const edge of snapshot.edges) {
+    if (graph.hasNode(edge.source) && graph.hasNode(edge.target)) {
+      if (!graph.hasEdge(edge.source, edge.target)) {
+        graph.addEdge(edge.source, edge.target, { 
+          relation: edge.relation,
+          weight: edge.weight || 1.0,
+          confidence: edge.confidence
+        });
+      }
+    }
+  }
+
+  return graph;
+}
+
+/**
+ * Traverses inbound edges (dependents) to see what is affected by a node.
+ * Following the prompt's request for "blast radius".
+ */
+export function getBlastRadius(graph: DirectedGraph, nodeId: string, depth: number = 1): string[] {
+  if (!graph.hasNode(nodeId)) return [];
+
+  const affected = new Set<string>();
+  let currentLevel = [nodeId];
+  
+  for (let i = 0; i < depth; i++) {
+    const nextLevel: string[] = [];
+    for (const node of currentLevel) {
+      graph.forEachInboundNeighbor(node, (neighbor) => {
+        if (!affected.has(neighbor) && neighbor !== nodeId) {
+          affected.add(neighbor);
+          nextLevel.push(neighbor);
+        }
+      });
+    }
+    if (nextLevel.length === 0) break;
+    currentLevel = nextLevel;
+  }
+  
+  return Array.from(affected);
+}
+
+/**
+ * Returns all nodes sharing a community ID.
+ */
+export function getCommunityNodes(snapshot: GraphSnapshot, communityId: number): string[] {
+  return snapshot.nodes
+    .filter(n => n.community === communityId)
+    .map(n => n.id);
 }
 
 /**
