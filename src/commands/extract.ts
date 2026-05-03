@@ -10,7 +10,6 @@ import type {
   CommandResult,
   CommandContext
 } from '../types/index.js';
-
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';

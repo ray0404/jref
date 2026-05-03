@@ -242,6 +242,8 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { PackCommand } = await import('../commands/pack.js');
   const { SummarizeCommand } = await import('../commands/summarize.js');
   const { RunCommand } = await import('../commands/run.js');
+  const { BinCommand } = await import('../commands/bin.js');
+  const { BinSetupCommand } = await import('../commands/bin-setup.js');
   const { BPackCommand } = await import('../commands/bpack.js');
   const { BExtractCommand } = await import('../commands/bextract.js');
   const { ValidateCommand } = await import('../commands/validate.js');
@@ -263,6 +265,8 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new PackCommand());
   registry.register(new SummarizeCommand());
   registry.register(new RunCommand());
+  registry.register(new BinCommand());
+  registry.register(new BinSetupCommand());
   registry.register(new BPackCommand());
   registry.register(new BExtractCommand());
   registry.register(new ValidateCommand());

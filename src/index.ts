@@ -9,7 +9,7 @@ import { registerBuiltinCommands, registry, loadPlugins } from './utils/command.
 import { readFromInput, isStdinPiped } from './utils/input.js';
 import { printError, printHeader, exit } from './utils/output.js';
 import type { CLIOptions, CommandContext } from './types/index.js';
-import { join } from 'path';
+import { join, basename } from 'path';
 
 const VERSION = '1.2.0';
 
@@ -177,8 +177,17 @@ async function main(): Promise<void> {
   }
 
   // Get command name
-  const commandName = remainingArgs[0];
-  const commandArgs = remainingArgs.slice(1);
+  let commandName = remainingArgs[0];
+  let commandArgs = remainingArgs.slice(1);
+
+  // Detect jbin alias
+  const baseName = basename(process.argv[1] || '');
+  const execBaseName = basename(process.argv[0] || '');
+  
+  if (baseName === 'jbin' || execBaseName === 'jbin') {
+    commandName = 'bin';
+    commandArgs = remainingArgs;
+  }
 
   // Find command
   const command = registry.get(commandName);
