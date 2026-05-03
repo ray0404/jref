@@ -1,62 +1,83 @@
-# Project Overview: jref (JSON Reference CLI)
+# jref - JSON Reference CLI
 
-`jref` is a specialized TypeScript-based CLI tool designed for interacting with condensed project snapshots (JSON/YAML/TOML/XML). It is optimized for both human developers and AI agents, particularly in constrained environments like Termux (Android) and Raspberry Pi.
+`jref` is a lightweight, specialized CLI tool designed to interact with "condensed" JSON project snapshots. It serves as a bridge between local codebases and AI agents, providing token-efficient ways to package, query, and analyze code.
 
-## Core Technology Stack
-- **Language:** TypeScript (Node.js)
-- **UI Framework:** Ink (React for CLI)
-- **Data Handling:** `stream-json` (for large snapshot processing), `fast-xml-parser`, `yaml`, `toml`, `json5`, `jq-wasm` (for in-memory filtering)
-- **Validation:** `zod`
-- **Testing:** `vitest`
-- **MCP:** `@modelcontextprotocol/sdk` (Model Context Protocol support)
+## 🚀 Project Overview
 
-## Architecture
-- **Entry Point:** `src/index.ts`
-- **Command Registry:** `src/utils/command.ts` manages command registration and dispatching.
-- **Commands:** Located in `src/commands/`, each command implements a standard interface (e.g., `inspect`, `search`, `extract`, `ui`, `serve`).
-- **TUI Components:** `src/components/` contains React components for the Ink-based terminal interface.
-- **Streaming:** `src/utils/streaming-json.ts` provides optimized parsing for snapshots that might exceed available memory.
+- **Core Mission:** Provide high-speed, structured, and AI-friendly access to codebase snapshots.
+- **Key Audience:** Human developers (via TUI and CLI) and AI agents (via MCP and JSON outputs).
+- **Primary Tech Stack:**
+  - **Runtime:** Node.js (ES Modules)
+  - **Language:** TypeScript
+  - **TUI Framework:** React + Ink
+  - **Packing Engine:** repomix
+  - **Code Analysis:** web-tree-sitter (AST-aware)
+  - **Search:** fuse.js (Fuzzy) + Transformers (Semantic/RAG)
+  - **Graph Analysis:** graphology
+  - **Protocols:** Model Context Protocol (MCP)
 
-## Building and Running
-The following commands are available for development and deployment:
+## 🏗️ Architecture & Structure
 
-```bash
-# Install dependencies
-npm install
+The project follows a modular, command-based architecture:
 
-# Build the project (compiles TS to JS in dist/)
-npm run build
+- `src/index.ts`: CLI entry point, handles global flags and command routing.
+- `src/commands/`: Implementation of individual CLI commands (e.g., `pack`, `query`, `serve`).
+  - Commands extend the `Command` base class in `src/utils/command.ts`.
+- `src/utils/`: Shared logic and utilities.
 
-# Run tests
-npm run test
+### 🏛️ Architectural Hubs (God Nodes)
+According to the latest graph analysis, these are the most central symbols/files that act as hubs for the system:
+- `utils/command.ts`: The foundational Command pattern definition.
+- `utils/streaming-json.ts`: Core streaming logic for memory-efficient snapshot processing.
+- `utils/output.ts`: Centralized output and formatting hub.
+- `utils/binary.ts`: Binary detection and encoding management.
 
-# Run tests in watch mode
-npm run test:watch
+Understanding these files is critical for understanding how the entire system communicates and handles data.
 
-# Development mode (compiles on changes)
-npm run dev
+## 🛠️ Development Workflow
 
-# Global installation for local use
-npm link
-```
+### Commands
+- **Build:** `npm run build` (uses `tsc`)
+- **Test:** `npm run test` (uses `vitest`)
+- **Dev Mode:** `npm run dev` (uses `tsc --watch`)
 
-## CLI Usage (Directives)
-When interacting with `jref` in this workspace, prefer the following patterns:
+### Adding a New Command
+1. Create a new class in `src/commands/<name>.ts` extending `Command`.
+2. Implement `execute`, `parseArgs`, and the `definition` property.
+3. Register the command in `src/utils/command.ts` within `registerBuiltinCommands`.
 
-- **Analysis:** Use `jref inspect <file>` for a quick overview or `jref summarize <file>` to generate a token-efficient map.
-- **Remote Resolution:** `jref pack <url>` allows snapshotting remote repositories (GitHub/GitLab) directly into jref format.
-- **Data Transformation:** Use the global `--jq <filter>` or `-q <filter>` flag to reshape or filter snapshots before command execution.
-- **Context Injection:** If you need to read specific files from a snapshot without extracting them, use `jref query --path <path> <file>`.
-- **Modification:** Use `jref patch <path> <content> <file>` to surgically update a snapshot.
-- **Testing Changes:** Use `jref diff <file>` to verify if local files match a snapshot's expected state.
-- **Agent Integration:** `jref serve <file>` starts an MCP server (stdio) with tools for search, query, jq filtering, summarization, and reference tracing.
+### Testing Strategy
+- **Framework:** Vitest
+- **Location:** Co-located `*.test.ts` files.
+- **Standard:** Aim for ~80% coverage. Use `ink-testing-library` for TUI components.
 
-## Development Conventions
-- **TDD:** Write unit tests in `*.test.ts` files alongside the implementation.
-- **Modularity:** New commands should be added to `src/commands/` and registered in `src/utils/command.ts`.
-- **Streaming First:** When handling snapshot data, prioritize streaming approaches (`processSnapshot`) to maintain performance in mobile/low-memory environments.
-- **Type Safety:** Maintain strict TypeScript typing; use `Zod` schemas in `schemas/` for data validation where applicable.
+## 📋 Coding Conventions & Guidelines
 
-## Target Environment Notes
-- **Termux:** The TUI supports `termux-clipboard-set` via the `y` keybind and uses `$EDITOR` for in-memory edits.
-- **Memory Management:** Be mindful of OOM errors on ARM devices; always use streaming for large files.
+- **ES Modules:** Always use `.js` extensions in imports (e.g., `import { x } from './utils.js'`).
+- **Command Pattern:** Encapsulate all CLI logic within command classes.
+- **AI-First Design:**
+  - Always support the `--json` flag for structured data.
+  - Use the `--raw` flag to emit pure content without decorative headers.
+  - Ensure `serve` command remains interactive (don't consume stdin prematurely).
+- **Performance:**
+  - Prefer streaming processing (`processSnapshot`) for files that could be large.
+  - Use `web-tree-sitter` for surgical code modifications or analysis.
+- **Validation:** Use `zod` for validating inputs and configuration schemas.
+
+## 🤖 AI Agent Integration (MCP)
+
+`jref` natively supports the Model Context Protocol. AI agents can connect via `jref serve <snapshot.json>` to access:
+- `inspect`: Metadata and tree structure.
+- `search`: High-speed regex search.
+- `query`: Targeted file reading or Semantic Search (RAG).
+- `summarize`: Interface-only architectural maps.
+- `list_directory`: Scoped file navigation.
+- `graph`: Symbol dependency tracing.
+
+## 📂 Key Snapshot Schema
+
+Snapshots follow the schema in `schemas/project-snapshot-schema.json`:
+- `directoryStructure`: Visual tree representation.
+- `files`: Map of relative paths to full content.
+- `chunks`: (Optional) Semantic code blocks with embeddings.
+- `instruction`: Contextual prompt for AI agents.

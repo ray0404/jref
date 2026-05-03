@@ -28,6 +28,15 @@ jref is optimized for LLM agents working in mobile or Linux environments.
 - **Editor**: The TUI supports `e` keybind to spawn `$EDITOR` (vi/nano).
 - **Streaming**: Large JSON files are handled via chunked processing to avoid OOM on mobile hardware.
 
+## 🔗 Dependency & Community Analysis
+
+For large-scale refactoring or deep understanding, agents should utilize the dependency graph data:
+
+- **Graph Analysis**: Run `jref graph --format json` to get full dependency relationships.
+- **God Nodes**: Prioritize understanding `utils/command.ts`, `utils/streaming-json.ts`, and `utils/output.ts` as they are the primary hubs of the system.
+- **Modular Communities**: The codebase is partitioned into distinct communities (e.g., individual commands and their tests). Use `jref graph --cluster` to identify these boundaries.
+- **Blast Radius**: Before making changes, run `jref validate <branch>` to automatically identify affected files based on import relationships.
+
 ## Snapshot Schema
 
 ```json
