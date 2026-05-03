@@ -59,8 +59,13 @@ export abstract class Command {
 
     const { loadSnapshot, loadSnapshotFromFile } = await import('./streaming-json.js');
     
-    if (filePath) {
+    if (filePath && filePath !== '-') {
       return await loadSnapshotFromFile(filePath, options);
+    }
+
+    if (!context.stdinIsPipe && !context.stdin) {
+      // Return a minimal valid snapshot if no input is provided
+      return { files: {}, directoryStructure: '' };
     }
 
     const snapshot = await loadSnapshot(context.stdin, options);
@@ -250,6 +255,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { GraphCommand } = await import('../commands/graph.js');
   const { AliasCommand } = await import('../commands/alias.js');
   const { ToolCommand } = await import('../commands/tool.js');
+  const { GitCommand } = await import('../commands/git.js');
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
@@ -274,4 +280,5 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new GraphCommand());
   registry.register(new AliasCommand());
   registry.register(new ToolCommand());
+  registry.register(new GitCommand());
 }
