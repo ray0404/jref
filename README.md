@@ -408,7 +408,13 @@ jref run -p main.js snapshot.json -- --port 8080
 Analyze and visualize dependency relationships between symbols and modules.
 
 ```bash
-jref graph [options] [file]
+jref graph <subcommand> [target] [options]
+
+Subcommands:
+  build [target]           Build the knowledge graph from directory or snapshot
+  query [target] [args]    Query the knowledge graph (experimental)
+  wasm-update              Pre-fetch registered WASM binaries for offline use
+  ui [target]              Start a local web server to visualize the graph
 
 Options:
   --output, -o <file>      Save graph data to a file
@@ -416,15 +422,20 @@ Options:
   --depth <n>              Traversal depth (default: 1)
   --cluster                Detect and highlight modular clusters (Louvain method)
   --centrality             Highlight high-impact nodes using degree centrality
+  --no-llm                 Skip semantic extraction using LLM
+  -p, --port <number>      Port for the graph UI server (default: 8080)
 ```
 
 **Examples:**
 ```bash
-# Generate a Mermaid diagram of dependencies
-jref graph --format mermaid project.json > dependencies.md
+# Build a graph from the current directory
+jref graph build .
 
-# Identify architectural bottlenecks
-jref graph --centrality project.json
+# Start the interactive graph UI server
+jref graph ui
+
+# Pre-fetch WASM binaries
+jref graph wasm-update
 ```
 
 ### alias
