@@ -10,6 +10,7 @@ import { readFromInput, isStdinPiped } from './utils/input.js';
 import { printError, printHeader, exit } from './utils/output.js';
 import { loadConfig } from './utils/config.js';
 import type { CLIOptions, CommandContext, JrefConfig } from './types/index.js';
+import { fileURLToPath } from 'url';
 import { join, basename } from 'path';
 
 const VERSION = '1.2.0';
@@ -251,7 +252,15 @@ async function main(): Promise<void> {
 export { main, registerBuiltinCommands, registry };
 
 // Run if executed directly
-main().catch((err) => {
-  console.error('Fatal error:', err);
-  process.exit(1);
-});
+const isMain = process.argv[1] && (
+  process.argv[1] === fileURLToPath(import.meta.url) || 
+  process.argv[1].endsWith('/jref') ||
+  process.argv[1].endsWith('/index.js')
+);
+
+if (isMain) {
+  main().catch((err) => {
+    console.error('Fatal error:', err);
+    process.exit(1);
+  });
+}

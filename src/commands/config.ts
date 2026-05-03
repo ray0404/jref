@@ -46,7 +46,7 @@ export class ConfigCommand extends Command {
   async execute(
     args: string[],
     options: CLIOptions,
-    context: CommandContext
+    _context: CommandContext
   ): Promise<CommandResult> {
     try {
       const { flags, action, key, value } = this.parseArgs(args);

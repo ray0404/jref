@@ -122,7 +122,7 @@ export const JrefConfigSchema = z.object({
   ui: z.object({
     theme: z.enum(['dark', 'light', 'system']).default('system'),
     showIcons: z.boolean().default(true),
-  }).default({}),
+  }).default({ theme: 'system', showIcons: true }),
   aliasToggle: z.boolean().default(true),
   binPath: z.string().optional(),
   defaultJq: z.string().optional(),

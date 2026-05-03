@@ -20,6 +20,11 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Summarize** - Generate token-efficient architectural maps (signatures only)
 - **OpenAPI** - Transform OpenAPI specs into virtual filesystem snapshots
 - **Run** - Execute scripts directly from a snapshot without extraction
+- **Graph** - Analyze and visualize symbol/module dependency relationships
+- **Alias** - Create and manage command shortcuts for complex workflows
+- **Bin** - Manage virtual binaries and executable scripts
+- **Config** - Persistent CLI configuration management
+- **Tool** - Execute external commands and parse output into snapshots
 
 ## Target Environments
 
@@ -388,7 +393,6 @@ jref run --path <script-path> [file] [script-args...]
 
 Options:
   --path, -p <path>   Path to the script within the snapshot
-```
 
 **Examples:**
 ```bash
@@ -397,6 +401,107 @@ jref run --path scripts/setup.ts project.json
 
 # Run with arguments
 jref run -p main.js snapshot.json -- --port 8080
+```
+
+### graph
+
+Analyze and visualize dependency relationships between symbols and modules.
+
+```bash
+jref graph [options] [file]
+
+Options:
+  --output, -o <file>      Save graph data to a file
+  --format <fmt>           Output format: json, dot, mermaid (default: json)
+  --depth <n>              Traversal depth (default: 1)
+  --cluster                Detect and highlight modular clusters (Louvain method)
+  --centrality             Highlight high-impact nodes using degree centrality
+```
+
+**Examples:**
+```bash
+# Generate a Mermaid diagram of dependencies
+jref graph --format mermaid project.json > dependencies.md
+
+# Identify architectural bottlenecks
+jref graph --centrality project.json
+```
+
+### alias
+
+Create and manage command shortcuts for complex or frequent workflows.
+
+```bash
+jref alias <action> [name] [expansion]
+
+Actions:
+  set <name> <exp>     Create or update an alias
+  remove <name>        Delete an alias
+  list                 List all active aliases
+```
+
+**Examples:**
+```bash
+# Shortcut for compressed architecture map
+jref alias set map "summarize --compress"
+
+# Use the alias
+jref map project.json
+```
+
+### bin
+
+Manage virtual binaries and executable scripts stored within snapshots.
+
+```bash
+jref bin <action> [args...]
+
+Actions:
+  list                 List all virtual binaries in $JREF_BIN_PATH
+  exec <name> [args]   Execute a virtual binary
+  setup                Interactive setup of the bin environment
+```
+
+**Features:**
+- **jbin**: When linked, `jbin` automatically executes the `bin` command for seamless script running.
+
+### config
+
+Persistent CLI configuration management.
+
+```bash
+jref config <action> [key] [value]
+
+Actions:
+  set <key> <val>      Update a configuration setting
+  get <key>            View a configuration setting
+  list                 Show all current settings
+  ui                   Open the interactive configuration TUI
+```
+
+**Settings:**
+- `defaultOutput`: json, pretty, raw
+- `theme`: dark, light, system
+- `silent`: true, false
+- `aliasToggle`: true, false
+
+### tool
+
+Execute external commands and parse their output directly into snapshots.
+
+```bash
+jref tool <name> <command> [args...]
+
+Parsers available:
+  ls                   Standard directory listing to JSON
+  git-log              Git history to structured JSON
+  ps                   Process list to structured JSON
+```
+
+**Examples:**
+```bash
+# Snapshoting a directory listing via ls tool
+jref tool ls "ls -la" > files.json
 ```
 
 ## AI Agent Usage

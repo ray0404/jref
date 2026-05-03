@@ -1,0 +1,25 @@
+dist/
+node_modules/
+
+prompt.md
+kilo-session*.md
+repo*.*
+.repomixignore
+roadmap.md
+pro*.md
+.user/
+.worktrees/
+
+# Test artifacts
+test-extracted/
+test-pack-root/
+test_*.js
+compare_outputs.js
+midjrefupdate.json
+repomix-output.json
+hermes*.json
+
+JREF*.json
+test-pack-target/
+.ignore
+/.jref/plugins

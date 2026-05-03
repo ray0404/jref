@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
-import { JrefConfigSchema, type JrefConfig } from '../types/index.js';
+import { type JrefConfig } from '../types/index.js';
 
 interface ConfigUIProps {
   config: JrefConfig;
