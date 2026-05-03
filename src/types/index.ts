@@ -95,3 +95,10 @@ export interface CommandResult {
   output?: string;
   error?: string;
 }
+
+/**
+ * Alias Configuration
+ */
+export const AliasConfigSchema = z.record(z.string(), z.array(z.string()));
+
+export type AliasConfig = z.infer<typeof AliasConfigSchema>;

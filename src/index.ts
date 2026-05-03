@@ -129,7 +129,24 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
   // Parse global options
-  const { remainingArgs, options } = parseGlobalOptions(args);
+  const { remainingArgs: initialRemainingArgs, options } = parseGlobalOptions(args);
+
+  // Expand aliases
+  let remainingArgs = initialRemainingArgs;
+  try {
+    const { loadAliasConfig, expandAliases, logDebug } = await import('./utils/alias.js');
+    try {
+      const aliasConfig = loadAliasConfig();
+      remainingArgs = expandAliases(initialRemainingArgs, aliasConfig);
+    } catch (err) {
+      const msg = `Alias expansion failed: ${(err as Error).message}`;
+      logDebug(msg);
+      printError(msg, options);
+      // Proceed with initial args
+    }
+  } catch (err) {
+    // If we can't even import the alias utility, just proceed
+  }
 
   // Load plugins from local directory
   try {

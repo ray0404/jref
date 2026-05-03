@@ -97,7 +97,7 @@ export class BExtractCommand extends Command {
 
         if (pipedBuffer && pipedPath) {
           const encoding = encodings[pipedPath] || 'utf8';
-          const content = pipedBuffer.toString('utf8');
+          const content = (pipedBuffer as Buffer).toString('utf8');
           const finalBuffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
           process.stdout.write(finalBuffer);
           return this.success();
