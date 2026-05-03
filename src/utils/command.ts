@@ -59,8 +59,13 @@ export abstract class Command {
 
     const { loadSnapshot, loadSnapshotFromFile } = await import('./streaming-json.js');
     
-    if (filePath) {
+    if (filePath && filePath !== '-') {
       return await loadSnapshotFromFile(filePath, options);
+    }
+
+    if (!context.stdinIsPipe && !context.stdin) {
+      // Return a minimal valid snapshot if no input is provided
+      return { files: {}, directoryStructure: '' };
     }
 
     const snapshot = await loadSnapshot(context.stdin, options);
@@ -245,6 +250,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { BPackCommand } = await import('../commands/bpack.js');
   const { BExtractCommand } = await import('../commands/bextract.js');
   const { ValidateCommand } = await import('../commands/validate.js');
+  const { GitCommand } = await import('../commands/git.js');
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
@@ -264,4 +270,5 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new BPackCommand());
   registry.register(new BExtractCommand());
   registry.register(new ValidateCommand());
+  registry.register(new GitCommand());
 }
