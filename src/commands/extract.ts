@@ -5,7 +5,7 @@
  */
 
 import { Command, type CommandDefinition } from '../utils/command.js';
-import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
+import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
 import { join, dirname } from 'path';
@@ -147,7 +147,7 @@ export class ExtractCommand extends Command {
 
           if (pipedBuffer && pipedPath) {
             const encoding = encodings[pipedPath] || 'utf8';
-            const content = pipedBuffer.toString('utf8');
+            const content = (pipedBuffer as Buffer).toString('utf8');
             const finalBuffer = encoding === 'base64' ? decodeBase64(content) : Buffer.from(content, 'utf8');
             process.stdout.write(finalBuffer);
             return this.success();
