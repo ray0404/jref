@@ -133,7 +133,7 @@ export class PackCommand extends Command {
   async execute(
     args: string[],
     options: CLIOptions,
-    context: CommandContext
+    _context: CommandContext
   ): Promise<CommandResult> {
     try {
       const { flags, targetDir } = this.parseArgs(args);
