@@ -1,0 +1,8 @@
+{
+  "directoryStructure": "src/\n  main.ts\n  utils.ts",
+  "files": {
+    "src/main.ts": "import { add } from './utils';\nconsole.log(add(1, 2));",
+    "src/utils.ts": "export const add = (a: number, b: number) => a + b;"
+  },
+  "instruction": "This is a sample snapshot for testing."
+}
