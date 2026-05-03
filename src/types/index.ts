@@ -78,7 +78,25 @@ export interface CLIOptions {
   help?: boolean;
   version?: boolean;
   jq?: string;
+  ui?: boolean;
 }
+
+/**
+ * Configuration schema for persistent jref settings
+ */
+export const JrefConfigSchema = z.object({
+  defaultOutput: z.enum(['json', 'pretty', 'raw']).default('pretty'),
+  silent: z.boolean().default(false),
+  ui: z.object({
+    theme: z.enum(['dark', 'light', 'system']).default('system'),
+    showIcons: z.boolean().default(true),
+  }).default({}),
+  aliasToggle: z.boolean().default(true),
+  binPath: z.string().optional(),
+  defaultJq: z.string().optional(),
+});
+
+export type JrefConfig = z.infer<typeof JrefConfigSchema>;
 
 export interface CommandContext {
   stdin?: string;
