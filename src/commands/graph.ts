@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Command, CommandDefinition } from '../utils/command.js';
 import { CLIOptions, CommandContext, CommandResult, GraphSnapshot } from '../types/index.js';
-import { extractGraphFromSource } from '../utils/graph-ast.js';
+import { extractGraphFromSource, ensureWasm, CORE_WASM_URL, LANGUAGE_REGISTRY } from '../utils/graph-ast.js';
 import { analyzeGraph, generateGraphReport } from '../utils/graph-analysis.js';
 import { inferSemanticEdges } from '../utils/graph-semantic.js';
 
@@ -21,7 +21,7 @@ export class GraphCommand extends Command {
     ],
     examples: [
       'jref graph build .',
-      'jref graph build snapshot.json',
+      'jref graph wasm-update',
       'jref graph query "concept"'
     ]
   };
@@ -44,8 +44,36 @@ export class GraphCommand extends Command {
       return await this.buildGraph(target, options, context);
     } else if (subcommand === 'query') {
       return await this.queryGraph(target, args.slice(2), options, context);
+    } else if (subcommand === 'wasm-update') {
+      return await this.updateWasm(options);
     } else {
-      return this.error('Invalid subcommand. Use "build" or "query".', options);
+      return this.error('Invalid subcommand. Use "build", "query", or "wasm-update".', options);
+    }
+  }
+
+  /**
+   * Pre-fetches all registered WASM binaries for offline use.
+   */
+  private async updateWasm(options: CLIOptions): Promise<CommandResult> {
+    try {
+      this.print('Updating WASM binaries...', options);
+      
+      // Update core
+      await ensureWasm('tree-sitter.wasm', CORE_WASM_URL);
+      
+      // Update languages
+      const uniqueWasms = new Map<string, string>();
+      for (const info of Object.values(LANGUAGE_REGISTRY)) {
+        uniqueWasms.set(info.wasm, info.url);
+      }
+
+      for (const [wasm, url] of uniqueWasms.entries()) {
+        await ensureWasm(wasm, url);
+      }
+
+      return this.success('All WASM binaries updated successfully.');
+    } catch (err) {
+      return this.error(`Failed to update WASM: ${(err as Error).message}`, options);
     }
   }
 

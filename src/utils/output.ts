@@ -192,3 +192,18 @@ export function exit(code: number): void {
     process.exit(code);
   });
 }
+
+export const output = {
+  print: printOutput,
+  success: printSuccess,
+  error: printError,
+  warn: printWarning,
+  info: printInfo,
+  table: printTable,
+  progress: printProgress,
+  header: printHeader,
+  format: formatOutput,
+  exit: exit,
+};
+
+export default output;
