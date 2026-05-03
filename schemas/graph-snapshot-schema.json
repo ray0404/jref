@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JREF Graph Snapshot",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label", "type", "source_file"],
+        "properties": {
+          "id": { "type": "string", "description": "Unique identifier, often a fully qualified path or symbol name" },
+          "label": { "type": "string", "description": "Human-readable concept or symbol name" },
+          "type": { "type": "string", "enum": ["code", "doc", "concept", "binary"] },
+          "source_file": { "type": "string", "description": "Relative path to the origin file" },
+          "source_location": { "type": "string", "description": "Line/column or chunk reference" },
+          "community": { "type": "integer", "description": "Assigned cluster ID post-analysis" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["source", "target", "relation", "confidence"],
+        "properties": {
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "relation": { "type": "string", "description": "e.g., calls, imports, uses, rationale_for" },
+          "confidence": { "type": "string", "enum": ["EXTRACTED", "INFERRED", "AMBIGUOUS"] },
+          "weight": { "type": "number", "default": 1.0 }
+        }
+      }
+    }
+  }
+}

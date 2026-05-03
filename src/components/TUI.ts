@@ -11,11 +11,13 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { tmpdir } from 'os';
 import Fuse from 'fuse.js';
+import { GraphSnapshot } from '../types/index.js';
 
 interface SnapshotBrowserProps {
   tree: TreeNode;
   files: Record<string, string>;
   encodings: Record<string, string>;
+  graph?: GraphSnapshot;
   onExit: () => void;
 }
 
@@ -78,9 +80,9 @@ export function buildFlatTree(root: TreeNode, expanded: Set<string>): FlatTreeIt
   return items;
 }
 
-export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrowserProps) {
+export function SnapshotBrowser({ tree, files, encodings, graph, onExit }: SnapshotBrowserProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<'tree' | 'file' | 'search'>('tree');
+  const [viewMode, setViewMode] = useState<'tree' | 'file' | 'search' | 'graph'>('tree');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -91,6 +93,12 @@ export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrow
   // Initialize expanded directories - include project root (using relative paths)
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set(['']));
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+
+  // Graph Subgraph memo
+  const relevantEdges = React.useMemo(() => {
+    if (!graph || !selectedFile) return [];
+    return graph.edges.filter(e => e.source === selectedFile || e.target === selectedFile);
+  }, [graph, selectedFile]);
 
   // Toggle directory expansion
   const toggleExpansion = React.useCallback((nodePath: string) => {
@@ -210,7 +218,7 @@ export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrow
   // Handle keyboard input
   useInput((input, key) => {
     if (key.escape) {
-      if (viewMode === 'search') {
+      if (viewMode === 'search' || viewMode === 'graph') {
         setViewMode('tree');
         setSearchQuery('');
         setSearchResults([]);
@@ -331,6 +339,16 @@ export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrow
         return;
       }
 
+      if (input === 'g' && !key.ctrl) {
+        const selectedItem = flatTreeItems[selectedIndex];
+        if (selectedItem) {
+          setSelectedFile(selectedItem.node.path);
+          setViewMode('graph');
+          setSelectedIndex(0);
+        }
+        return;
+      }
+
       if (key.upArrow || input === 'k') {
         const newIndex = Math.max(0, selectedIndex - 1);
         setSelectedIndex(newIndex);
@@ -437,6 +455,36 @@ export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrow
        }
     }
   });
+
+  if (viewMode === 'graph' && selectedFile) {
+    const fileName = getFileName(selectedFile);
+    return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
+      React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
+        React.createElement(Text, { color: 'cyan', bold: true }, `🔗 KNOWLEDGE GRAPH: ${fileName}`)
+      ),
+      React.createElement(Box, { key: 'instr', paddingX: 1 },
+        React.createElement(Text, { color: 'yellow', dimColor: true }, 'Esc Back • ↑↓ Navigate')
+      ),
+      React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: 1, borderStyle: 'single', borderColor: 'gray' },
+        relevantEdges.length === 0 
+          ? React.createElement(Text, { color: 'gray', italic: true }, 'No relationships found in graph.')
+          : relevantEdges.map((edge, idx) => {
+              const isSource = edge.source === selectedFile;
+              const otherId = isSource ? edge.target : edge.source;
+              const direction = isSource ? '──▶' : '◀──';
+              const color = isSource ? 'green' : 'blue';
+              
+              return React.createElement(Box, { key: idx },
+                React.createElement(Text, { color }, [
+                  isSource ? 'self' : otherId,
+                  ` ${direction} (${edge.relation}) ${direction} `,
+                  isSource ? otherId : 'self'
+                ])
+              );
+            })
+      )
+    ]);
+  }
 
   if (viewMode === 'file' && selectedFile) {
     const isBinary = encodings[selectedFile] === 'base64';
@@ -569,8 +617,8 @@ export function SnapshotBrowser({ tree, files, encodings, onExit }: SnapshotBrow
     React.createElement(Box, { key: 'instructions', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
       React.createElement(Text, { color: 'yellow', dimColor: true },
         isCompactMode
-          ? '↑↓/Ent • Spc:sel • /:src • y:yank • e:edit • v:view • x:ext'
-          : '↑↓ Navigate • Enter Select • Space Toggle Sel • / Search • y Yank • e Edit • v View • x Extract • c Compact'
+          ? '↑↓/Ent • Spc:sel • /:src • y:yank • e:edit • v:view • x:ext • g:graph'
+          : '↑↓ Navigate • Enter Select • Space Toggle Sel • / Search • y Yank • e Edit • v View • x Extract • c Compact • g Graph'
       )
     ),
 

@@ -27,6 +27,38 @@ export const ProjectSnapshotSchema = z.object({
 
 export type ProjectSnapshot = z.infer<typeof ProjectSnapshotSchema>;
 
+/**
+ * Graph Snapshot Schema Types
+ */
+
+export const GraphNodeSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  type: z.enum(['code', 'doc', 'concept', 'binary']),
+  source_file: z.string(),
+  source_location: z.string().optional(),
+  community: z.number().int().optional(),
+});
+
+export type GraphNode = z.infer<typeof GraphNodeSchema>;
+
+export const GraphEdgeSchema = z.object({
+  source: z.string(),
+  target: z.string(),
+  relation: z.string(),
+  confidence: z.enum(['EXTRACTED', 'INFERRED', 'AMBIGUOUS']),
+  weight: z.number().default(1.0),
+});
+
+export type GraphEdge = z.infer<typeof GraphEdgeSchema>;
+
+export const GraphSnapshotSchema = z.object({
+  nodes: z.array(GraphNodeSchema),
+  edges: z.array(GraphEdgeSchema),
+});
+
+export type GraphSnapshot = z.infer<typeof GraphSnapshotSchema>;
+
 export const SnapshotMetadataSchema = z.object({
   fileCount: z.number(),
   totalSize: z.number(),

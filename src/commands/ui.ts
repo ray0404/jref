@@ -12,6 +12,7 @@ import { reestablishTTY } from '../utils/input.js';
 import { render } from 'ink';
 import React from 'react';
 import { SnapshotBrowser } from '../components/TUI.js';
+import * as fs from 'fs';
 
 interface UIFlags {
   help?: boolean;
@@ -48,6 +49,10 @@ export class UICommand extends Command {
         description: 'Edit current file in-memory using $EDITOR'
       },
       {
+        flags: 'g',
+        description: 'View Knowledge Graph relationships for selected item'
+      },
+      {
         flags: 'Esc',
         description: 'Back / Exit'
       }
@@ -60,7 +65,8 @@ export class UICommand extends Command {
       'Visual Exploration: Browse large codebases without extracting them.',
       'Mobile Development: Effortlessly navigate files on Termux using simple keybinds.',
       'Quick Edits: Use the "e" key to perform temporary edits in your preferred editor.',
-      'Snippet Sharing: Use the "y" key to quickly copy code for use elsewhere.'
+      'Snippet Sharing: Use the "y" key to quickly copy code for use elsewhere.',
+      'Graph Discovery: Use the "g" key to explore symbol dependencies and modular clusters.'
     ]
   };
 
@@ -84,6 +90,18 @@ export class UICommand extends Command {
       // Parse directory structure into tree
       const tree = parseDirectoryStructure(snapshot.directoryStructure || '');
 
+      // Try to load graph data if it exists
+      let graphData = undefined;
+      const graphPath = filePath ? filePath.replace('.json', '-graph.json') : 'graph-snapshot.json';
+      if (fs.existsSync(graphPath)) {
+        try {
+          const graphContent = fs.readFileSync(graphPath, 'utf8');
+          graphData = JSON.parse(graphContent);
+        } catch (e) {
+          // Ignore graph loading errors
+        }
+      }
+
       // Re-establish TTY if we were piped, so Ink can handle keyboard input
       if (context.stdinIsPipe) {
         reestablishTTY();
@@ -96,6 +114,7 @@ export class UICommand extends Command {
             tree,
             files: snapshot.files,
             encodings: snapshot.encodings || {},
+            graph: graphData,
             onExit: () => {
               unmount();
               resolve(this.success());

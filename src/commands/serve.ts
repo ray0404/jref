@@ -50,6 +50,27 @@ export class ServeCommand extends Command {
         return this.error('No snapshot file provided', options);
       }
 
+      // Load graph if exists
+      const fs = await import('fs');
+      let graph: any = undefined;
+      const possibleGraphPaths = [
+        'graph-snapshot.json',
+        snapshotFile ? snapshotFile.replace('.json', '-graph.json') : null,
+        snapshotFile ? snapshotFile.replace('.json', '.graph.json') : null
+      ].filter(Boolean) as string[];
+
+      for (const p of possibleGraphPaths) {
+        if (fs.existsSync(p)) {
+          try {
+            graph = JSON.parse(fs.readFileSync(p, 'utf8'));
+            console.error(`MCP: Loaded graph from ${p}`);
+            break;
+          } catch (e) {
+            // ignore
+          }
+        }
+      }
+
       const server = new Server(
         {
           name: 'jref-mcp-server',
@@ -142,6 +163,40 @@ export class ServeCommand extends Command {
                   symbol: { type: 'string', description: 'Symbol name to trace' },
                 },
                 required: ['symbol'],
+              },
+            },
+            {
+              name: 'query_graph_node',
+              description: 'Get structural relationships for a specific node in the knowledge graph',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  nodeId: { type: 'string', description: 'ID of the node (file path or symbol ID)' },
+                },
+                required: ['nodeId'],
+              },
+            },
+            {
+              name: 'get_shortest_path',
+              description: 'Find the connection path between two nodes in the knowledge graph',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  source: { type: 'string', description: 'Source node ID' },
+                  target: { type: 'string', description: 'Target node ID' },
+                },
+                required: ['source', 'target'],
+              },
+            },
+            {
+              name: 'get_community_context',
+              description: 'Get all symbols belonging to the same modular community as the given node',
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  nodeId: { type: 'string', description: 'ID of the node' },
+                },
+                required: ['nodeId'],
               },
             },
           ],
@@ -305,6 +360,73 @@ export class ServeCommand extends Command {
                 {
                   type: 'text',
                   text: JSON.stringify(results, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'query_graph_node': {
+            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
+            const { nodeId } = request.params.arguments as { nodeId: string };
+            const node = graph.nodes.find((n: any) => n.id === nodeId);
+            if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
+            
+            const edges = graph.edges.filter((e: any) => e.source === nodeId || e.target === nodeId);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ node, edges }, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'get_shortest_path': {
+            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
+            const { source, target } = request.params.arguments as { source: string, target: string };
+            
+            const { DirectedGraph } = await import('graphology');
+            const g = new DirectedGraph();
+            graph.nodes.forEach((n: any) => { if (!g.hasNode(n.id)) g.addNode(n.id); });
+            graph.edges.forEach((e: any) => {
+              if (g.hasNode(e.source) && g.hasNode(e.target)) {
+                if (!g.hasEdge(e.source, e.target)) g.addEdge(e.source, e.target);
+              }
+            });
+
+            const { bidirectional } = await import('graphology-shortest-path');
+            const path = bidirectional(g, source, target);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ path }, null, 2),
+                },
+              ],
+            };
+          }
+
+          case 'get_community_context': {
+            if (!graph) throw new McpError(ErrorCode.InvalidRequest, 'No knowledge graph loaded');
+            const { nodeId } = request.params.arguments as { nodeId: string };
+            const node = graph.nodes.find((n: any) => n.id === nodeId);
+            if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
+            
+            const communityId = node.community;
+            if (communityId === undefined) {
+               return { content: [{ type: 'text', text: 'Node does not belong to a community' }] };
+            }
+            
+            const communityNodes = graph.nodes.filter((n: any) => n.community === communityId);
+            
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({ communityId, nodes: communityNodes.map((n: any) => n.id) }, null, 2),
                 },
               ],
             };
