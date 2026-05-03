@@ -126,6 +126,7 @@ export const JrefConfigSchema = z.object({
   aliasToggle: z.boolean().default(true),
   binPath: z.string().optional(),
   defaultJq: z.string().optional(),
+  autoDownloadWasm: z.boolean().default(true),
 });
 
 export type JrefConfig = z.infer<typeof JrefConfigSchema>;
