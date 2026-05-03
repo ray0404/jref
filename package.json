@@ -11,9 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build",
-    "prepack": "node scripts/install-man.js",
-    "postinstall": "node scripts/install-man.js"
+    "prepublishOnly": "npm run build"
   },
   "man": [
     "./docs/jref.1"
@@ -29,7 +27,6 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@xenova/transformers": "^2.17.2",
     "fast-xml-parser": "^5.7.1",
     "fuse.js": "^7.3.0",
     "graphology": "^0.26.0",
@@ -48,9 +45,12 @@
     "repomix": "^1.13.1",
     "stream-json": "^2.1.0",
     "toml": "^4.1.1",
-    "web-tree-sitter": "^0.26.8",
     "yaml": "^2.8.3",
     "zod": "^4.3.6"
+  },
+  "optionalDependencies": {
+    "@xenova/transformers": "^2.17.2",
+    "web-tree-sitter": "^0.26.8"
   },
   "devDependencies": {
     "@types/micromatch": "^4.0.10",
@@ -61,6 +61,10 @@
     "ink-testing-library": "^4.0.0",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0"
+  },
+  "overrides": {
+    "sharp": "npm:noop2@^2.0.0",
+    "onnxruntime-node": "npm:onnxruntime-web@1.14.0"
   },
   "engines": {
     "node": ">=18.0.0"

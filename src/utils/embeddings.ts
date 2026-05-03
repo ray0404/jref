@@ -9,15 +9,26 @@ let transformersLib: any = null;
 
 async function getTransformers() {
   if (!transformersLib) {
-    // Dynamically import to allow setting environment variables before loading backends
-    const { env, pipeline } = await import('@xenova/transformers');
-    
-    // Explicitly set backend to wasm to avoid onnxruntime-node dependency on Android/Termux
-    (env as any).backend = 'wasm';
-    env.allowRemoteModels = true;
-    env.localModelPath = './models/';
-    
-    transformersLib = { env, pipeline };
+    try {
+      // Dynamically import to allow setting environment variables before loading backends
+      const { env, pipeline } = await import('@xenova/transformers');
+      
+      // Explicitly set backend to wasm to avoid onnxruntime-node dependency on Android/Termux
+      (env as any).backend = 'wasm';
+      env.allowRemoteModels = true;
+      env.localModelPath = './models/';
+
+      // Additional Termux/Node.js shimming for onnxruntime-web
+      if (typeof process !== 'undefined' && process.release?.name === 'node') {
+        (env as any).wasm.numThreads = 1;
+        (env as any).wasm.proxy = false;
+      }
+      
+      transformersLib = { env, pipeline };
+    } catch (err) {
+      console.warn('⚠️ @xenova/transformers not found. Semantic search/embeddings disabled.');
+      throw err;
+    }
   }
   return transformersLib;
 }

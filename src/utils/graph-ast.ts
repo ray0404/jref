@@ -1,6 +1,6 @@
-import { Parser, Language } from 'web-tree-sitter';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
 import { GraphNode, GraphEdge } from '../types/index.js';
 
 /**
@@ -15,13 +15,24 @@ const PARSER_MAP: Record<string, string> = {
 };
 
 let initialized = false;
+let Parser: any = null;
+let Language: any = null;
 
 async function ensureInitialized() {
   if (initialized) return;
-  
-  // In Node.js environment with web-tree-sitter
-  await Parser.init();
-  initialized = true;
+
+  try {
+    const mod = await import('web-tree-sitter');
+    Parser = mod.default || mod.Parser;
+    Language = mod.Language;
+
+    // In Node.js environment with web-tree-sitter
+    await Parser.init();
+    initialized = true;
+  } catch (err) {
+    console.error('⚠️ web-tree-sitter not found or failed to initialize. Graph extraction disabled.');
+    throw err;
+  }
 }
 
 /**
@@ -32,8 +43,12 @@ export async function extractGraphFromSource(
   content: string,
   baseDir: string = process.cwd()
 ): Promise<{ nodes: GraphNode[], edges: GraphEdge[] }> {
-  await ensureInitialized();
-  
+  try {
+    await ensureInitialized();
+  } catch {
+    return { nodes: [], edges: [] };
+  }
+
   const ext = path.extname(filePath);
   const wasmFile = PARSER_MAP[ext];
   
@@ -56,9 +71,10 @@ export async function extractGraphFromSource(
 
   try {
     // Try to find WASM in common locations
+    const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const possibleWasmPaths = [
       path.join(process.cwd(), 'vendor/wasm', wasmFile),
-      path.join(path.dirname(new URL(import.meta.url).pathname), '../../vendor/wasm', wasmFile),
+      path.join(__dirname, '../../vendor/wasm', wasmFile),
     ];
     
     let wasmPath = possibleWasmPaths[0];
