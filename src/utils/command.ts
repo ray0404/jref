@@ -257,6 +257,8 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { ToolCommand } = await import('../commands/tool.js');
   const { GitCommand } = await import('../commands/git.js');
   const { ConfigCommand } = await import('../commands/config.js');
+  const { FlattenCommand } = await import('../commands/flatten.js');
+  const { UnflattenCommand } = await import('../commands/unflatten.js');
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
@@ -283,4 +285,6 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new ToolCommand());
   registry.register(new GitCommand());
   registry.register(new ConfigCommand());
+  registry.register(new FlattenCommand());
+  registry.register(new UnflattenCommand());
 }
