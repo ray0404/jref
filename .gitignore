@@ -26,3 +26,4 @@ test-pack-target/
 GEMINI.md.bak
 /.env
 /.npmrc
+/conductor/
