@@ -18,18 +18,33 @@ jref \- JSON Reference CLI tool for condensed JSON project snapshots
 .YS
 .PP
 The following commands are available:
-.IR pack ,
-.IR inspect ,
-.IR search ,
-.IR query ,
-.IR extract ,
-.IR run ,
-.IR reconstruct ,
+.IR alias ,
+.IR bextract ,
+.IR bin ,
+.IR bpack ,
+.IR config ,
 .IR diff ,
+.IR extract ,
+.IR flatten ,
+.IR get ,
+.IR graph ,
+.IR inspect ,
+.IR mount ,
+.IR openapi ,
+.IR pack ,
 .IR patch ,
-.IR summarize ,
+.IR query ,
+.IR reconstruct ,
+.IR run ,
+.IR search ,
 .IR serve ,
-.IR ui .
+.IR set ,
+.IR shell ,
+.IR summarize ,
+.IR tool ,
+.IR ui ,
+.IR unflatten ,
+.IR validate .
 .
 .SH DESCRIPTION
 .B jref
@@ -84,88 +99,251 @@ to get
 .
 .SH COMMANDS
 .
-.SS PACK
-Create a jref snapshot from a local directory or remote repository (optimized for LLMs).
+.SS ALIAS
+Create and manage command shortcuts for complex or frequent workflows.
 .PP
-.B "jref pack [directory|url] [options]"
+.B "jref alias <action> [name] [expansion]"
 .PP
-.B OPTIONS
+.B ACTIONS
 .RS 4
 .TP 4
-.B \-\-instruction \fItext\fR
-Set the
-.B instruction
-field in the snapshot (AI system prompt context). If omitted, an instruction is automatically generated.
+.B set \fIname\fR \fIexp\fR
+Create or update an alias.
 .TP
-.B \-\-summary \fItext\fR
-Set the
-.B fileSummary
-field (human-readable project description).
+.B remove \fIname\fR
+Delete an alias.
 .TP
-.B \-\-max\-size \fIbytes\fR
-Splits the snapshot into multiple chunk files (JSON only) if the resulting total size exceeds this threshold.
-.TP
-.B \-s, \-\-output\-style \fIstyle\fR
-Choose output format: \fBjson\fR, \fBmarkdown\fR, \fBxml\fR, or \fBplain\fR (default: \fBjson\fR).
-.TP
-.B \-\-branch \fIname\fR
-Target a specific branch for remote repositories.
-.TP
-.B \-\-commit \fIhash\fR
-Target a specific commit hash for remote repositories.
-.TP
-.B \-\-compress
-Enable AST-aware compression (removes unnecessary whitespace from code).
-.TP
-.B \-\-remove\-comments
-Strip code comments from the output files.
-.TP
-.B \-\-remove\-empty\-lines
-Strip blank lines from the output files.
-.TP
-.B \-\-top\-files\-length \fIn\fR
-Limit the number of top-level files processed (default: 100).
-.TP
-.B \-\-token\-limit \fIn\fR
-Set a maximum token limit for the output.
+.B list
+List all active aliases.
 .RE
-.PP
-.B FEATURES
-.RS 4
-.IP \(bu 2
-\fBRemote Packing\fR: Snapshot repositories by providing a URL (GitHub, GitLab, Bitbucket).
-.IP \(bu 2
-\fBToken Authentication\fR: Automatically uses \fBGITHUB_TOKEN\fR or \fBGITLAB_TOKEN\fR from the environment.
-.IP \(bu 2
-\fBSecret Scanning\fR: Automatically redacts secrets (API keys, credentials) using \fIsecretlint\fR.
-.IP \(bu 2
-\fBOptimization\fR: Drastically reduce context overhead using compression and comment stripping.
-.IP \(bu 2
-\fBMulti-Format\fR: Export to Markdown or XML for better readability in specific AI interfaces.
-.RE
-.PP
-Reads
-.I directory
-or clones
-.I url
-recursively and produces a snapshot.
-Defaults to the current working directory if omitted.
-Reads
-.B .gitignore
-from the root of
-.I directory
-and respects its patterns;
-.B .git
-is always excluded.
-All file contents are read as UTF-8.
 .PP
 .B EXAMPLES
 .PP
 .EX
-jref pack . --compress > snapshot.json
-jref pack https://github.com/user/repo --branch main > remote.json
-jref pack . --output-style markdown --remove-comments > project.md
-jref pack . --max-size 1048576
+jref alias set map "summarize --compress"
+jref map project.json
+.EE
+.
+.SS BEXTRACT
+Unpack a JSON binary archive back to the filesystem. Specialized for large assets.
+.PP
+.B "jref bextract \fIfile\fR [\fIoptions\fR] [\fIpatterns...\fR]"
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-output, \-o \fIdir\fR
+Target directory (default: ./extracted).
+.TP
+.B \-\-overwrite, \-w
+Overwrite existing files.
+.TP
+.B \-\-dry\-run
+Show what would be extracted.
+.TP
+.B \-\-stdout
+Pipes a single decoded asset directly to stdout.
+.RE
+.
+.SS BIN
+Manage virtual binaries and executable scripts stored within snapshots.
+.PP
+.B "jref bin \fIaction\fR [\fIargs...\fR]"
+.PP
+.B ACTIONS
+.RS 4
+.TP 4
+.B list
+List all virtual binaries in $JREF_BIN_PATH.
+.TP
+.B exec \fIname\fR [\fIargs\fR]
+Execute a virtual binary.
+.TP
+.B setup
+Interactive setup of the bin environment.
+.RE
+.PP
+\fBNote:\fR When linked, the \fBjbin\fR command automatically executes the \fBbin\fR command.
+.
+.SS BPACK
+Specialized binary-first snapshot creation for large datasets and assets.
+.PP
+.B "jref bpack [\fIdirectory\fR] [\fIoptions\fR]"
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-output, \-o \fIfile\fR
+Output filename (default: stdout).
+.TP
+.B \-\-exclude \fIpattern\fR
+Exclude files matching pattern.
+.TP
+.B \-\-max\-size \fIbytes\fR
+Limit maximum size of a single binary file.
+.RE
+.
+.SS CONFIG
+Persistent CLI configuration management.
+.PP
+.B "jref config \fIaction\fR [\fIkey\fR] [\fIvalue\fR]"
+.PP
+.B ACTIONS
+.RS 4
+.TP 4
+.B set \fIkey\fR \fIval\fR
+Update a configuration setting.
+.TP
+.B get \fIkey\fR
+View a configuration setting.
+.TP
+.B list
+Show all current settings.
+.TP
+.B ui
+Open the interactive configuration TUI.
+.RE
+.PP
+.B SETTINGS
+.RS 4
+.IP \(bu 2
+\fBdefaultOutput\fR: json, pretty, raw
+.IP \(bu 2
+\fBtheme\fR: dark, light, system
+.IP \(bu 2
+\fBsilent\fR: true, false
+.IP \(bu 2
+\fBaliasToggle\fR: true, false
+.RE
+.
+.SS DIFF
+Compare snapshot contents against the local filesystem.
+.PP
+.B "jref diff [\fIoptions\fR] [\fIfile.json\fR]"
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-directory, \-d \fIdir\fR
+Target directory to compare against (default: current directory).
+.TP
+.B \-\-all, \-a
+Find extra local files not in snapshot.
+.RE
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref diff snapshot.json
+jref diff --directory ./my-app snapshot.json
+.EE
+.
+.SS EXTRACT
+Unpack files from a snapshot back into the local filesystem. Supports wildcards and directory prefixes.
+.PP
+.B "jref extract [\fIoptions\fR] [\fIfile\fR] [\fIpatterns...\fR]"
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-output \fIdir\fR, \fB\-o \fIdir\fR
+Destination directory. Defaults to \fB./extracted\fR.
+.TP
+.B \-\-overwrite, \-w
+Overwrite existing files on disk.
+.TP
+.B \-\-dry\-run, \-n
+Preview what would be extracted without writing any files.
+.TP
+.B \-\-flat
+Extract files into a single directory (no subfolders).
+.TP
+.B \-\-stdout
+Pipe a single decoded asset directly to stdout.
+.TP
+.B \-\-listen
+Listen on stdin for continuous stream of snapshots/deltas (RPC mode).
+.RE
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref extract snapshot.json
+jref extract snapshot.json "src/**/*.ts"
+jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
+jref extract --listen --output ./mirror
+.EE
+.
+.SS FLATTEN
+Flatten a nested snapshot into a one-level key-value map.
+.PP
+.B "jref flatten [\fIfile.json\fR]"
+.PP
+Useful for legacy tool compatibility or simplified parsing.
+.
+.SS GET
+Retrieve specific data nodes from a snapshot using dot-notation.
+.PP
+.B "jref get \fIpath\fR [\fIfile.json\fR]"
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref get instruction project.json
+jref get "files.src/index.ts" project.json
+.EE
+.
+.SS GRAPH
+Analyze and visualize dependency relationships between symbols and modules.
+.PP
+.B "jref graph \fIsubcommand\fR [\fItarget\fR] [\fIoptions\fR]"
+.PP
+.B SUBCOMMANDS
+.RS 4
+.TP 4
+.B build \fItarget\fR
+Build the knowledge graph from directory or snapshot.
+.TP
+.B query \fItarget\fR \fIargs\fR
+Query the knowledge graph (experimental).
+.TP
+.B wasm\-update
+Pre-fetch registered WASM binaries for offline use.
+.TP
+.B ui \fItarget\fR
+Start a local web server to visualize the graph.
+.RE
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-output, \-o \fIfile\fR
+Save graph data to a file.
+.TP
+.B \-\-format \fIfmt\fR
+Output format: \fBjson\fR, \fBdot\fR, \fBmermaid\fR (default: \fBjson\fR).
+.TP
+.B \-\-depth \fIn\fR
+Traversal depth (default: 1).
+.TP
+.B \-\-cluster
+Detect and highlight modular clusters (Louvain method).
+.TP
+.B \-\-centrality
+Highlight high-impact nodes using degree centrality.
+.TP
+.B \-\-no\-llm
+Skip semantic extraction using LLM.
+.TP
+.B \-p, \-\-port \fIn\fR
+Port for the graph UI server (default: 8080).
+.RE
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref graph build .
+jref graph ui
 .EE
 .
 .SS INSPECT
@@ -174,517 +352,297 @@ file into memory.
 .PP
 .B "jref inspect [\fIoptions\fR] [\fIfile\fR]"
 .PP
-.I Options
+.B OPTIONS
 .RS 4
 .TP 4
-.B \-\-metadata\fR, \fB\-m
-Show only snapshot metadata (file count, byte size, structure line
-count, presence of instruction/summary/header).
+.B \-\-metadata, \-m
+Show only snapshot metadata.
 .TP 4
-.B \-\-structure\fR, \fB\-t
+.B \-\-structure, \-t
 Show only the ASCII directory tree.
 .TP
-.B \-\-files\fR, \fB\-f
-Show only the list of file paths with human-readable sizes.
+.B \-\-files, \-f
+Show only the list of file paths.
 .TP
 .B \-\-summary
-Show the contents of the
-.BR instruction ,
-.BR fileSummary ,
-and
-.B userProvidedHeader
-fields, if present.
+Show instruction/summary/header fields.
 .RE
+.
+.SS MOUNT
+Mount a snapshot as a virtual filesystem and expose it via WebDAV.
 .PP
-If no option flags are given, all sections are displayed.
+.B "jref mount \fIfile.json\fR [\fIoptions\fR]"
+.PP
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-port, \-p \fIn\fR
+Port for the WebDAV server (default: 8080).
+.TP
+.B \-\-read\-only
+Mount in read-only mode.
+.RE
+.
+.SS OPENAPI
+Transform an OpenAPI/RESTful specification into a queryable jref snapshot.
+.PP
+.B "jref openapi \fIspec.json\fR"
 .PP
 .B EXAMPLES
 .PP
 .EX
-jref inspect snapshot.json
-jref inspect --metadata snapshot.json
-jref inspect --structure snapshot.json
-cat snapshot.json | jref inspect --json
+jref openapi api.json > snapshot.json
+jref openapi api.json | jref ui
 .EE
 .
-.SS SEARCH
-Search file contents within a snapshot using literal keyword matching
-or regular expressions.
+.SS PACK
+Create a jref snapshot from a local directory or remote repository (optimized for LLMs).
 .PP
-.B "jref search \fIpattern\fR [\fIoptions\fR] [\fIfile\fR]"
+.B "jref pack [directory|url] [options]"
 .PP
-.I Options
+.B OPTIONS
 .RS 4
 .TP 4
-.B \-\-regex\fR, \fB\-r
-Treat
-.I pattern
-as a regular expression.
-Default: literal string with regex metacharacters escaped.
+.B \-\-semantic
+Enable AST-aware semantic chunking and local embeddings.
 .TP
-.B \-\-case\-insensitive\fR, \fB\-i
-Case-insensitive matching.
+.B \-\-instruction \fItext\fR
+Add custom AI instructions (auto-generated if omitted).
 .TP
-.B \-\-files\fR, \fB\-f
-Output only the file paths that contain matches, not the matching
-lines.
+.B \-\-summary \fItext\fR
+Add a high-level file summary.
 .TP
-.B \-\-max\-results\fR, \fB\-n \fIn\fR
-Maximum number of files to return (default: 1000).
+.B \-\-max\-size \fIbytes\fR
+Split snapshot into chunks (JSON only).
 .TP
-.B \-\-context\fR, \fB\-c \fIn\fR
-Show
-.I n
-lines of context around each match (default: 0).
-.RE
-.PP
-For each matching file: the file path and match count are shown,
-along with up to 5 matching lines with the match text highlighted.
-.PP
-.B EXAMPLES
-.PP
-.EX
-jref search "async function" snapshot.json
-jref search "class.*Controller" --regex snapshot.json
-jref search "TODO" --case-insensitive snapshot.json
-jref search "function" --context 2 snapshot.json
-cat snapshot.json | jref search "TODO"
-.EE
-.
-.SS QUERY
-Retrieve the content of a specific file path from the snapshot.
-The primary interface for AI agents reading individual files.
-.PP
-.B "jref query \fB\-\-path\fR \fIpath\fR [\fIfile\fR] [\fIoptions\fR]"
-.PP
-.I Options
-.RS 4
-.TP 4
-.B \-\-path \fIpath\fR, \fB\-p \fIpath\fR
-\fBRequired.\fR
-The relative path of the file to retrieve from the snapshot.
+.B \-s, \-\-output\-style \fIstyle\fR
+Output format: \fBjson\fR, \fBmarkdown\fR, \fBxml\fR, \fBplain\fR.
 .TP
-.B \-\-raw\fR, \fB\-r
-Emit only the raw file content, with no header or formatting.
-Ideal for piping to other commands or passing content to an AI.
+.B \-\-branch \fIname\fR
+Target specific branch (remote).
 .TP
-.B \-\-line-start \fIn\fR
-Start reading from line
-.I n
-(1-indexed, inclusive).
+.B \-\-commit \fIhash\fR
+Target specific commit (remote).
 .TP
-.B \-\-line-end \fIn\fR
-Stop reading at line
-.I n
-(1-indexed, inclusive).
+.B \-\-compress
+Enable AST-aware whitespace removal.
+.TP
+.B \-\-remove\-comments
+Strip code comments.
+.TP
+.B \-\-remove\-empty\-lines
+Strip blank lines.
+.TP
+.B \-\-token\-limit \fIn\fR
+Cap the total output tokens.
+.TP
+.B \-\-hashes
+Output a hash map of the directory instead of a snapshot.
+.TP
+.B \-\-delta [\fIremote-hashes\fR]
+Create a delta snapshot based on remote hashes.
+.TP
+.B \-\-stream
+Enable real-time streaming mode for piped synchronization.
 .RE
 .PP
 .B EXAMPLES
 .PP
 .EX
-# Human-readable with header
-jref query --path "src/main.ts" snapshot.json
-
-# Raw output (pure content, for AI or piping)
-jref query --path "src/main.ts" --raw snapshot.json
-
-# Line range
-jref query --path "src/main.ts" --line-start 10 --line-end 50 snapshot.json
-
-# Pipe query output into a patch operation
-jref query --path "src/utils.ts" --raw snapshot.json \e
-  | sed 's/old/new/g' \e
-  | jref patch src/utils.ts snapshot.json > updated.json
-.EE
-.
-.SS EXTRACT
-Unpack files from a snapshot back into the local filesystem.
-.PP
-.B "jref extract [\fIoptions\fR] [\fIfile\fR] [\fIpatterns...\fR]"
-.PP
-.I Options
-.RS 4
-.TP 4
-.B \-\-output \fIdir\fR, \fB\-o \fIdir\fR
-Destination directory.
-Defaults to
-.B ./extracted
-if not specified.
-.TP
-.B \-\-overwrite\fR, \fB\-w
-Overwrite existing files on disk.
-By default, existing files are skipped.
-.TP
-.B \-\-dry-run\fR, \fB\-n
-Preview what would be extracted without writing any files.
-.TP
-.B \-\-flat
-Flatten output: files are written directly into the output
-directory with no subdirectory structure.
-.RE
-.PP
-.B EXAMPLES
-.PP
-.EX
-jref extract snapshot.json
-jref extract snapshot.json "src/**/*.ts"
-jref extract --output ./restored snapshot.json
-jref extract --dry-run snapshot.json
-.EE
-.
-.SS RUN
-Execute a script directly from the JSON snapshot without permanent extraction.
-Automatically detects the appropriate runner based on file extension or shebang
-.RB ( #! ).
-.PP
-.B "jref run \fB\-\-path\fR \fIpath\fR [\fIfile\fR] [\fIscript-args...\fR]"
-.PP
-.I Options
-.RS 4
-.TP 4
-.B \-\-path \fIpath\fR, \fB\-p \fIpath\fR
-\fBRequired.\fR
-The path to the script within the snapshot.
-.RE
-.PP
-Extracts all files to a unique temporary directory, executes the target
-script using an appropriate runner (node, python3, bash), and cleans up
-the temporary files upon exit.
-.PP
-.B EXAMPLES
-.PP
-.EX
-jref run --path scripts/setup.ts project.json
-jref run -p main.js snapshot.json -- --port 8080
-.EE
-.
-.SS RECONSTRUCT
-Dry-run verification: check whether a local directory's contents
-match the expected state in the snapshot.
-Reports missing, extra, and modified files.
-.PP
-.B "jref reconstruct [\fIoptions\fR] [\fIfile\fR]"
-.PP
-.I Options
-.RS 4
-.TP 4
-.B \-\-directory \fIdir\fR, \fB\-d \fIdir\fR
-Local directory to compare against.
-Defaults to the current working directory.
-.TP
-.B \-\-verbose\fR, \fB\-v
-List the actual missing, extra, and modified file paths in detail.
-.TP
-.B \-\-ignore-missing
-Ignore files that are in the snapshot but not on disk.
-.TP
-.B \-\-ignore-extra
-Ignore files that are on disk but not in the snapshot.
-.RE
-.PP
-.B EXIT CODES
-.RS 4
-.TP 4
-0
-Directory matches the snapshot perfectly.
-.TP 4
-1
-One or more differences were found.
-.RE
-.PP
-The following patterns are always ignored during comparison:
-.BR node_modules ,
-.BR .git ,
-.BR .svn ,
-.BR .hg ,
-.BR __pycache__ ,
-.BR .DS_Store ,
-.BR Thumbs.db ,
-.BR .env ,
-.BR .env.local ,
-.BR dist ,
-.BR build ,
-.BR .cache .
-.PP
-.B EXAMPLES
-.PP
-.EX
-jref reconstruct snapshot.json
-jref reconstruct --directory ./my-app snapshot.json
-jref reconstruct --verbose snapshot.json
-jref reconstruct --json snapshot.json
-.EE
-.
-.SS DIFF
-Compare a snapshot against the local filesystem, listing files that
-differ in content or are present/absent.
-.PP
-.B "jref diff [\fIoptions\fR] [\fIfile\fR]"
-.PP
-.I Options
-.RS 4
-.TP 4
-.B \-\-directory \fIdir\fR, \fB\-d \fIdir\fR
-Target directory to compare against.
-Defaults to the current working directory.
-.TP
-.B \-\-all\fR, \fB\-a
-Also report local files that are not present in the snapshot.
-.RE
-.PP
-.B OUTPUT CLASSIFICATION
-.RS 4
-.TP 4
-.B M
-Modified: file content differs between snapshot and disk.
-.TP 4
-.B A
-Added to snapshot: file exists in snapshot but not on disk.
-.TP 4
-.B D
-Deleted from snapshot: file exists on disk but not in snapshot.
-.RE
-.PP
-.B EXAMPLES
-.PP
-.EX
-jref diff snapshot.json
-jref diff --directory ./staging snapshot.json
-jref diff --all snapshot.json
-jref diff --json snapshot.json
+jref pack . --compress > project.json
+jref pack https://github.com/user/repo --branch main > remote.json
 .EE
 .
 .SS PATCH
-Update or add file contents and/or metadata in a snapshot without
-unpacking it to disk.
-The canonical mechanism for surgically mutating a snapshot.
+Update or add files and metadata in a snapshot without extraction.
 .PP
-.B "jref patch [\fIpath\fR] [\fIcontent\fR] [\fIfile.json\fR] [\fIoptions\fR]"
+.B "jref patch [path] [content] [file.json] [options]"
 .PP
-.I Options
+.B OPTIONS
 .RS 4
 .TP 4
 .B \-\-instruction \fItext\fR
-Set or update the snapshot's
-.B instruction
-field.
+Update snapshot instructions.
 .TP
 .B \-\-summary \fItext\fR
-Set or update the snapshot's
-.B fileSummary
-field.
+Update snapshot summary.
 .RE
 .PP
-.B POSITIONAL ARGUMENT RULES
+.B EXAMPLES
+.PP
+.EX
+jref patch src/main.ts "new code" project.json > updated.json
+cat fix.ts | jref patch src/main.ts project.json > updated.json
+.EE
+.
+.SS QUERY
+Get content of a specific file path or perform natural language Semantic Search (RAG).
+.PP
+.B "jref query [options] [file]"
+.PP
+.B OPTIONS
 .RS 4
 .TP 4
-.I path
-only
-.RS 4
-The file path is given; content is read from
-.B stdin
-if a pipe is present.
-.RE
+.B \-\-path, \-p \fIpath\fR
+Path of the file to query.
 .TP
-.I path content
-.RS 4
-Both are given as separate arguments; content is used directly.
-.RE
+.B \-\-semantic, \-s \fIquery\fR
+Perform natural language search across code chunks.
 .TP
-.I path file.json
-.RS 4
-The second positional ending in
-.B .json
-is interpreted as the snapshot file path; content is read from
-.B stdin
-if available.
-.RE
+.B \-\-top\-k \fIn\fR
+Number of results for semantic search (default: 5).
 .TP
-.I file.json
-only
-.RS 4
-A path ending in
-.B .json
-given alone: performs a metadata-only update.
-.RE
+.B \-\-raw, \-r
+Emit pure content without headers.
 .RE
 .PP
 .B EXAMPLES
 .PP
 .EX
-# Content from argument
-jref patch src/main.ts "const x = 1;" snapshot.json > updated.json
-
-# Content from stdin
-cat new-main.ts | jref patch src/main.ts snapshot.json > updated.json
-
-# Metadata only
-jref patch --instruction "Updated rules" snapshot.json > updated.json
-
-# Both content and metadata
-cat new-auth.ts | jref patch src/auth.ts \e
-  --instruction "Auth module updated" \e
-  snapshot.json > updated.json
+jref query --path "src/main.ts" snapshot.json
+jref query --semantic "How are tokens handled?" snapshot.json
 .EE
 .
-.SS SUMMARIZE
-Generate a token-efficient architectural map by stripping
-implementation details from code files.
-Preserves import/export statements, function signatures,
-class/interface/type declarations, and decorators.
-Non-code files
-.RB ( .json ,
-.BR .md ,
-.B .txt )
-are kept verbatim.
+.SS RECONSTRUCT
+Verify if a local directory matches the snapshot (dry-run mode).
 .PP
-The output is a valid jref snapshot containing only signatures and
-import/export lines, suitable for injecting a compact overview of a
-large codebase into an LLM's context window.
+.B "jref reconstruct [\fIoptions\fR] [\fIfile\fR]"
 .PP
-.B "jref summarize [\fIfile\fR]"
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-directory, \-d \fIdir\fR
+Target directory to verify (default: current directory).
+.TP
+.B \-\-verbose, \-v
+Show detailed comparison results.
+.TP
+.B \-\-ignore\-missing
+Do not fail if files from the snapshot are missing locally.
+.TP
+.B \-\-ignore\-extra
+Do not fail if extra local files are found.
+.RE
+.
+.SS RUN
+Execute a script directly from the JSON snapshot without permanent extraction.
 .PP
-.B EXAMPLES
+.B "jref run \fB\-\-path\fR \fIpath\fR [\fIfile\fR] [\fIscript-args...\fR]"
 .PP
-.EX
-jref summarize snapshot.json > map.json
-cat snapshot.json | jref summarize | jref inspect --files
-.EE
+.B OPTIONS
+.RS 4
+.TP 4
+.B \-\-path, \-p \fIpath\fR
+Path to the script within the snapshot.
+.RE
+.
+.SS SEARCH
+High-speed regex or keyword searching across all entries.
+.PP
+.B "jref search \fIpattern\fR [\fIoptions\fR] [\fIfile\fR]"
 .
 .SS SERVE
-Start a Model Context Protocol (MCP) stdio server that exposes the
-snapshot to AI agents via JSON-RPC over stdio.
+Start a Model Context Protocol (MCP) server for agentic interoperability.
 .PP
-.B "jref serve \fIfile\fR"
-.PP
-Loads the snapshot at startup and runs indefinitely, handling
-JSON-RPC requests from an MCP client.
+.B "jref serve [\fIfile.json\fR]"
 .PP
 .B MCP TOOLS EXPOSED
 .RS 4
 .TP 4
 .B inspect
-Returns snapshot metadata and the full directory structure as JSON.
-.TP 4
+Get metadata and structure.
+.TP
 .B search
-Arguments: { pattern: string }.
-Returns a JSON array of file paths that contain the pattern.
-.TP 4
+Regex search across files.
+.TP
 .B query
-Arguments: { path: string }.
-Returns the raw content of the specified file.
-.TP 4
+Read specific file content.
+.TP
 .B jq_query
-Arguments: { filter: string }.
-Executes a jq filter against the snapshot.
-.TP 4
+Execute jq filter against snapshot.
+.TP
 .B summarize
-Arguments: { paths: string[] }.
-Returns a token-efficient map of requested files.
-.TP 4
+Get token-efficient map of specific files.
+.TP
 .B list_directory
-Arguments: { path: string }.
-Returns children of specified directory (ls style).
-.TP 4
+Localized tree inspection (ls style).
+.TP
 .B find_references
-Arguments: { symbol: string }.
-Cross-file reference tracing for a specific symbol.
+Cross-file symbol reference tracing.
 .RE
+.
+.SS SET
+Update or create specific nodes in a snapshot using dot-notation.
 .PP
-.B EXAMPLE
+.B "jref set \fIpath\fR \fIvalue\fR [\fIfile.json\fR]"
+.PP
+.B EXAMPLES
 .PP
 .EX
-jref serve snapshot.json
+jref set instruction "New AI prompt" project.json
+jref set "files.README.md" "New content" project.json
+.EE
+.
+.SS SHELL
+Launch an interactive JavaScript REPL to manipulate snapshots in real-time.
+.PP
+.B "jref shell [\fIfile.json\fR]"
+.PP
+Available in shell: \fBctx\fR (snapshot), \fBfiles\fR (alias), \fB.save\fR, \fB.reload\fR.
+.
+.SS SUMMARIZE
+Generate a token-efficient architectural map by stripping implementation details.
+.PP
+.B "jref summarize [\fIfile.json\fR]"
+.
+.SS TOOL
+Execute external commands and parse their output directly into snapshots.
+.PP
+.B "jref tool \fIname\fR \fIcommand\fR [\fIargs...\fR]"
+.PP
+.B PARSERS AVAILABLE
+.RS 4
+.IP \(bu 2
+\fBls\fR: Standard directory listing to JSON.
+.IP \(bu 2
+\fBgit\-log\fR: Git history to structured JSON.
+.IP \(bu 2
+\fBps\fR: Process list to structured JSON.
+.RE
+.PP
+.B EXAMPLES
+.PP
+.EX
+jref tool ls "ls -la" > files.json
 .EE
 .
 .SS UI
-Interactive Terminal User Interface (TUI) for browsing a snapshot's
-directory tree and file contents.
-Built with Ink (React for CLI).
+Interactive Terminal User Interface for browsing snapshots.
 .PP
 .B "jref ui [\fIfile\fR]"
+.
+.SS UNFLATTEN
+Restore a flattened snapshot back to its original nested structure.
 .PP
-.B CONTROLS
+.B "jref unflatten [\fIfile.json\fR]"
+.
+.SS VALIDATE
+Analyze git diff blast radius and generate AI validation context.
+.PP
+.B "jref validate \fItarget-branch\fR [\fIoptions\fR]"
+.PP
+.B OPTIONS
 .RS 4
 .TP 4
-.B Up/Down
-arrows or
-.B k/j
-.RS 4
-Navigate up/down in tree view or search results.
+.B \-\-output, \-o \fIfile\fR
+Output the validation snapshot to a file.
+.TP
+.B \-\-depth, \-d \fIn\fR
+Maximum depth for dependency traversal (default: 1).
+.TP
+.B \-\-all, \-a
+Include all tracked files (ignores blast radius).
 .RE
-.TP
-.B Left/Right
-arrows or
-.B h/l
-.RS 4
-Collapse (left) or expand (right) a directory.
-.RE
-.TP
-.B Enter
-Select a tree item (open directory or view file).
-.TP
-.B Space
-Toggle selection for current item. Selected items are marked with
-\fB[*]\fR.
-.TP
-.B /
-Open fuzzy search mode (using \fBfuse.js\fR).
-Type to filter files matching the pattern.
-.TP
-.B Tab
-Toggle search type between Filename and Content in search mode.
-.TP
-.B y
-Yank (copy) the current file's content to the system clipboard.
-.RS 4
-On Termux: uses
-.BR termux-clipboard-set .
-.br
-On macOS: uses
-.BR pbcopy .
-.br
-On Linux: uses
-.BR xclip\ -selection\ clipboard .
-.RE
-.TP
-.B e
-Edit the current file in
-.BR $EDITOR .
-Spawns the editor with file content in a temporary file.
-On exit, the in-memory snapshot is updated;
-changes are \fBnot\fR written to the snapshot file or filesystem.
-.TP
-.B v
-View the current file in your preferred pager ($PAGER).
-.TP
-.B x
-Extract all selected items (\fB[*]\fR) to the local disk.
-If no items are selected, extracts the currently highlighted file.
-.TP
-.B c
-Toggle compact mode (reduces UI elements for narrow terminals).
-Auto-activated when terminal width < 60 columns.
-.TP
-.B Esc
-Return to previous view (file view to tree view), or exit the TUI
-from tree view.
-.RE
-.PP
-.B FEATURES
-.RS 4
-.IP \(bu 2
-\fBFuzzy Search\fR: Fast approximate matching by filename or file content.
-.IP \(bu 2
-\fBMulti-Selection\fR: Mark multiple files/directories with \fBSpace\fR for batch extraction.
-.RE
-.PP
-.B EXAMPLE
-.PP
-.EX
-jref ui snapshot.json
-cat snapshot.json | jref ui
-.EE
 .
 .SH SNAPSHOT SCHEMA
 A valid jref snapshot is a JSON object with this structure:
@@ -702,29 +660,12 @@ A valid jref snapshot is a JSON object with this structure:
 }
 .EE
 .
-.SH STREAMING AND MEMORY
-.B jref
-handles JSON snapshots of any size using automatic streaming:
-.TP 4
-< 8 MB
-Loaded directly via
-.BR JSON.parse ;
-single memory allocation.
-.TP
->= 8 MB
-64KB chunked read with streaming parse; prevents heap exhaustion.
-.TP
-> ~16 MB
-Returns error:
-.B "Snapshot file too large to process safely" .
-.
 .SH TARGET ENVIRONMENTS
 .B jref
 is engineered for constrained computing environments:
 .TP 4
 Termux (Android/ARM)
-Full clipboard integration via
-.BR termux-clipboard-set .
+Full clipboard integration via \fBtermux-clipboard-set\fR.
 .TP
 Raspberry Pi 4 (ARM)
 Chunked streaming for large snapshots; minimal memory footprint.
@@ -733,9 +674,7 @@ Standard Linux (x86)
 Full feature set.
 .TP
 macOS
-Full feature set;
-.BR pbcopy
-for clipboard integration.
+Full feature set; \fBpbcopy\fR for clipboard integration.
 .
 .SH EXIT CODES
 .TP 4
@@ -747,67 +686,6 @@ General error: file not found, invalid arguments, parse error.
 .TP
 .B 2
 Query target file not found in snapshot.
-.PP
-The
-.B serve
-command runs indefinitely until the MCP client disconnects and does
-not return an exit code during normal operation.
-.
-.SH EXAMPLES
-.SS Full Workflow
-.EX
-# Create a snapshot
-jref pack . --instruction "React dashboard app" > project.json
-
-# Inspect it
-jref inspect project.json
-
-# Search for something
-jref search "async" project.json
-
-# Extract a specific file
-jref extract --paths src/main.tsx project.json
-
-# Verify local disk matches snapshot
-jref reconstruct --verbose project.json
-
-# Get an architectural overview for an LLM
-jref summarize project.json > map.json
-
-# Start MCP server for agent integration
-jref serve project.json
-.EE
-.
-.SS AI Agent Pipelines
-.EX
-# Query + patch: apply a fix from an LLM to the snapshot
-jref query --path "src/main.ts" --raw snapshot.json \e
-  | sed 's/oldFn/newFn/g' \e
-  | jref patch src/main.ts snapshot.json > fixed.json
-
-# Pipe stdin snapshot through multiple jref operations
-cat snapshot.json \e
-  | jref search "TODO" \e
-  | jref summarize \e
-  | jref inspect --files
-.EE
-.
-.SH FILES
-.TP 4
-.B /usr/local/bin/jref
-CLI entry point (installed by
-.B "npm install -g" ).
-.TP
-.B /usr/local/share/man/man1/jref.1
-Man page (standard location on most Linux/macOS systems).
-.
-.SH SEE ALSO
-.BR json (1),
-.BR jq (1)
-.PP
-Project snapshot schema:
-.B project-snapshot-schema.json
-(distribution package).
 .
 .SH BUGS
 Report bugs at the project issue tracker.

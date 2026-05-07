@@ -12,11 +12,13 @@
     "schemas"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:docs",
+    "build:docs": "mandoc -Tutf8 docs/jref.1 > docs/jref.man",
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsc --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepare": "npm run build"
   },
   "man": [
     "./docs/jref.1"

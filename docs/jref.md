@@ -1,619 +1,406 @@
-# jref — JSON Reference CLI
+# jref - JSON Reference CLI
 
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Global Options](#global-options)
-6. [Command Reference](#command-reference)
-   - [pack — Create Snapshots](#pack)
-   - [bpack — Binary Snapshotting](#bpack)
-   - [bextract — Binary Unpacking](#bextract)
-   - [inspect — View Snapshot Metadata](#inspect)
-   - [search — Regex Search Within Snapshots](#search)
-   - [query — Retrieve Specific File Content](#query)
-   - [extract — Unpack Files to Filesystem](#extract)
-   - [validate — Analyze Blast Radius](#validate)
-   - [reconstruct — Verify Local vs Snapshot](#reconstruct)
-   - [diff — Compare Snapshot to Local Filesystem](#diff)
-   - [patch — Modify Snapshots Without Extraction](#patch)
-   - [get — Retrieve specific metadata](#get)
-   - [set — Update specific metadata](#set)
-   - [flatten — Flatten nested snapshots](#flatten)
-   - [unflatten — Restore flat snapshots](#unflatten)
-   - [shell — Interactive JavaScript REPL](#shell)
-   - [mount — Virtual Filesystem via WebDAV](#mount)
-   - [summarize — Generate Architectural Maps](#summarize)
-   - [openapi — Transform OpenAPI Specifications](#openapi)
-   - [serve — MCP Server for AI Agents](#serve)
-   - [ui — Interactive TUI Browser](#ui)
-7. [Snapshot Schema](#snapshot-schema)
-8. [AI Agent Workflows](#ai-agent-workflows)
-9. [Target Environments](#target-environments)
-10. [Use Cases](#use-cases)
-11. [Exit Codes](#exit-codes)
-12. [File Size and Streaming Behavior](#file-size-and-streaming-behavior)
-
----
-
-## Overview
-
-**jref** (JSON Reference) is a CLI tool for creating, inspecting, searching, and manipulating **condensed JSON project snapshots** — single JSON files that pack an entire codebase's file tree and file contents into one portable, streamable artifact. It is designed for both human developers and AI agents working in constrained environments (mobile, ARM, low-memory).
-
-A snapshot captures:
-- An ASCII directory tree (`directoryStructure`)
-- All source file contents keyed by path (`files`)
-- Optional AI instructions (`instruction`)
-- Optional high-level project summary (`fileSummary`)
-- Optional custom user header (`userProvidedHeader`)
-
----
+A lightweight CLI tool to interact with "condensed" JSON project snapshots. Designed for both human developers and AI agents.
 
 ## Features
 
-| Feature | Description |
-|---------|-------------|
-| **pack** | Create a snapshot from a local directory or remote repository (respects `.gitignore`). Includes **Secret Scanning**, **Auto-Instructions**, and **Chunking**. |
-| **bpack** | Specialized binary-first snapshot creation for large datasets and assets. |
-| **bextract** | Unpack a JSON binary archive back to the filesystem (supports `--stdout`). |
-| **inspect** | View tree and metadata without loading the whole file into memory |
-| **search** | High-speed regex / keyword search across all files in the snapshot |
-| **query** | Pull out a single file's content by path (AI-friendly, supports `--raw`) |
-| **extract** | Unpack specific files, directories, or the entire project to disk (supports `--stdout`) |
-| **validate** | Analyze git diff blast radius and generate AI validation context |
-| **reconstruct** | Dry-run check: does the local directory match the snapshot? |
-| **diff** | Compare snapshot contents against the live filesystem |
-| **patch** | Update/add file contents or metadata in a snapshot without extracting |
-| **get** | Retrieve specific metadata or file content using dot-notation |
-| **set** | Update specific metadata or file content using dot-notation |
-| **flatten** | Convert nested snapshots to flat key-value pairs |
-| **unflatten** | Restore flat snapshots to their original nested structure |
-| **shell** | Interactive JavaScript REPL for real-time snapshot manipulation |
-| **mount** | Expose snapshots as virtual filesystems via WebDAV |
-| **summarize** | Strip implementation bodies, keep only signatures and imports |
-| **openapi** | Transform an OpenAPI spec into a virtual filesystem snapshot |
-| **serve** | Start an MCP (Model Context Protocol) stdio server for AI agents |
-| **ui** | Interactive Terminal UI for browsing snapshots with **Fuzzy Search** and **Multi-Selection**. |
+- **Inspect** - View directoryStructure and metadata without loading entire file
+- **Search** - High-speed regex or keyword searching across all file entries
+- **Validate** - Analyze git diff blast radius and generate AI validation context
+- **Extract** - Unpack specific files, directories, or entire project to filesystem (supports --stdout piping)
+- **Query** - Get content by path or perform **Semantic Search** (RAG) across chunks
+- **Reconstruct** - Dry-run mode to verify if local directory matches snapshot
+- **UI** - Interactive Terminal User Interface for browsing snapshots (mobile-friendly)
+- **Patch** - Update/add files and metadata in a snapshot via stdin or args
+- **Serve** - Model Context Protocol (MCP) server for agentic interoperability
+- **Diff** - Compare snapshot against local filesystem
+- **Pack** - Native creation of snapshots from local directories (.gitignore support)
+- **BPack** - Specialized binary-first snapshot creation for large assets
+- **BExtract** - Specialized binary-first extraction (supports --stdout piping)
+- **Summarize** - Generate token-efficient architectural maps (signatures only)
+- **OpenAPI** - Transform OpenAPI specs into virtual filesystem snapshots
+- **Run** - Execute scripts directly from a snapshot without extraction
+- **Graph** - Analyze and visualize symbol/module dependency relationships
+- **Alias** - Create and manage command shortcuts for complex workflows
+- **Bin** - Manage virtual binaries and executable scripts
+- **Config** - Persistent CLI configuration management
+- **Tool** - Execute external commands and parse output into snapshots
+- **Get** - Retrieve specific metadata or file content using dot-notation
+- **Set** - Update specific metadata or file content using dot-notation
+- **Flatten** - Convert nested snapshots to flat key-value pairs
+- **Unflatten** - Restore flat snapshots to their original nested structure
+- **Shell** - Interactive JavaScript REPL for real-time snapshot manipulation
+- **Mount** - Expose snapshots as virtual filesystems via WebDAV
 
-### Global Flags
+## Target Environments
 
-| Flag | Alias | Description |
-|------|-------|-------------|
-| `--json` | `-j` | Output structured JSON (for AI consumption) |
-| `--silent` | `-s` | Suppress all decorative/progress output |
-| `--raw` | `-r` | Raw output — no formatting, pure content |
-| `--jq` | `-q` | Apply a `jq` filter to reshape the snapshot |
-| `--help` | `-h` | Show global help or command-specific help |
-| `--version` | `-v` | Print version string |
+- Termux (Android/ARM)
+- Raspberry Pi 4 (Linux/ARM)
+- Standard x86 Linux
 
-All commands accept stdin pipe input, enabling patterns like:
+## Multi-Format Support
 
-```bash
-cat snapshot.json | jref inspect
-cat snapshot.json | jref search "TODO"
-```
+jref natively supports multiple snapshot formats:
+- **JSON / JSON5 / JSONC** (.json, .json5, .jsonc)
+- **YAML / YML** (.yaml, .yml)
+- **TOML** (.toml)
+- **Repomix XML** (.xml)
 
----
+The tool automatically detects the format from the file extension or content.
 
 ## Installation
 
-### From Source
-
 ```bash
-git clone <repo>
-cd jref
+# From source
 npm install
 npm run build
 
 # Link globally
 npm link
 
-# Or install globally directly
-npm install -g .
+# Or install directly
+npm install -g jref
 ```
-
-### Requirements
-
-- **Node.js** >= 18.0.0
-- **npm** >= 9.0.0
-
-### Verifying Installation
-
-```bash
-jref --version
-# jref v1.2.0
-
-jref --help
-```
-
----
 
 ## Quick Start
 
-### Create a Snapshot
-
 ```bash
-# Snapshot the current working directory
-jref pack . > project.json
+# Create a snapshot from current directory
+jref pack . > snapshot.json
 
-# Snapshot a remote repository with branch/tag
-jref pack https://github.com/user/repo --branch main > remote.json
+# Inspect a snapshot
+jref inspect snapshot.json
 
-# Snapshot with XML output and compression
-jref pack . --output-style xml --compress > project.xml
+# Interactive browsing (mobile-friendly)
+jref ui snapshot.json
 
-# Snapshot with custom AI instructions and comment stripping
-jref pack . --instruction "Follow these architectural rules" \
-  --remove-comments --remove-empty-lines \
-  > project.json
+# Search for patterns
+jref search "function" snapshot.json
+
+# Compare snapshot to local disk
+jref diff snapshot.json
+
+# Start MCP server for agents
+jref serve snapshot.json
 ```
 
-### Inspect a Snapshot
+## Data Schema
 
-```bash
-# Full overview (metadata + tree + file list + summary)
-jref inspect project.json
+jref works with JSON snapshots following this schema:
 
-# Only the directory tree
-jref inspect --structure project.json
-
-# Only file list with sizes
-jref inspect --files project.json
-
-# Only metadata (file count, total size, etc.)
-jref inspect --metadata project.json
-
-# Pipe from stdin
-cat project.json | jref inspect
+```json
+{
+  "directoryStructure": "String representing the file tree",
+  "files": {
+    "path/to/file1.ts": "file contents...",
+    "path/to/file2.ts": "file contents..."
+  },
+  "instruction": "Optional context or AI instructions",
+  "fileSummary": "Optional summary of files",
+  "userProvidedHeader": "Optional custom header"
+}
 ```
-
-### Search Within a Snapshot
-
-```bash
-# Literal keyword search (escapes regex metacharacters)
-jref search "async function" project.json
-
-# Regex search
-jref search "class.*Controller" --regex project.json
-
-# Case-insensitive
-jref search "export" --case-insensitive project.json
-
-# Limit results and show context lines
-jref search "TODO" --max-results 50 --context 2 project.json
-
-# JSON output (for AI agents)
-jref search "function" --json project.json
-
-# Pipe input
-cat project.json | jref search "TODO"
-```
-
-### Query a Specific File
-
-```bash
-# Get file content (human-readable with header)
-jref query --path "src/main.ts" project.json
-
-# Raw output (pure content, ideal for AI parsing / piping to patch)
-jref query --path "src/main.ts" --raw project.json
-
-# Specific line range
-jref query --path "src/main.ts" --line-start 10 --line-end 50 project.json
-
-# JSON structured output
-jref query --path "src/main.ts" --json project.json
-```
-
-### Extract Files
-
-```bash
-# Extract entire project to ./extracted/
-jref extract project.json
-
-# Extract to custom output directory
-jref extract --output ./output project.json
-
-# Extract only specific files
-jref extract --paths src/main.ts src/utils.ts project.json
-
-# Flat output (filename only, no directory structure)
-jref extract --flat --output ./output project.json
-
-# Dry run (preview what would be extracted)
-jref extract --dry-run project.json
-
-# Skip existing files (do not overwrite)
-jref extract --output ./output project.json
-
-# Overwrite existing files
-jref extract --overwrite --output ./output project.json
-```
-
-### Verify Local vs Snapshot
-
-```bash
-# Check if current directory matches snapshot
-jref reconstruct project.json
-
-# Check against a specific directory
-jref reconstruct --directory ./my-app project.json
-
-# Verbose: show which files are missing, extra, or modified
-jref reconstruct --verbose project.json
-
-# JSON output
-jref reconstruct --json project.json
-
-# Ignore missing files (snapshot files not on disk)
-jref reconstruct --ignore-missing project.json
-
-# Ignore extra files (local files not in snapshot)
-jref reconstruct --ignore-extra project.json
-```
-
-### Diff Snapshot Against Filesystem
-
-```bash
-# Compare snapshot to current directory
-jref diff project.json
-
-# Compare to a specific directory
-jref diff --directory ./another-project project.json
-
-# Include extra local files in diff output
-jref diff --all project.json
-
-# JSON structured output
-jref diff --json project.json
-```
-
-### Patch a Snapshot (Surgical Edit)
-
-```bash
-# Update file content from argument
-jref patch src/main.ts "new file content" project.json > updated.json
-
-# Update file content from stdin (pipe a file's content in)
-cat fix.ts | jref patch src/main.ts project.json > updated.json
-
-# Update metadata only
-jref patch --instruction "Updated: follow new linting rules" project.json > updated.json
-
-# Update file summary
-jref patch --summary "Refactored auth module" project.json > updated.json
-
-# Update both file and metadata
-jref patch src/main.ts "new content" \
-  --instruction "Updated instructions" \
-  project.json > updated.json
-
-# Content detection: if second positional arg ends in .json it's treated
-# as the snapshot file path, not content
-jref patch src/main.ts updated-snapshot.json > patched.json
-```
-
-### Summarize (Architectural Map)
-
-```bash
-# Generate a token-efficient map (strips function bodies)
-jref summarize project.json > map.json
-
-# Pipe from stdin
-cat project.json | jref summarize > map.json
-
-# Summarize outputs a new valid snapshot with implementation details
-# stripped — you can pipe it back through other jref commands
-cat project.json | jref summarize | jref inspect --files
-```
-
-### Serve as MCP Server
-
-```bash
-# Start stdio MCP server (blocks)
-jref serve project.json
-```
-
-The MCP server exposes several tools over stdio using the Model Context Protocol:
-
-| Tool | Input | Output |
-|------|-------|--------|
-| `inspect` | (none) | JSON with `metadata` and `directoryStructure` |
-| `search` | `{ pattern: string }` | JSON array of file paths containing the pattern |
-| `query` | `{ path: string }` | Raw file content as plain text |
-| `jq_query` | `{ filter: string }` | Result of jq filter execution against snapshot |
-| `summarize` | `{ paths: string[] }` | Token-efficient map of requested files |
-| `list_directory` | `{ path: string }` | Flat list of children at specified path |
-| `find_references` | `{ symbol: string }` | Cross-file reference tracing for a symbol |
-
-This enables AI agents (Claude Code, Codex, etc.) to interactively browse and query the snapshot through their native MCP integration.
-
-### Interactive TUI Browser
-
-```bash
-# Start the interactive browser
-jref ui project.json
-```
-
-**Keyboard controls:**
-
-| Key | Tree View | File View | Search Mode |
-|-----|-----------|-----------|-------------|
-| `↑` / `k` | Move up | Scroll up | Move up |
-| `↓` / `j` | Move down | Scroll down | Move down |
-| `←` / `h` | Collapse dir | — | — |
-| `→` / `l` | Expand dir | — | — |
-| `Enter` | Select/toggle | Back to tree | Select file |
-| `Space` | Toggle selection `[*]` | — | — |
-| `/` | Open fuzzy search | — | — |
-| `Tab` | — | — | Toggle Search Type |
-| `y` | Yank content | Yank content | — |
-| `e` | Edit in `$EDITOR` | — | — |
-| `v` | View in `$PAGER` | — | — |
-| `x` | Extract selected | — | — |
-| `c` | Toggle compact | Toggle compact | — |
-| `Esc` | Exit | Back to tree | Cancel search |
-
-**Mobile/Termux optimizations:**
-- Compact mode auto-detected when terminal width < 60 columns
-- Yank uses `termux-clipboard-set` on Termux, `pbcopy` on macOS, `xclip` on Linux
-- Edit spawns `$EDITOR` (default: `vi`) for temporary in-memory edits
-
-**Multi-Selection ([*]):** Press `Space` on any file or directory to mark it. Press `x` to extract all marked items at once to your local disk.
-
-**Fuzzy Search:** Uses `fuse.js` for fast approximate matching by filename or file content (toggle search type with `Tab`).
-
----
 
 ## Global Options
 
-These flags work with **any** command and must appear before the command name:
+The following flags can be used with any command:
 
-```
-jref [--json|-j] [--silent|-s] [--raw|-r] [--help|-h] [--version|-v] <command> [args...]
-```
+- `--json, -j`: Output in JSON format (for AI agents)
+- `--silent, -s`: Suppress all progress and decorative output
+- `--raw, -r`: Raw output mode (no formatting)
+- `--jq, -q <filter>`: Apply a `jq` filter to reshape the snapshot before command execution
+- `--help, -h`: Show help message
+- `--version, -v`: Show version information
 
-| Option | Description |
-|--------|-------------|
-| `--json`, `-j` | Emit JSON instead of human-readable text. Every command supports this. |
-| `--silent`, `-s` | Suppress all ASCII art, progress indicators, and decorative output. |
-| `--raw`, `-r` | Emit raw output with no formatting. For `--query`, this means pure file content without headers. For AI agents consuming file content. |
-| `--jq`, `-q <f>` | Apply a `jq` filter to reshape or filter the snapshot state in memory before any core command receives it. Uses `jq-wasm` for portability. |
-| `--help`, `-h` | Show global help (all commands). Append to any command for command-specific help: `jref pack --help` |
-| `--version`, `-v` | Print `jref v1.2.0` (or `--json` for `{"version": "1.2.0"}`). |
-
----
-
-## Command Reference
-
----
-
+## Commands
 ### pack
 
 Create a snapshot from a local directory or remote repository (optimized for LLMs).
 
-```
+```bash
 jref pack [directory|url] [options]
+
+Options:
+  --semantic               Enable AST-aware semantic chunking and local embeddings
+  --instruction <text>     Add custom AI instructions (auto-generated if omitted)
+  --summary <text>         Add a high-level file summary
+  --max-size <bytes>       Split snapshot into chunks (JSON only)
+  -s, --output-style <st>  Output format: json, markdown, xml, plain
+  --branch <name>          Target specific branch (remote)
+  --commit <hash>          Target specific commit (remote)
+  --compress               Enable AST-aware whitespace removal
+  --remove-comments        Strip code comments
+  --remove-empty-lines     Strip blank lines
+  --token-limit <n>        Cap the total output tokens
+  --hashes                 Output a hash map of the directory instead of a snapshot
+  --delta [remote-hashes]  Create a delta snapshot based on remote hashes
+  --stream                 Enable real-time streaming mode for piped synchronization
 ```
 
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--instruction <text>` | | Add an `instruction` field to the snapshot — AI system prompt context. **Auto-generated** if omitted. |
-| `--summary <text>` | | Add a `fileSummary` field — human-readable project overview |
-| `--max-size <bytes>` | | Split the snapshot into multiple parts (e.g., `part1.json`) if it exceeds this threshold. **JSON only.** |
-| `--output-style <style>` | `-s` | Output style: `json`, `markdown`, `xml`, or `plain`. Defaults to `json`. |
-| `--branch <name>` | | Target a specific branch for remote repositories. |
-| `--commit <hash>` | | Target a specific commit hash for remote repositories. |
-| `--compress` | | Enable AST-aware compression (removes unnecessary whitespace). |
-| `--remove-comments` | | Strip code comments from the output files. |
-| `--remove-empty-lines` | | Strip blank lines from the output files. |
-| `--top-files-length <n>` | | Limit the number of top-level files processed (default: 100). |
-| `--token-limit <n>` | | Set a maximum token limit for the output. |
-| `--semantic` | | Enable AST-aware semantic chunking and local embeddings. |
-| `--hashes` | | Output a hash map of the directory files instead of a snapshot. |
-| `--delta [remote-hashes]` | | Create a delta snapshot based on remote hashes. |
-| `--stream` | | Enable real-time streaming mode (wraps in protocol markers). |
-
-**Behavior:**
-- Defaults to current working directory if no directory is given
-- **Remote Packing**: Snapshot public or private repositories by providing a URL (GitHub, GitLab, Bitbucket).
+**Features:**
+- **Remote Packing**: Snapshot public or private repositories by providing a URL.
+- **Optimization**: Use `--compress` and `--remove-comments` to reduce token counts for AI agents.
+- **Multi-Format**: Export to Markdown or XML for better performance with specific LLMs.
+- **Secret Scanning**: Automatically redacts secrets (API keys, tokens) using `secretlint`.
 - **Token Authentication**: Automatically uses `GITHUB_TOKEN` or `GITLAB_TOKEN` from the environment.
-- **Secret Scanning**: Automatically redacts secrets (API keys, credentials) using `secretlint`.
-- **Optimization**: Use `--compress`, `--remove-comments`, and `--remove-empty-lines` to drastically reduce token counts for AI agents.
-- **Semantic RAG**: Use `--semantic` to generate local vector embeddings for code chunks, enabling natural language search in `jref query`.
-- **Delta Sync**: Combine `--hashes` and `--delta` to transfer only modified files between environments.
-- **Multi-Format**: Output to Markdown or XML for better performance with specific LLM context windows.
 
 **Examples:**
-
 ```bash
-# Snapshot current directory with compression
-jref pack . --compress > snapshot.json
-
-# Snapshot with semantic embeddings for RAG
-jref pack . --semantic > snapshot.json
-
-# Generate delta snapshot against remote hashes
-ssh remote "jref pack . --hashes" | jref pack . --delta --stream | ssh remote "jref extract --listen"
+jref pack . --compress > project.json
+jref pack https://github.com/user/repo --branch main > remote.json
+jref pack . --output-style xml > snapshot.xml
+jref pack . --max-size 1048576 # 1MB chunks (JSON only)
 ```
-
----
 
 ### bpack
 
-Specialized binary-first snapshot creation for large datasets and assets. Optimized for packing non-text files encoded as Base64.
+Specialized binary-first snapshot creation for large datasets and assets.
 
-```
+```bash
 jref bpack [directory] [options]
+
+Options:
+  --output, -o <file>      Output filename (default: stdout)
+  --exclude <pattern>      Exclude files matching pattern
+  --max-size <bytes>       Limit maximum size of a single binary file
 ```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--output <file>` | `-o` | Output filename (default: stdout) |
-| `--exclude <pattern>` | | Exclude files matching a glob pattern |
-| `--max-size <bytes>` | | Limit the maximum size of a single binary file |
-
----
 
 ### bextract
 
-Unpack a JSON binary archive back to the filesystem. Designed to complement `bpack`.
+Unpack a JSON binary archive back to the filesystem.
 
-```
+```bash
 jref bextract <file> [options] [patterns...]
+
+Options:
+  --output, -o <dir>  Target directory (default: ./extracted)
+  --overwrite, -w     Overwrite existing files
+  --dry-run           Show what would be extracted
+  --stdout            Pipes a single decoded asset directly to stdout
 ```
 
-**Options:**
+### patch
 
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--output <dir>` | `-o` | Target directory for extraction (default: `./extracted`) |
-| `--overwrite` | `-w` | Overwrite existing files on disk |
-| `--dry-run` | | Show what would be extracted without writing |
-| `--stdout` | | Pipe a single decoded asset directly to stdout |
+Update or add files and metadata in a snapshot without extraction.
 
----
+```bash
+jref patch [path] [content] [file.json]
+
+Options:
+  --instruction <text>  Update snapshot instructions
+  --summary <text>      Update snapshot summary
+```
+
+**Examples:**
+```bash
+# Update from args
+jref patch src/main.ts "new code" project.json > updated.json
+
+# Update from stdin
+cat fix.ts | jref patch src/main.ts project.json > updated.json
+
+# Update metadata only
+jref patch --instruction "New rules" project.json > updated.json
+```
+
+### diff
+
+Compare snapshot contents against the local filesystem.
+
+```bash
+jref diff [options] [file.json]
+
+Options:
+  --directory, -d <dir>   Target directory to compare against
+  --all, -a               Find extra local files not in snapshot
+```
+
+**Examples:**
+```bash
+jref diff snapshot.json
+jref diff --directory ./my-app snapshot.json
+```
+
+### validate
+
+Analyze git diff blast radius and generate AI validation context.
+
+```bash
+jref validate <target-branch> [options]
+
+Options:
+  --output, -o <file>  Output the validation snapshot to a file
+  --depth, -d <n>      Maximum depth for dependency traversal (default: 1)
+  --all, -a            Include all tracked files (ignores blast radius)
+```
+
+**Workflows:**
+- **Blast Radius**: Automatically identify which files are affected by a change based on imports (supports TS, JS, Python, Rust, C++).
+- **AI Verification**: Generates a snapshot with specific instructions for an LLM to perform boolean pass/fail validation of the changes.
+
+**Examples:**
+```bash
+jref validate main --output validation.json
+jref validate HEAD~1 --depth 2
+```
+
+### openapi
+
+Transform an OpenAPI/RESTful specification into a queryable jref snapshot.
+
+```bash
+jref openapi <spec.json>
+```
+
+**Examples:**
+```bash
+# Transform and save
+jref openapi api.json > snapshot.json
+
+# Browse the virtual API structure
+jref openapi api.json | jref ui
+```
+
+### serve
+
+Start a Model Context Protocol (MCP) server to expose the snapshot to AI agents.
+
+```bash
+jref serve [file.json]
+```
+
+**MCP Tools Exposed:**
+- `inspect`: Get metadata and structure
+- `search`: Regex search across files
+- `query`: Read specific file content
+- `jq_query`: Execute jq filter against snapshot
+- `summarize`: Get token-efficient map of specific files
+- `list_directory`: Localized tree inspection (ls style)
+- `find_references`: Cross-file symbol reference tracing
+
+### summarize
+
+Generate a token-efficient architectural map by stripping implementation details.
+
+```bash
+jref summarize [file.json]
+```
+
+**Implementation:** Strips function/class bodies, leaving only signatures and imports.
+
+### ui
+
+Interactive Terminal User Interface for browsing project snapshots.
+
+```bash
+jref ui [file]
+
+Controls:
+  ↑↓ Arrows / j,k Navigate tree/file
+  ←→ Arrows / h,l Expand/collapse directories
+  Enter           Select file (view) or toggle directory
+  Space           Toggle selection (for multi-extraction)
+  /               Fuzzy search files by name or content
+  x               Extract selected files (or current file if no selection)
+  y               Yank (copy) current file content to clipboard
+  e               Edit current file in-memory using $EDITOR
+  c               Toggle compact mode
+  Esc             Back/Exit
+
+Keybinds for Mobile/Termux:
+- Yank (y): Uses `termux-clipboard-set` if available.
+- Edit (e): Spawns your local editor (vi, nano, etc.) for temporary edits.
+- Selection ([*]): Mark multiple files for batch extraction using `x`.
+```
 
 ### inspect
 
-View `directoryStructure` and metadata **without loading the entire file into memory**. Supports streaming for large snapshots.
-
-```
-jref inspect [options] [file]
-```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--metadata` | `-m` | Show only snapshot metadata (file count, total size, etc.) |
-| `--structure` | `-t` | Show only the ASCII directory tree |
-| `--files` | `-f` | Show only the file list with sizes |
-| `--summary` | | Show `instruction`, `fileSummary`, and `userProvidedHeader` fields |
-
-Without any flag, all sections are displayed.
-
-**Output sections:**
-
-- **Snapshot Metadata** — file count, total byte size, number of tree lines, presence of instruction/summary/header
-- **Directory Structure** — the ASCII tree string
-- **File List** — all file paths with human-readable sizes and **detected MIME types** for binary assets
-- **Summary** — custom header, file summary, and AI instructions
-
-**Examples:**
+View directoryStructure and metadata without loading entire file.
 
 ```bash
-jref inspect snapshot.json
-jref inspect --metadata snapshot.json
-jref inspect --structure snapshot.json
-jref inspect --files snapshot.json
-jref inspect --summary snapshot.json
-cat snapshot.json | jref inspect --json
-```
+jref inspect [options] [file]
 
----
+Options:
+  --metadata, -m     Show only metadata
+  --structure, -t    Show only directory structure
+  --files, -f        Show only file list
+  --summary          Show instruction/summary/header
+```
 
 ### search
 
-High-speed regex or literal keyword search across all file contents in a snapshot.
+High-speed regex or keyword searching across all entries.
 
-```
+```bash
 jref search <pattern> [options] [file]
 ```
 
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--regex` | `-r` | Treat `<pattern>` as a regular expression (default: literal string) |
-| `--case-insensitive` | `-i` | Case-insensitive match |
-| `--files` | `-f` | Output only file paths that contain matches |
-| `--max-results` | `-n` | Maximum number of files to return (default: 1000) |
-| `--context` | `-c` | Number of context lines around each match (default: 0) |
-
-**Output:** For each matching file, shows:
-- File path and match count
-- Up to 5 matching lines with highlighted match text (ANSI yellow)
-- Remaining match count if > 5
-
-**Examples:**
-
-```bash
-jref search "async" snapshot.json
-jref search "class.*extends" --regex snapshot.json
-jref search "TODO" --case-insensitive snapshot.json
-jref search "export" --max-results 10 snapshot.json
-jref search "function" --context 2 snapshot.json
-cat snapshot.json | jref search "TODO"
-```
-
----
-
 ### query
 
-Retrieve the raw content of a specific file path or perform natural language **Semantic Search** (RAG) across the snapshot.
-
-```
-jref query [options] [file]
-```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--path <path>` | `-p` | Path of the file to retrieve. |
-| `--semantic <query>` | `-s` | Perform a natural language search across code chunks. |
-| `--top-k <n>` | | Number of results for semantic search (default: 5). |
-| `--raw` | `-r` | Emit pure file content (no header, no formatting). Ideal for piping. |
-| `--line-start <n>` | | Start reading from line `n` (1-indexed) |
-| `--line-end <n>` | | Stop reading at line `n` (1-indexed, inclusive) |
-
-**Examples:**
+Get content of a specific file path or perform natural language **Semantic Search** (RAG) across code chunks.
 
 ```bash
-# Human-readable with header
-jref query --path "src/main.ts" snapshot.json
+jref query [options] [file]
 
-# Semantic Search (requires --semantic during pack)
-jref query --semantic "How are authentication tokens handled?" snapshot.json
-
-# Pure content for AI parsing
-jref query --path "src/main.ts" --raw snapshot.json
+Options:
+  --path, -p <path>        Path of the file to query
+  --semantic, -s <query>   Perform natural language search across code chunks
+  --top-k <n>              Number of results for semantic search (default: 5)
+  --raw, -r                Emit pure content without headers
 ```
 
----
+**Examples:**
+```bash
+# Targeted reading
+jref query --path "src/main.ts" snapshot.json
+
+# Semantic RAG (requires snapshot packed with --semantic)
+jref query --semantic "How are authentication tokens handled?" snapshot.json
+```
+
+### extract
+
+Unpack files from snapshot to local filesystem. Supports wildcards and directory prefixes.
+
+```bash
+jref extract [options] [file] [patterns...]
+
+Options:
+  --output, -o <dir>  Target directory (default: ./extracted)
+  --overwrite, -w     Overwrite existing files
+  --dry-run, -n       Show what would be extracted
+  --flat              Extract files into a single directory (no subfolders)
+  --stdout            Pipe a single decoded asset directly to stdout
+  --listen            Listen on stdin for continuous stream of snapshots/deltas
+```
+
+**Examples:**
+```bash
+# Extract everything
+jref extract project.json
+
+# Extract specific files/dirs with wildcards
+jref extract snapshot.json "src/**/*.ts" "docs/*"
+
+# Pipe asset to another tool
+jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
+
+# Continuous sync (RPC mode)
+jref extract --listen --output ./mirror
+```
 
 ### run
 
 Execute a script directly from the JSON snapshot without permanent extraction. Automatically detects the appropriate runner based on file extension or shebang (`#!`).
 
-```
+```bash
 jref run --path <script-path> [file] [script-args...]
 ```
 
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--path <path>` | `-p` | Path to the script within the snapshot |
-
-**Runner mapping:**
-
-| Extension | Runner |
-|-----------|--------|
-| `.js` | `node` |
-| `.ts` | `node --experimental-strip-types` |
-| `.py` | `python3` |
-| `.sh` | `bash` |
+Options:
+  --path, -p <path>   Path to the script within the snapshot
 
 **Examples:**
-
 ```bash
 # Run a setup script
 jref run --path scripts/setup.ts project.json
@@ -622,234 +409,144 @@ jref run --path scripts/setup.ts project.json
 jref run -p main.js snapshot.json -- --port 8080
 ```
 
----
+### graph
 
-### extract
-
-Unpack files from a snapshot back into the local filesystem. Supports wildcard patterns.
-
-```
-jref extract [options] [file] [patterns...]
-```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--output <dir>` | `-o` | Output directory (default: `./extracted`) |
-| `--overwrite` | `-w` | Overwrite existing files on disk |
-| `--dry-run` | `-n` | Preview what would be extracted without writing files |
-| `--flat` | | Flatten: extract filenames only (no directory structure) |
-| `--stdout` | | Pipe a single decoded asset directly to stdout |
-| `--listen` | | Listen on stdin for a continuous stream of snapshots/deltas |
-
-**Examples:**
+Analyze and visualize dependency relationships between symbols and modules.
 
 ```bash
-# Extract entire project
-jref extract snapshot.json
+jref graph <subcommand> [target] [options]
 
-# Pipe decoded asset to another tool
-jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
+Subcommands:
+  build [target]           Build the knowledge graph from directory or snapshot
+  query [target] [args]    Query the knowledge graph (experimental)
+  wasm-update              Pre-fetch registered WASM binaries for offline use
+  ui [target]              Start a local web server to visualize the graph
 
-# Listen for continuous synchronization
-jref extract --listen --output ./mirror
+Options:
+  --output, -o <file>      Save graph data to a file
+  --format <fmt>           Output format: json, dot, mermaid (default: json)
+  --depth <n>              Traversal depth (default: 1)
+  --cluster                Detect and highlight modular clusters (Louvain method)
+  --centrality             Highlight high-impact nodes using degree centrality
+  --no-llm                 Skip semantic extraction using LLM
+  -p, --port <number>      Port for the graph UI server (default: 8080)
 ```
-
----
-
-### validate
-
-Analyze git diff blast radius and generate AI validation context. This command identifies changed files relative to a target branch and identifies their affected dependents through import analysis.
-
-```
-jref validate <target-branch> [options]
-```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--output <file>` | `-o` | Output the validation snapshot to a specific file |
-| `--depth <n>` | `-d` | Maximum depth for dependency traversal (default: 1) |
-| `--all` | `-a` | Include all tracked files in the snapshot (ignores blast radius) |
-
-**Workflows:**
-- **Blast Radius Analysis**: Automatically identifies which files in the project need to be re-verified when a specific file is changed.
-- **Import Mapping**: Supports dependency resolution for TypeScript, JavaScript, Python, Rust, and C++.
-- **Autonomous Guardrails**: The generated snapshot includes a specialized `instruction` that forces an LLM into a rigorous "pass/fail" verification mode.
 
 **Examples:**
+```bash
+# Build a graph from the current directory
+jref graph build .
+
+# Start the interactive graph UI server
+jref graph ui
+
+# Pre-fetch WASM binaries
+jref graph wasm-update
+```
+
+### alias
+
+Create and manage command shortcuts for complex or frequent workflows.
 
 ```bash
-# Analyze changes against main
-jref validate main
+jref alias <action> [name] [expansion]
 
-# Analyze against a specific commit with deep dependency tracing
-jref validate HEAD~3 --depth 3 --output validation.json
-
-# Analyze all files regardless of dependency
-jref validate origin/develop --all
+Actions:
+  set <name> <exp>     Create or update an alias
+  remove <name>        Delete an alias
+  list                 List all active aliases
 ```
-
----
-
-### reconstruct
-
-Dry-run verification: checks whether a local directory's contents match the snapshot's expected state. Reports missing, extra, and modified files.
-
-```
-jref reconstruct [options] [file]
-```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--directory <dir>` | `-d` | Local directory to compare against (default: `.`) |
-| `--verbose` | `-v` | List the actual missing/extra/modified file names |
-| `--ignore-missing` | | Only check for extra/modified, ignore missing files |
-| `--ignore-extra` | | Only check for missing/modified, ignore extra local files |
-
-**Exit codes:** `0` = perfect match, `1` = differences found.
-
-**Files ignored during comparison:** `node_modules`, `.git`, `.svn`, `.hg`, `__pycache__`, `.DS_Store`, `Thumbs.db`, `.env`, `.env.local`, `dist`, `build`, `.cache`
 
 **Examples:**
+```bash
+# Shortcut for compressed architecture map
+jref alias set map "summarize --compress"
+
+# Use the alias
+jref map project.json
+```
+
+### bin
+
+Manage virtual binaries and executable scripts stored within snapshots.
 
 ```bash
-# Check if . matches the snapshot
-jref reconstruct snapshot.json
+jref bin <action> [args...]
 
-# Check specific directory
-jref reconstruct --directory ./my-app snapshot.json
-
-# Verbose listing of differences
-jref reconstruct --verbose snapshot.json
-
-# JSON output for automation
-jref reconstruct --json snapshot.json
+Actions:
+  list                 List all virtual binaries in $JREF_BIN_PATH
+  exec <name> [args]   Execute a virtual binary
+  setup                Interactive setup of the bin environment
 ```
 
----
+**Features:**
+- **jbin**: When linked, `jbin` automatically executes the `bin` command for seamless script running.
 
-### diff
+### config
 
-Compare a snapshot against the local filesystem, listing files that differ.
+Persistent CLI configuration management.
 
+```bash
+jref config <action> [key] [value]
+
+Actions:
+  set <key> <val>      Update a configuration setting
+  get <key>            View a configuration setting
+  list                 Show all current settings
+  ui                   Open the interactive configuration TUI
 ```
-jref diff [options] [file]
+
+**Settings:**
+- `defaultOutput`: json, pretty, raw
+- `theme`: dark, light, system
+- `silent`: true, false
+- `aliasToggle`: true, false
+
+### tool
+
+Execute external commands and parse their output directly into snapshots.
+
+```bash
+jref tool <name> <command> [args...]
+
+Parsers available:
+  ls                   Standard directory listing to JSON
+  git-log              Git history to structured JSON
+  ps                   Process list to structured JSON
 ```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--directory <dir>` | `-d` | Target directory to compare against (default: current directory) |
-| `--all` | `-a` | Include local files that are **not** in the snapshot in the output |
-
-**Output classification:**
-
-| Status | Meaning |
-|--------|---------|
-| `M` | Modified — content differs between snapshot and disk |
-| `A` | Added to snapshot — file exists in snapshot but not on disk |
-| `D` | Deleted from snapshot — file exists on disk but not in snapshot |
 
 **Examples:**
-
 ```bash
-jref diff snapshot.json
-jref diff --directory ./staging snapshot.json
-jref diff --all snapshot.json
-jref diff --json snapshot.json
+# Snapshoting a directory listing via ls tool
+jref tool ls "ls -la" > files.json
 ```
-
----
-
-### patch
-
-Update or add file contents and/or metadata in a snapshot **without extracting it to disk**. Supports stdin content piping. The canonical way to surgically mutate a snapshot.
-
-```
-jref patch [path] [content] [file.json]
-```
-
-**Options:**
-
-| Option | Description |
-|--------|-------------|
-| `--instruction <text>` | Set/update the `instruction` field |
-| `--summary <text>` | Set/update the `fileSummary` field |
-
-**Positional argument rules:**
-
-| Args given | Interpretation |
-|------------|----------------|
-| `path` | `path` is the file to update; content comes from **stdin** |
-| `path content` | `path` is the file to update; `content` is the new content string |
-| `path file.json` | `path` is the file; `file.json` is the snapshot file path (no inline content) |
-| `path content file.json` | All three explicitly provided |
-| `file.json` (ends in `.json`) | Metadata-only update of that snapshot file |
-
-**Stdin behavior:** If `content` is not provided as a positional arg and stdin is piped, the **entire stdin content** is used as the file's new content.
-
-**Examples:**
-
-```bash
-# Content from argument
-jref patch src/main.ts "const x = 1;" snapshot.json > updated.json
-
-# Content from stdin
-cat new-main.ts | jref patch src/main.ts snapshot.json > updated.json
-
-# Update metadata only
-jref patch --instruction "Follow the new style guide" snapshot.json > updated.json
-
-# Update both content and metadata
-cat new-auth.ts | jref patch src/auth.ts \
-  --instruction "Auth module updated with OAuth2" \
-  snapshot.json > updated.json
-
-# Auto-detect: second positional ending in .json is the snapshot file
-jref patch src/main.ts updated-snapshot.json > patched.json
-```
-
----
 
 ### get
 
-Retrieve specific data nodes from a snapshot using dot-notation. This allows reading specific file contents or metadata fields without parsing the whole snapshot manually.
+Retrieve specific data nodes from a snapshot using dot-notation (e.g., `files.src/main.ts`).
 
-```
+```bash
 jref get <path> [file.json]
 ```
 
 **Examples:**
-
 ```bash
 # Get instruction node
 jref get instruction project.json
 
 # Get content of a specific file
 jref get "files.src/index.ts" project.json
-
-# Get detected file size from metadata (if present)
-jref get "metadata.totalSize" project.json
 ```
-
----
 
 ### set
 
-Update or create specific nodes in a snapshot using dot-notation. This is a generalized version of `patch` that can target any node in the JSON structure.
+Update or create specific nodes in a snapshot using dot-notation.
 
-```
+```bash
 jref set <path> <value> [file.json]
 ```
 
 **Examples:**
-
 ```bash
 # Update metadata
 jref set instruction "New AI prompt" project.json
@@ -858,409 +555,65 @@ jref set instruction "New AI prompt" project.json
 jref set "files.README.md" "New content" project.json
 ```
 
----
-
 ### flatten
 
-Flatten a nested snapshot into a one-level key-value map. Paths are converted to dot-separated keys. This is useful for compatibility with tools that expect simple key-value pairs or for simplified grep-based processing.
+Flatten a nested snapshot into a one-level key-value map. Useful for legacy tool compatibility or simplified parsing.
 
-```
+```bash
 jref flatten [file.json]
 ```
-
----
 
 ### unflatten
 
 Restore a flattened snapshot back to its original nested structure.
 
-```
+```bash
 jref unflatten [file.json]
 ```
 
----
-
 ### shell
 
-Launch an interactive JavaScript REPL (Read-Eval-Print Loop) to manipulate snapshots in real-time. The snapshot is loaded into a global `ctx` variable.
+Launch an interactive JavaScript REPL to manipulate snapshots in real-time.
 
-```
+```bash
 jref shell [file.json]
+
+# Available in shell:
+# - ctx: The current snapshot object
+# - files: The files map
+# - .save [filename]: Save current state
+# - .reload: Reload from source
 ```
-
-**Shell Context:**
-- `ctx`: The current snapshot object
-- `files`: Alias for `ctx.files`
-- `.save [filename]`: Save the current state to a file
-- `.reload`: Reload the snapshot from the source file
-
-**Example:**
-```javascript
-🚀 Starting jref shell...
-jref> files['src/main.ts'] = "console.log('Modified');";
-jref> .save modified.json
-✅ Snapshot saved to modified.json
-```
-
----
 
 ### mount
 
-Mount a snapshot as a virtual filesystem and expose it via a local WebDAV server. This allows you to "mount" a project snapshot as a network drive and browse/edit it using standard file explorers (Finder, Windows Explorer, GNOME Files, etc.).
+Mount a snapshot as a virtual filesystem and expose it via a WebDAV server. This allows browsing snapshots as local drives in any file manager.
 
-```
+```bash
 jref mount <file.json> [options]
+
+Options:
+  -p, --port <number>   Port for the WebDAV server (default: 8080)
+  --read-only           Mount in read-only mode
 ```
-
-**Options:**
-
-| Option | Alias | Description |
-|--------|-------|-------------|
-| `--port <n>` | `-p` | Port for the WebDAV server (default: 8080) |
-| `--read-only`| | Mount in read-only mode |
-
-**Behavior:**
-- The server stays running until terminated (`Ctrl+C`).
-- If not in read-only mode, any changes made via WebDAV are **flushed back to the original JSON snapshot file** upon server shutdown.
 
 **Examples:**
-
 ```bash
 # Mount and open in file manager
 jref mount project.json
-
-# Mount on a specific port
-jref mount project.json --port 9000
 ```
 
----
+## AI Agent Usage
 
-### summarize
-
-Generate a **token-efficient architectural map** by stripping implementation details from code files while preserving:
-- All `import` / `export` statements
-- All `function` / `class` / `interface` / `type` declarations
-- All decorator lines (`@` prefix)
-- Blank lines
-
-Non-code files (`.json`, `.md`, `.txt`) are kept verbatim.
-
-The output is a **valid snapshot** that can be piped back into other jref commands.
-
-**Primary use case:** Injecting a compact overview of a large codebase into an LLM's context window without burning tokens on implementation details.
-
-```
-jref summarize [file]
-```
-
-**Examples:**
+jref is designed for agentic workflows. Use `--json` for structured output or `--raw` for pure content.
 
 ```bash
-# Generate architectural map
-jref summarize snapshot.json > map.json
-
-# Chain: summarize then inspect only file list
-cat snapshot.json | jref summarize | jref inspect --files
-
-# JSON output
-jref summarize --json snapshot.json
-```
-
-**Stripping behavior:**
-
-| Line type | Kept? |
-|-----------|-------|
-| `import ...` | ✅ |
-| `export ...` | ✅ |
-| `function foo(...)` | ✅ (body stripped) |
-| `class Foo ...` | ✅ (body stripped) |
-| `interface ...` | ✅ |
-| `type ...` | ✅ |
-| `@decorator` | ✅ |
-| Everything else | ❌ (replaced with `/* ... implementation details stripped ... */`) |
-
----
-
-### openapi
-
-Transform an OpenAPI/Swagger/RESTful specification into a queryable jref snapshot. This "unpacks" a monolithic API spec into a virtual filesystem, splitting paths and schemas into discrete files.
-
-```
-jref openapi <spec.json>
-```
-
-**Metadata Mapping:**
-
-| Source | Virtual Path | Content |
-|--------|--------------|---------|
-| `.servers` | `metadata/servers.json` | JSON list of API base URLs |
-| `.components.schemas` | `components/schemas/*.json` | Reusable data model definitions |
-| `.paths` | `paths/{path}/{METHOD}.json` | Endpoint definitions (params, responses, etc.) |
-
-**Header Integration:** All server URLs found in the specification are added to the snapshot's `userProvidedHeader` for quick reference during `jref inspect`.
-
-**Primary use cases:**
-- **API Exploration**: Navigate complex API specs using `jref ui`.
-- **Agentic Routing**: Provide AI agents with small, relevant file-like chunks of an API rather than one giant JSON file.
-
-**Examples:**
-
-```bash
-# Transform a spec and save to file
-jref openapi tailscale-api.json > tailscale.json
-
-# Transform and query a specific endpoint immediately
-jref openapi api.json | jref query --path "paths/users/{id}/GET.json"
-
-# View the virtual API structure
-jref openapi api.json | jref ui
-```
-
----
-
-### serve
-
-Start a **Model Context Protocol (MCP)** stdio server that exposes snapshot tools to AI agents. The server reads the snapshot file once at startup and serves requests over stdio using the MCP JSON-RPC protocol.
-
-```
-jref serve <file>
-```
-
-**MCP Tools exposed:**
-
-| Tool | Input | Output |
-|------|-------|--------|
-| `inspect` | (none) | JSON with `metadata` and `directoryStructure` |
-| `search` | `{ pattern: string }` | JSON array of file paths containing the pattern |
-| `query` | `{ path: string }` | Raw file content as plain text |
-| `jq_query` | `{ filter: string }` | Result of jq filter execution against snapshot |
-| `summarize` | `{ paths: string[] }` | Token-efficient map of requested files |
-| `list_directory` | `{ path: string }` | Flat list of children at specified path |
-| `find_references` | `{ symbol: string }` | Cross-file reference tracing for a symbol |
-
-**Examples:**
-
-```bash
-# Block and serve (use with agent runner)
-jref serve snapshot.json
-```
-
-**Integration:** Connect the stdio transport to any MCP-compatible agent runner (Claude Code, etc.):
-
-```bash
-# Example: connect to Claude Code's MCP
-claude --mcp "jref serve snapshot.json"
-```
-
----
-
-### ui
-
-Interactive Terminal User Interface (TUI) for visually browsing a snapshot's directory tree and file contents. Built with Ink (React for CLI).
-
-```
-jref ui [file]
-```
-
-**Launch:** `jref ui snapshot.json`
-
-**Two-pane layout:** The left/top shows the directory tree; selecting a file shows its content in the right/bottom pane.
-
-**Controls:**
-
-| Key | Tree View | File View | Search Mode |
-|-----|-----------|-----------|-------------|
-| `↑` / `k` | Move up | Scroll up | Move up |
-| `↓` / `j` | Move down | Scroll down | Move down |
-| `←` / `h` | Collapse dir | — | — |
-| `→` / `l` | Expand dir | — | — |
-| `Enter` | Select/toggle | Back to tree | Select file |
-| `/` | Open search | — | — |
-| `Tab` | — | — | Toggle Search Type |
-| `y` | Yank content | Yank content | — |
-| `e` | Edit in `$EDITOR` | — | — |
-| `v` | View in `$PAGER` | — | — |
-| `x` | Extract file | — | — |
-| `c` | Toggle compact | Toggle compact | — |
-| `Esc` | Exit | Back to tree | Cancel search |
-
-**Yank behavior:**
-- Termux: uses `termux-clipboard-set`
-- macOS: uses `pbcopy`
-- Linux: uses `xclip -selection clipboard`
-
-**Edit behavior:** Spawns `$EDITOR` (default `vi`) with the file content in a temp file. On exit, the in-memory file is updated — **changes are not written back to the snapshot or the filesystem**.
-
-**Compact mode:** Auto-enabled when terminal width < 60 columns. Shows abbreviated UI elements to fit narrow screens.
-
----
-
-## Snapshot Schema
-
-A valid jref snapshot is a JSON object conforming to this schema:
-
-```json
-{
-  "directoryStructure": "ASCII tree string (required)",
-  "files": {
-    "path/to/file1.ts": "file content string (required)",
-    "path/to/file2.py": "file content string"
-  },
-  "instruction": "AI system prompt context (optional)",
-  "fileSummary": "Human-readable project overview (optional)",
-  "userProvidedHeader": "Custom header note (optional)"
-}
-```
-
-### Field Descriptions
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `directoryStructure` | `string` | ✅ Yes | ASCII tree representation of the directory layout |
-| `files` | `object` | ✅ Yes | Map of relative file paths to their UTF-8 content strings |
-| `instruction` | `string` | No | AI-specific instructions or context injected at pack time |
-| `fileSummary` | `string` | No | Human-readable description of the project structure |
-| `userProvidedHeader` | `string` | No | Arbitrary custom header or metadata note |
-
----
-
-## AI Agent Workflows
-
-### Context Injection
-
-```bash
-# Get a compact architectural map for initial planning
+# Get summarized map for context
 jref summarize project.json > map.json
 
-# Inspect the summarized map
-jref inspect --files map.json
-```
-
-### State Mutation
-
-```bash
-# AI suggests a fix; apply it directly to the snapshot
-cat fix.ts | jref patch src/main.ts project.json > updated.json
-
-# Chain: query → patch
-jref query --path "src/utils.ts" --raw project.json | \
-  sed 's/old/new/g' | \
-  jref patch src/utils.ts project.json > updated.json
-```
-
-### Tool Interoperability
-
-```bash
-# Start MCP server for agent-native browsing
+# Use MCP in agent-enabled IDEs
 jref serve project.json
 ```
-
-### Verification Loop
-
-```bash
-# After applying edits locally, verify against snapshot
-jref reconstruct --verbose project.json
-
-# Or diff to see all differences
-jref diff --all project.json
-```
-
-### Streaming Large Snapshots
-
-```bash
-# For very large snapshots (>8MB), jref uses chunked streaming
-# to avoid heap overflow on low-memory devices (Raspberry Pi, Termux)
-# No special flag needed — handled automatically
-jref inspect large-snapshot.json
-```
-
----
-
-## Target Environments
-
-jref is engineered for constrained computing environments:
-
-| Environment | Notes |
-|-------------|-------|
-| **Termux (Android)** | Full clipboard integration via `termux-clipboard-set`; ARM-compatible |
-| **Raspberry Pi 4 (ARM)** | Chunked streaming for large snapshots; low memory footprint |
-| **Standard Linux (x86)** | Full feature set |
-| **macOS** | Full feature set; `pbcopy` for clipboard |
-
-### Memory Management
-
-- Snapshots **< 8MB**: loaded directly via `JSON.parse`
-- Snapshots **≥ 8MB**: streamed in 64KB chunks to prevent heap overflow
-- The TUI auto-activates compact mode on narrow terminals (< 60 columns)
-
----
-
-## Use Cases
-
-### 1. Code Review by AI Agent
-```bash
-jref pack ./project > snapshot.json
-jref summarize snapshot.json > map.json
-# Inject map.json into LLM context for architectural overview
-# Use jref query for targeted file reads during review
-```
-
-### 2. Portable Development Context
-```bash
-# Create a shareable snapshot of a project
-jref pack . --instruction "This is a React dashboard" > context.json
-
-# Share the single JSON file instead of a zip
-# Recipient: jref inspect context.json
-```
-
-### 3. Surgical Patch without Full Extraction
-```bash
-# Fix a bug in a file inside a snapshot without unpacking everything
-cat fixed.ts | jref patch src/buggy.ts snapshot.json > fixed.json
-```
-
-### 4. Backup / Audit Trail
-```bash
-# Snapshot a project state
-jref pack . --instruction "State at commit abc123" > state-abc123.json
-# Store the JSON as an immutable artifact
-```
-
-### 5. CI/CD Verification
-```bash
-# In CI: ensure deployed code matches the approved snapshot
-jref diff --all snapshot.json && echo "Match" || echo "Drift detected"
-```
-
----
-
-## Exit Codes
-
-All jref commands return an exit code:
-
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | General error (file not found, invalid input, etc.) |
-| `2` | Query target file not found in snapshot |
-| MCP server | Runs indefinitely; no exit unless connection drops |
-
----
-
-## File Size and Streaming Behavior
-
-jref handles JSON snapshot files of any size through automatic streaming:
-
-| Snapshot Size | Strategy |
-|--------------|----------|
-| < 8 MB | Direct `JSON.parse` — fast, single allocation |
-| ≥ 8 MB | `stream-json` pipeline — prevents heap exhaustion |
-| Up to 1GB+ | Fully supported via streaming callbacks |
-
-The threshold is configurable internally via `MAX_BUFFER_SIZE` in `streaming-json.js` (currently 8MB).
-
----
 
 ## License
 
