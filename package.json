@@ -1,11 +1,16 @@
 {
-  "name": "jref",
+  "name": "@ray0404/jref",
   "version": "1.2.0",
   "description": "CLI tool to interact with condensed JSON project snapshots for humans and AI agents",
   "type": "module",
   "bin": {
     "jref": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "docs",
+    "schemas"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",

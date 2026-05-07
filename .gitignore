@@ -24,3 +24,5 @@ test-pack-target/
 .ignore
 /.jref/plugins
 GEMINI.md.bak
+/.env
+/.npmrc
