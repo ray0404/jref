@@ -19,6 +19,12 @@
    - [reconstruct — Verify Local vs Snapshot](#reconstruct)
    - [diff — Compare Snapshot to Local Filesystem](#diff)
    - [patch — Modify Snapshots Without Extraction](#patch)
+   - [get — Retrieve specific metadata](#get)
+   - [set — Update specific metadata](#set)
+   - [flatten — Flatten nested snapshots](#flatten)
+   - [unflatten — Restore flat snapshots](#unflatten)
+   - [shell — Interactive JavaScript REPL](#shell)
+   - [mount — Virtual Filesystem via WebDAV](#mount)
    - [summarize — Generate Architectural Maps](#summarize)
    - [openapi — Transform OpenAPI Specifications](#openapi)
    - [serve — MCP Server for AI Agents](#serve)
@@ -60,6 +66,12 @@ A snapshot captures:
 | **reconstruct** | Dry-run check: does the local directory match the snapshot? |
 | **diff** | Compare snapshot contents against the live filesystem |
 | **patch** | Update/add file contents or metadata in a snapshot without extracting |
+| **get** | Retrieve specific metadata or file content using dot-notation |
+| **set** | Update specific metadata or file content using dot-notation |
+| **flatten** | Convert nested snapshots to flat key-value pairs |
+| **unflatten** | Restore flat snapshots to their original nested structure |
+| **shell** | Interactive JavaScript REPL for real-time snapshot manipulation |
+| **mount** | Expose snapshots as virtual filesystems via WebDAV |
 | **summarize** | Strip implementation bodies, keep only signatures and imports |
 | **openapi** | Transform an OpenAPI spec into a virtual filesystem snapshot |
 | **serve** | Start an MCP (Model Context Protocol) stdio server for AI agents |
@@ -801,6 +813,124 @@ cat new-auth.ts | jref patch src/auth.ts \
 
 # Auto-detect: second positional ending in .json is the snapshot file
 jref patch src/main.ts updated-snapshot.json > patched.json
+```
+
+---
+
+### get
+
+Retrieve specific data nodes from a snapshot using dot-notation. This allows reading specific file contents or metadata fields without parsing the whole snapshot manually.
+
+```
+jref get <path> [file.json]
+```
+
+**Examples:**
+
+```bash
+# Get instruction node
+jref get instruction project.json
+
+# Get content of a specific file
+jref get "files.src/index.ts" project.json
+
+# Get detected file size from metadata (if present)
+jref get "metadata.totalSize" project.json
+```
+
+---
+
+### set
+
+Update or create specific nodes in a snapshot using dot-notation. This is a generalized version of `patch` that can target any node in the JSON structure.
+
+```
+jref set <path> <value> [file.json]
+```
+
+**Examples:**
+
+```bash
+# Update metadata
+jref set instruction "New AI prompt" project.json
+
+# Inject or overwrite a file
+jref set "files.README.md" "New content" project.json
+```
+
+---
+
+### flatten
+
+Flatten a nested snapshot into a one-level key-value map. Paths are converted to dot-separated keys. This is useful for compatibility with tools that expect simple key-value pairs or for simplified grep-based processing.
+
+```
+jref flatten [file.json]
+```
+
+---
+
+### unflatten
+
+Restore a flattened snapshot back to its original nested structure.
+
+```
+jref unflatten [file.json]
+```
+
+---
+
+### shell
+
+Launch an interactive JavaScript REPL (Read-Eval-Print Loop) to manipulate snapshots in real-time. The snapshot is loaded into a global `ctx` variable.
+
+```
+jref shell [file.json]
+```
+
+**Shell Context:**
+- `ctx`: The current snapshot object
+- `files`: Alias for `ctx.files`
+- `.save [filename]`: Save the current state to a file
+- `.reload`: Reload the snapshot from the source file
+
+**Example:**
+```javascript
+🚀 Starting jref shell...
+jref> files['src/main.ts'] = "console.log('Modified');";
+jref> .save modified.json
+✅ Snapshot saved to modified.json
+```
+
+---
+
+### mount
+
+Mount a snapshot as a virtual filesystem and expose it via a local WebDAV server. This allows you to "mount" a project snapshot as a network drive and browse/edit it using standard file explorers (Finder, Windows Explorer, GNOME Files, etc.).
+
+```
+jref mount <file.json> [options]
+```
+
+**Options:**
+
+| Option | Alias | Description |
+|--------|-------|-------------|
+| `--port <n>` | `-p` | Port for the WebDAV server (default: 8080) |
+| `--read-only`| | Mount in read-only mode |
+
+**Behavior:**
+- The server stays running until terminated (`Ctrl+C`).
+- If not in read-only mode, any changes made via WebDAV are **flushed back to the original JSON snapshot file** upon server shutdown.
+
+**Examples:**
+
+```bash
+# Mount and open in file manager
+jref mount project.json
+
+# Mount on a specific port
+jref mount project.json --port 9000
 ```
 
 ---

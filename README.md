@@ -25,6 +25,12 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Bin** - Manage virtual binaries and executable scripts
 - **Config** - Persistent CLI configuration management
 - **Tool** - Execute external commands and parse output into snapshots
+- **Get** - Retrieve specific metadata or file content using dot-notation
+- **Set** - Update specific metadata or file content using dot-notation
+- **Flatten** - Convert nested snapshots to flat key-value pairs
+- **Unflatten** - Restore flat snapshots to their original nested structure
+- **Shell** - Interactive JavaScript REPL for real-time snapshot manipulation
+- **Mount** - Expose snapshots as virtual filesystems via WebDAV
 
 ## Target Environments
 
@@ -513,6 +519,88 @@ Parsers available:
 ```bash
 # Snapshoting a directory listing via ls tool
 jref tool ls "ls -la" > files.json
+```
+
+### get
+
+Retrieve specific data nodes from a snapshot using dot-notation (e.g., `files.src/main.ts`).
+
+```bash
+jref get <path> [file.json]
+```
+
+**Examples:**
+```bash
+# Get instruction node
+jref get instruction project.json
+
+# Get content of a specific file
+jref get "files.src/index.ts" project.json
+```
+
+### set
+
+Update or create specific nodes in a snapshot using dot-notation.
+
+```bash
+jref set <path> <value> [file.json]
+```
+
+**Examples:**
+```bash
+# Update metadata
+jref set instruction "New AI prompt" project.json
+
+# Inject or overwrite a file
+jref set "files.README.md" "New content" project.json
+```
+
+### flatten
+
+Flatten a nested snapshot into a one-level key-value map. Useful for legacy tool compatibility or simplified parsing.
+
+```bash
+jref flatten [file.json]
+```
+
+### unflatten
+
+Restore a flattened snapshot back to its original nested structure.
+
+```bash
+jref unflatten [file.json]
+```
+
+### shell
+
+Launch an interactive JavaScript REPL to manipulate snapshots in real-time.
+
+```bash
+jref shell [file.json]
+
+# Available in shell:
+# - ctx: The current snapshot object
+# - files: The files map
+# - .save [filename]: Save current state
+# - .reload: Reload from source
+```
+
+### mount
+
+Mount a snapshot as a virtual filesystem and expose it via a WebDAV server. This allows browsing snapshots as local drives in any file manager.
+
+```bash
+jref mount <file.json> [options]
+
+Options:
+  -p, --port <number>   Port for the WebDAV server (default: 8080)
+  --read-only           Mount in read-only mode
+```
+
+**Examples:**
+```bash
+# Mount and open in file manager
+jref mount project.json
 ```
 
 ## AI Agent Usage
