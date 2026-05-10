@@ -57,26 +57,36 @@ export class MountCommand extends Command {
 
       // Start the server
       await new Promise<void>((resolve, reject) => {
-        server.start((err) => {
-          if (err) reject(err);
-          else resolve();
+        server.start(() => {
+          resolve();
         });
+
+        // server.start returns nothing sometimes or internal server property isn't typed properly,
+        // but we know internally it creates this.server = http.createServer(...)
+        // webdav-server does not emit an error to the callback for server.listen failures.
+        // It's a known limitation in standard webdav-server v2, the server property is on `server.server`
+        const nodeServer = (server as any).server;
+        if (nodeServer) {
+          nodeServer.on('error', (err: any) => {
+            console.error(`\nFailed to start WebDAV server on port ${port}. Error: ${err.message}`);
+            if (err.code === 'EADDRINUSE') {
+               console.error(`Port ${port} is already in use. Try specifying a different port using the -p flag.`);
+            }
+            reject(err);
+          });
+        }
       });
 
-      // Bind to 127.0.0.1 is handled by the server implementation by default if not specified?
-      // Actually, we can pass it in start() or via options.
-      // The lib documentation says start() takes a callback.
-
-      console.log(`WebDAV server running at: http://127.0.0.1:${port}/`);
+      console.error(`WebDAV server running at: http://127.0.0.1:${port}/`);
 
       return new Promise((resolve) => {
         const shutdown = () => {
-          console.log('\nStopping server and saving changes...');
+          console.error('\nStopping server and saving changes...');
           server.stop(() => {
             try {
               if (snapshotPath !== '-') {
                 fs.writeFileSync(snapshotPath, JSON.stringify(snapshot, null, 2));
-                console.log(`Changes saved to ${snapshotPath}`);
+                console.error(`Changes saved to ${snapshotPath}`);
               }
               resolve(this.success());
             } catch (err) {
