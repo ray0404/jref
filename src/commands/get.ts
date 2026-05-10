@@ -31,7 +31,7 @@ export class GetCommand extends Command {
         return this.error('No path provided', options);
       }
 
-      const snapshot = await this.getSnapshot(context, options, snapshotFile);
+      const snapshot = await this.getJSON(context, options, snapshotFile);
       const value = getValueByPath(snapshot, path);
 
       if (value === undefined) {
