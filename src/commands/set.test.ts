@@ -74,3 +74,35 @@ describe('SetCommand', () => {
     expect(result.error).toContain('No value provided');
   });
 });
+
+describe('SetCommand Extensibility', () => {
+  it('should update directoryStructure when a new file is added', async () => {
+    const command = new SetCommand();
+    const mockContext = {
+      snapshot: {
+        files: { 'a.js': '' },
+        directoryStructure: '.\n└── a.js\n'
+      },
+      stdin: '',
+      stdinIsPipe: false
+    };
+    const result = await command.execute(['files["b.js"]', 'test'], {}, mockContext);
+    expect(result.success).toBe(true);
+    const updated = JSON.parse(result.output!);
+    expect(updated.directoryStructure).toContain('b.js');
+  });
+
+  it('should not throw if we modify something generic and there is no file', async () => {
+    const command = new SetCommand();
+    const mockContext = {
+      snapshot: { name: 'my-project' },
+      stdin: '',
+      stdinIsPipe: false
+    };
+    const result = await command.execute(['version', '1.0'], {}, mockContext);
+    expect(result.success).toBe(true);
+    const updated = JSON.parse(result.output!);
+    expect(updated.version).toBe(1.0);
+    expect(updated.name).toBe('my-project');
+  });
+});
