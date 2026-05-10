@@ -52,6 +52,37 @@ export abstract class Command {
   /**
    * Get the snapshot from context, loading if necessary
    */
+
+  /**
+   * Get generic JSON from context or file without schema coercion
+   */
+  protected async getJSON(context: CommandContext, _options?: CLIOptions, filePath?: string): Promise<any> {
+    if (context.snapshot) {
+      return context.snapshot;
+    }
+
+    const { readFromInput } = await import('./input.js');
+    let data = '';
+
+    if (filePath && filePath !== '-') {
+      const { readFileSync } = await import('fs');
+      data = readFileSync(filePath, 'utf8');
+    } else if (context.stdinIsPipe || context.stdin) {
+      data = context.stdin || await readFromInput();
+    } else {
+      return {};
+    }
+
+    if (!data.trim()) return {};
+
+    try {
+      return JSON.parse(data);
+    } catch {
+      const JSON5 = (await import('json5')).default;
+      return JSON5.parse(data); // If it fails, it throws
+    }
+  }
+
   protected async getSnapshot(context: CommandContext, options?: CLIOptions, filePath?: string): Promise<ProjectSnapshot> {
     if (context.snapshot) {
       return context.snapshot;

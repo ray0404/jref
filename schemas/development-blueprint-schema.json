@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Development Blueprint Schema",
+  "description": "A refined schema for tracking feature development, architectural changes, and bug fixes with high granularity and AI-agent compatibility.",
+  "type": "object",
+  "required": [
+    "id",
+    "metadata",
+    "specification",
+    "implementation"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the development track (e.g., feat_auth_v2)."
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["title", "status", "priority"],
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": {
+          "type": "string",
+          "enum": ["BACKLOG", "PLANNED", "IN_PROGRESS", "COMPLETED", "BLOCKED", "ARCHIVED"]
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"]
+        },
+        "complexity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "specification": {
+      "type": "object",
+      "properties": {
+        "userStory": { "type": "string" },
+        "acceptanceCriteria": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "constraints": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "outOfScope": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "properties": {
+        "targetFiles": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "symbols": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Key functions, classes, or types relevant to this blueprint."
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "externalRefs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "required": ["strategy", "steps"],
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "description": "High-level architectural approach."
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "task", "status"],
+            "properties": {
+              "id": { "type": "string" },
+              "task": { "type": "string" },
+              "status": {
+                "type": "string",
+                "enum": ["PENDING", "IN_PROGRESS", "COMPLETED", "SKIPPED"]
+              },
+              "tdd": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this task includes writing a failing test first."
+              },
+              "notes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "properties": {
+        "unitTests": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "integrationTests": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "manualChecklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "item": { "type": "string" },
+              "passed": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "timestamp": { "type": "string", "format": "date-time" },
+          "event": { "type": "string" },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -35,7 +35,7 @@ export class SetCommand extends Command {
         return this.error('No value provided', options);
       }
 
-      const snapshot = await this.getSnapshot(context, options, snapshotFile);
+      const snapshot = await this.getJSON(context, options, snapshotFile);
       
       // Try to parse value as JSON
       let value: any = rawValue;
@@ -57,6 +57,19 @@ export class SetCommand extends Command {
       }
 
       setValueByPath(snapshot, path, value);
+
+      // Schema detection: If it looks like a jref snapshot and we modified files,
+      // update the directory structure
+      if (
+        snapshot &&
+        typeof snapshot === 'object' &&
+        'files' in snapshot &&
+        typeof snapshot.files === 'object' &&
+        (path === 'files' || path.startsWith('files.') || path.startsWith('files['))
+      ) {
+        const { generateDirectoryStructure } = await import('../utils/streaming-json.js');
+        snapshot.directoryStructure = generateDirectoryStructure(Object.keys(snapshot.files || {}));
+      }
 
       // Output the modified snapshot
       const output = JSON.stringify(snapshot, null, 2);

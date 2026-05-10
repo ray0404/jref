@@ -344,6 +344,7 @@ export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
     fileCount,
     totalSize,
     hasInstruction: Boolean(snapshot.instruction),
+    hasRoadmap: Boolean(snapshot.roadmap),
     hasFileSummary: Boolean(snapshot.fileSummary),
     hasUserProvidedHeader: Boolean(snapshot.userProvidedHeader),
     directoryStructureLines: snapshot.directoryStructure
