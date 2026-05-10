@@ -63,6 +63,8 @@ Understanding these files is critical for understanding how the entire system co
   - Prefer streaming processing (`processSnapshot`) for files that could be large.
   - Use `web-tree-sitter` for surgical code modifications or analysis.
 - **Validation:** Use `zod` for validating inputs and configuration schemas.
+- **Development Blueprints**: Follow the schema in `schemas/development-blueprint-schema.json` for planning and tracking complex features.
+- **Roadmap Awareness**: The snapshot schema supports `roadmap` and `roadmap_status` fields to provide long-term context to agents.
 
 ## 🤖 AI Agent Integration (MCP)
 
@@ -81,3 +83,5 @@ Snapshots follow the schema in `schemas/project-snapshot-schema.json`:
 - `files`: Map of relative paths to full content.
 - `chunks`: (Optional) Semantic code blocks with embeddings.
 - `instruction`: Contextual prompt for AI agents.
+- `roadmap`: (Optional) Project technical roadmap.
+- `roadmap_status`: (Optional) Current status of the roadmap.

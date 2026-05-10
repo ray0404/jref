@@ -25,12 +25,13 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Bin** - Manage virtual binaries and executable scripts
 - **Config** - Persistent CLI configuration management
 - **Tool** - Execute external commands and parse output into snapshots
-- **Get** - Retrieve specific metadata or file content using dot-notation
-- **Set** - Update specific metadata or file content using dot-notation
+- **Get** - Retrieve specific metadata or file content from any JSON file using dot-notation
+- **Set** - Update specific metadata or file content in any JSON file using dot-notation
 - **Flatten** - Convert nested snapshots to flat key-value pairs
 - **Unflatten** - Restore flat snapshots to their original nested structure
 - **Shell** - Interactive JavaScript REPL for real-time snapshot manipulation
 - **Mount** - Expose snapshots as virtual filesystems via WebDAV
+- **Git** - Virtualized or local Git operations with a high-fidelity interactive TUI (diffing, staging, commits)
 
 ## Target Environments
 
@@ -96,6 +97,8 @@ jref works with JSON snapshots following this schema:
     "path/to/file2.ts": "file contents..."
   },
   "instruction": "Optional context or AI instructions",
+  "roadmap": "Optional project technical roadmap",
+  "roadmap_status": "Optional status of the roadmap",
   "fileSummary": "Optional summary of files",
   "userProvidedHeader": "Optional custom header"
 }
@@ -523,36 +526,44 @@ jref tool ls "ls -la" > files.json
 
 ### get
 
-Retrieve specific data nodes from a snapshot using dot-notation (e.g., `files.src/main.ts`).
+Retrieve specific data nodes from any JSON file or snapshot using dot-notation (e.g., `files.src/main.ts`).
 
 ```bash
 jref get <path> [file.json]
 ```
 
+**Features:**
+- **Universal Mode**: Operates on any valid JSON structure, not just snapshots.
+- **Raw Output**: Use `--raw` to emit pure string content.
+
 **Examples:**
 ```bash
-# Get instruction node
-jref get instruction project.json
+# Get version from package.json
+jref get version package.json --raw
 
-# Get content of a specific file
-jref get "files.src/index.ts" project.json
+# Get content of a specific file in a snapshot
+jref get "files['src/index.ts']" project.json
 ```
 
 ### set
 
-Update or create specific nodes in a snapshot using dot-notation.
+Update or create specific nodes in any JSON file or snapshot using dot-notation.
 
 ```bash
 jref set <path> <value> [file.json]
 ```
 
+**Features:**
+- **Universal Mutation**: Programmatically update metadata or content in any JSON file.
+- **Snapshot Awareness**: Automatically recalculates `directoryStructure` when modifying files in a snapshot.
+
 **Examples:**
 ```bash
-# Update metadata
-jref set instruction "New AI prompt" project.json
+# Update version in package.json
+jref set version "1.2.1" package.json
 
-# Inject or overwrite a file
-jref set "files.README.md" "New content" project.json
+# Inject a new file into a snapshot
+jref set "files['new-file.ts']" "console.log('hello');" project.json
 ```
 
 ### flatten
@@ -601,6 +612,30 @@ Options:
 ```bash
 # Mount and open in file manager
 jref mount project.json
+```
+
+### git
+
+Virtualized or local Git operations. Supports an advanced dual-pane interactive TUI for virtual staging and diffing.
+
+```bash
+jref git <subcommand> [args] [file]
+
+Options:
+  ui                       Launch interactive Git TUI (lazygit-style)
+  -l, --local              Force operation on local repository (ignore snapshot)
+  -m, --message <text>     Commit message
+```
+
+**Features:**
+- **Interactive TUI**: Dual-pane view with scrollable diffs, staging, and commit management.
+- **Virtual Versioning**: Track changes within snapshots without needing a `.git` directory.
+
+**Examples:**
+```bash
+jref git status snapshot.json
+jref git ui project.json
+jref git commit -m "fix: logic error" snapshot.json
 ```
 
 ## AI Agent Usage

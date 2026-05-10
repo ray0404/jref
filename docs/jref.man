@@ -8,9 +8,9 @@ SSYYNNOOPPSSIISS
             [----vveerrssiioonn|--vv] _c_o_m_m_a_n_d [_a_r_g_u_m_e_n_t_s...]
 
        The following commands are available: _a_l_i_a_s, _b_e_x_t_r_a_c_t, _b_i_n, _b_p_a_c_k,
-       _c_o_n_f_i_g, _d_i_f_f, _e_x_t_r_a_c_t, _f_l_a_t_t_e_n, _g_e_t, _g_r_a_p_h, _i_n_s_p_e_c_t, _m_o_u_n_t, _o_p_e_n_a_p_i,
-       _p_a_c_k, _p_a_t_c_h, _q_u_e_r_y, _r_e_c_o_n_s_t_r_u_c_t, _r_u_n, _s_e_a_r_c_h, _s_e_r_v_e, _s_e_t, _s_h_e_l_l,
-       _s_u_m_m_a_r_i_z_e, _t_o_o_l, _u_i, _u_n_f_l_a_t_t_e_n, _v_a_l_i_d_a_t_e.
+       _c_o_n_f_i_g, _d_i_f_f, _e_x_t_r_a_c_t, _f_l_a_t_t_e_n, _g_e_t, _g_i_t, _g_r_a_p_h, _i_n_s_p_e_c_t, _m_o_u_n_t,
+       _o_p_e_n_a_p_i, _p_a_c_k, _p_a_t_c_h, _q_u_e_r_y, _r_e_c_o_n_s_t_r_u_c_t, _r_u_n, _s_e_a_r_c_h, _s_e_r_v_e, _s_e_t,
+       _s_h_e_l_l, _s_u_m_m_a_r_i_z_e, _t_o_o_l, _u_i, _u_n_f_l_a_t_t_e_n, _v_a_l_i_d_a_t_e.
 
 DDEESSCCRRIIPPTTIIOONN
        jjrreeff (JSON Reference) is a CLI tool for creating, inspecting,
@@ -221,14 +221,40 @@ CCOOMMMMAANNDDSS
        Useful for legacy tool compatibility or simplified parsing.
 
    GGEETT
-       Retrieve specific data nodes from a snapshot using dot-notation.
+       Retrieve specific data nodes from any JSON file or snapshot using dot-
+       notation.
 
        jjrreeff ggeett _p_a_t_h [_f_i_l_e_._j_s_o_n]
 
+       FFeeaattuurreess::
+
+           +o UUnniivveerrssaall MMooddee: Operates on any valid JSON structure, not just
+             snapshots.
+
+           +o RRaaww OOuuttppuutt: Use ----rraaww to emit pure string content.
+
        EEXXAAMMPPLLEESS
 
-       jref get instruction project.json
-       jref get "files.src/index.ts" project.json
+       jref get version package.json --raw
+       jref get "files['src/index.ts']" project.json
+
+   GGIITT
+       Virtualized or local Git operations.
+
+       jjrreeff ggiitt <<ssuubbccoommmmaanndd>> [[aarrggss]] [[ffiillee]]
+
+       Supports a high-fidelity dual-pane interactive TUI for virtual repo
+       management via the uuii subcommand (lazygit-style).
+
+       OOppttiioonnss::
+
+           uuii  Launch interactive Git TUI.
+
+           --ll,, ----llooccaall
+               Force operation on local repository.
+
+           --mm,, ----mmeessssaaggee _t_e_x_t
+               Commit message.
 
    GGRRAAPPHH
        Analyze and visualize dependency relationships between symbols and
@@ -485,14 +511,23 @@ CCOOMMMMAANNDDSS
                Cross-file symbol reference tracing.
 
    SSEETT
-       Update or create specific nodes in a snapshot using dot-notation.
+       Update or create specific nodes in any JSON file or snapshot using dot-
+       notation.
 
        jjrreeff sseett _p_a_t_h _v_a_l_u_e [_f_i_l_e_._j_s_o_n]
+
+       FFeeaattuurreess::
+
+           +o UUnniivveerrssaall MMuuttaattiioonn: Programmatically update metadata or content
+             in any JSON file.
+
+           +o SSnnaappsshhoott AAwwaarreenneessss: Automatically recalculates ddiirreeccttoorryySSttrruuccttuurree
+             when modifying files in a snapshot.
 
        EEXXAAMMPPLLEESS
 
        jref set instruction "New AI prompt" project.json
-       jref set "files.README.md" "New content" project.json
+       jref set "files['README.md']" "New content" project.json
 
    SSHHEELLLL
        Launch an interactive JavaScript REPL to manipulate snapshots in real-
@@ -562,6 +597,8 @@ SSNNAAPPSSHHOOTT SSCCHHEEMMAA
            "path/to/file2.py": "file content string"
          },
          "instruction": "AI system prompt context (optional)",
+         "roadmap": "Project technical roadmap (optional)",
+         "roadmap_status": "Status of the roadmap (optional)",
          "fileSummary": "Human-readable project overview (optional)",
          "userProvidedHeader": "Custom header note (optional)"
        }
@@ -595,4 +632,4 @@ CCOOPPYYRRIIGGHHTT
        Copyright (C) 2025 the jref contributors.
        License: MIT
 
-1.2.0                             2026-04-22                           JREF(1)
+1.2.0                             2026-05-10                           JREF(1)
