@@ -44,6 +44,7 @@ For large-scale refactoring or deep understanding, agents should utilize the dep
   "directoryStructure": "ASCII tree string",
   "files": {"path/to/file.ts": "source code..."},
   "instruction": "AI system prompt context",
+  "roadmap": "Project technical roadmap/milestones",
   "fileSummary": "Project high-level overview"
 }
 ```

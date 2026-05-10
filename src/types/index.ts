@@ -20,6 +20,7 @@ export const ProjectSnapshotSchema = z.object({
   files: z.record(z.string(), z.string()),
   encodings: z.record(z.string(), z.enum(['utf8', 'base64'])).optional(),
   instruction: z.string().optional(),
+  roadmap: z.string().optional(),
   fileSummary: z.string().optional(),
   userProvidedHeader: z.string().optional(),
   chunks: z.array(z.custom<CodeChunk>()).optional(),
@@ -63,6 +64,7 @@ export const SnapshotMetadataSchema = z.object({
   fileCount: z.number(),
   totalSize: z.number(),
   hasInstruction: z.boolean(),
+  hasRoadmap: z.boolean(),
   hasFileSummary: z.boolean(),
   hasUserProvidedHeader: z.boolean(),
   directoryStructureLines: z.number(),
@@ -153,3 +155,73 @@ export interface CommandResult {
 export const AliasConfigSchema = z.record(z.string(), z.array(z.string()));
 
 export type AliasConfig = z.infer<typeof AliasConfigSchema>;
+
+/**
+ * Development Blueprint Schema Types
+ * Refined structure for tracking features, bugs, and architectural changes.
+ */
+
+export const BlueprintMetadataSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  status: z.enum(['BACKLOG', 'PLANNED', 'IN_PROGRESS', 'COMPLETED', 'BLOCKED', 'ARCHIVED']),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
+  complexity: z.number().min(1).max(10).optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+export const BlueprintSpecSchema = z.object({
+  userStory: z.string().optional(),
+  acceptanceCriteria: z.array(z.string()).optional(),
+  constraints: z.array(z.string()).optional(),
+  outOfScope: z.array(z.string()).optional(),
+});
+
+export const BlueprintContextSchema = z.object({
+  targetFiles: z.array(z.string()).optional(),
+  symbols: z.array(z.string()).optional(),
+  dependencies: z.array(z.string()).optional(),
+  externalRefs: z.array(z.object({
+    label: z.string(),
+    url: z.string(),
+  })).optional(),
+});
+
+export const BlueprintStepSchema = z.object({
+  id: z.string(),
+  task: z.string(),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED', 'SKIPPED']),
+  tdd: z.boolean().default(false),
+  notes: z.string().optional(),
+});
+
+export const BlueprintImplementationSchema = z.object({
+  strategy: z.string(),
+  steps: z.array(BlueprintStepSchema),
+});
+
+export const BlueprintVerificationSchema = z.object({
+  unitTests: z.array(z.string()).optional(),
+  integrationTests: z.array(z.string()).optional(),
+  manualChecklist: z.array(z.object({
+    item: z.string(),
+    passed: z.boolean(),
+  })).optional(),
+});
+
+export const DevelopmentBlueprintSchema = z.object({
+  id: z.string(),
+  metadata: BlueprintMetadataSchema,
+  specification: BlueprintSpecSchema.optional(),
+  context: BlueprintContextSchema.optional(),
+  implementation: BlueprintImplementationSchema,
+  verification: BlueprintVerificationSchema.optional(),
+  history: z.array(z.object({
+    timestamp: z.string(),
+    event: z.string(),
+    note: z.string().optional(),
+  })).optional(),
+});
+
+export type DevelopmentBlueprint = z.infer<typeof DevelopmentBlueprintSchema>;
+export type BlueprintStep = z.infer<typeof BlueprintStepSchema>;

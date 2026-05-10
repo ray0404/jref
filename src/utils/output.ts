@@ -42,6 +42,15 @@ export function formatOutput(
   return JSON.stringify(data, null, 2);
 }
 
+let outputHandler: ((data: string, type: 'stdout' | 'stderr') => void) | null = null;
+
+/**
+ * Set a custom output handler to redirect all prints
+ */
+export function setOutputHandler(handler: ((data: string, type: 'stdout' | 'stderr') => void) | null): void {
+  outputHandler = handler;
+}
+
 /**
  * Print output to console with formatting
  */
@@ -50,19 +59,30 @@ export function printOutput(
   options: CLIOptions = {}
 ): void {
   const formatted = formatOutput(data, options);
-  console.log(formatted);
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    console.log(formatted);
+  }
 }
 
 /**
  * Print error to stderr
  */
 export function printError(message: string, options: CLIOptions = {}): void {
+  let formatted = '';
   if (options.json) {
-    console.error(JSON.stringify({ error: message }));
+    formatted = JSON.stringify({ error: message });
   } else if (!options.silent && !options.raw) {
-    console.error(`${RED}Error:${RESET} ${message}`);
+    formatted = `${RED}Error:${RESET} ${message}`;
   } else {
-    console.error(message);
+    formatted = message;
+  }
+
+  if (outputHandler) {
+    outputHandler(formatted, 'stderr');
+  } else {
+    console.error(formatted);
   }
 }
 
@@ -70,12 +90,19 @@ export function printError(message: string, options: CLIOptions = {}): void {
  * Print success message
  */
 export function printSuccess(message: string, options: CLIOptions = {}): void {
+  let formatted = '';
   if (options.json) {
-    console.log(JSON.stringify({ success: true, message }));
+    formatted = JSON.stringify({ success: true, message });
   } else if (!options.silent && !options.raw) {
-    console.log(`${GREEN}✓${RESET} ${message}`);
+    formatted = `${GREEN}✓${RESET} ${message}`;
   } else {
-    console.log(message);
+    formatted = message;
+  }
+
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    console.log(formatted);
   }
 }
 
@@ -83,12 +110,19 @@ export function printSuccess(message: string, options: CLIOptions = {}): void {
  * Print warning message
  */
 export function printWarning(message: string, options: CLIOptions = {}): void {
+  let formatted = '';
   if (options.json) {
-    console.log(JSON.stringify({ warning: message }));
+    formatted = JSON.stringify({ warning: message });
   } else if (!options.silent && !options.raw) {
-    console.log(`${YELLOW}⚠${RESET} ${message}`);
+    formatted = `${YELLOW}⚠${RESET} ${message}`;
   } else {
-    console.log(message);
+    formatted = message;
+  }
+
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    console.log(formatted);
   }
 }
 
@@ -96,12 +130,19 @@ export function printWarning(message: string, options: CLIOptions = {}): void {
  * Print info message
  */
 export function printInfo(message: string, options: CLIOptions = {}): void {
+  let formatted = '';
   if (options.json) {
-    console.log(JSON.stringify({ info: message }));
+    formatted = JSON.stringify({ info: message });
   } else if (!options.silent && !options.raw) {
-    console.log(`${CYAN}ℹ${RESET} ${message}`);
+    formatted = `${CYAN}ℹ${RESET} ${message}`;
   } else {
-    console.log(message);
+    formatted = message;
+  }
+
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    console.log(formatted);
   }
 }
 
@@ -114,14 +155,18 @@ export function printTable(
   options: CLIOptions = {}
 ): void {
   if (options.json) {
-    console.log(JSON.stringify({ headers, rows }));
+    printOutput({ headers, rows }, options);
     return;
   }
 
   if (options.silent || options.raw) {
     // In silent/raw mode, just output tab-separated
     for (const row of rows) {
-      console.log(row.join('\t'));
+      if (outputHandler) {
+        outputHandler(row.join('\t'), 'stdout');
+      } else {
+        console.log(row.join('\t'));
+      }
     }
     return;
   }
@@ -133,14 +178,22 @@ export function printTable(
 
   // Print header
   const headerRow = headers.map((h, i) => h.padEnd(widths[i])).join('  ');
-  console.log(BOLD + headerRow + RESET);
-  console.log(widths.map((w) => '-'.repeat(w)).join('  '));
+  if (outputHandler) {
+    outputHandler(BOLD + headerRow + RESET, 'stdout');
+    outputHandler(widths.map((w) => '-'.repeat(w)).join('  '), 'stdout');
+  } else {
+    console.log(BOLD + headerRow + RESET);
+    console.log(widths.map((w) => '-'.repeat(w)).join('  '));
+  }
 
   // Print rows
   for (const row of rows) {
-    console.log(
-      row.map((cell, i) => (cell || '').padEnd(widths[i])).join('  ')
-    );
+    const r = row.map((cell, i) => (cell || '').padEnd(widths[i])).join('  ');
+    if (outputHandler) {
+      outputHandler(r, 'stdout');
+    } else {
+      console.log(r);
+    }
   }
 }
 
@@ -154,7 +207,12 @@ export function printProgress(
   if (options.silent || options.raw) {
     return;
   }
-  console.log(`${DIM}${message}${RESET}`);
+  const formatted = `${DIM}${message}${RESET}`;
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    console.log(formatted);
+  }
 }
 
 /**

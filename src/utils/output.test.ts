@@ -128,7 +128,7 @@ describe('Output Utilities', () => {
 
     it('should print JSON when --json flag is true', () => {
       printTable(headers, rows, { json: true });
-      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ headers, rows }));
+      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ headers, rows }, null, 2));
     });
 
     it('should print tab-separated values in raw/silent mode', () => {

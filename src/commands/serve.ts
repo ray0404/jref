@@ -1,6 +1,6 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command, type CommandDefinition, registry } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { loadSnapshotFromFile } from '../utils/streaming-json.js';
+import { loadSnapshotFromFile, calculateMetadata } from '../utils/streaming-json.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -9,26 +9,34 @@ import {
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
-import { stripImplementation } from '../utils/format.js';
+import { setOutputHandler } from '../utils/output.js';
 import { parseDirectoryStructure, findNodeByPath } from '../utils/ui.js';
 
 export class ServeCommand extends Command {
   readonly definition: CommandDefinition = {
     name: 'serve',
-    description: 'Start an MCP server to expose snapshot to AI agents',
-    usage: 'jref serve snapshot.json',
-    options: [],
+    description: 'Start an MCP server to expose jref capabilities to AI agents',
+    usage: 'jref serve [snapshot.json]',
+    options: [
+      {
+        flags: '--port <number>',
+        description: 'Port for the MCP server (if using network transport - TBD)'
+      }
+    ],
     examples: [
-      'jref serve snapshot.json'
+      'jref serve snapshot.json',
+      'jref serve'
     ],
     workflows: [
       'Agent Context: Provide AI agents with structured access to the codebase via MCP.',
-      'Live Tooling: Use search and query tools within your agentic workflow.',
-      'Remote Analysis: Expose a snapshot as a service for distributed agent architectures.',
-      'Advanced Queries: Use jq, file summarization, and reference tracing through MCP.',
-      'Graph Analytics: Query blast radius, dependency chains, and modular communities.'
+      'Live Tooling: Agents can dynamically call pack, search, and graph tools.',
+      'Context Loading: Start a session and let the agent load snapshots as needed.',
+      'Enriched Inspect: Get high-level instructions and roadmaps directly in the session.'
     ]
   };
+
+  private snapshot: ProjectSnapshot | null = null;
+  private snapshotFile: string | null = null;
 
   async execute(
     args: string[],
@@ -36,51 +44,19 @@ export class ServeCommand extends Command {
     context: CommandContext
   ): Promise<CommandResult> {
     try {
-      const { snapshotFile } = this.parseArgs(args);
+      const { snapshotFile: fileArg } = this.parseArgs(args);
+      this.snapshotFile = fileArg || null;
       
-      let snapshot: ProjectSnapshot;
       if (context.snapshot) {
-        snapshot = context.snapshot;
-      } else if (snapshotFile) {
-        snapshot = await loadSnapshotFromFile(snapshotFile, options);
-      } else if (context.stdin) {
-        // If stdin was somehow pre-read (though we try to avoid it in index.ts for serve)
-        const { parseJSON } = await import('../utils/streaming-json.js');
-        snapshot = await parseJSON(context.stdin, undefined, options);
-      } else {
-        return this.error('No snapshot file provided', options);
+        this.snapshot = context.snapshot;
+      } else if (this.snapshotFile) {
+        this.snapshot = await loadSnapshotFromFile(this.snapshotFile, options);
       }
-
-      // Lazy loader for graph
-      let graphData: any = undefined;
-      const loadGraph = async () => {
-        if (graphData) return graphData;
-        
-        const fs = await import('fs');
-        const possibleGraphPaths = [
-          'graph-snapshot.json',
-          snapshotFile ? snapshotFile.replace('.json', '-graph.json') : null,
-          snapshotFile ? snapshotFile.replace('.json', '.graph.json') : null
-        ].filter(Boolean) as string[];
-
-        for (const p of possibleGraphPaths) {
-          if (fs.existsSync(p)) {
-            try {
-              graphData = JSON.parse(fs.readFileSync(p, 'utf8'));
-              console.error(`MCP: Loaded graph from ${p}`);
-              return graphData;
-            } catch (e) {
-              // ignore
-            }
-          }
-        }
-        return null;
-      };
 
       const server = new Server(
         {
           name: 'jref-mcp-server',
-          version: '1.2.0',
+          version: '1.3.0',
         },
         {
           capabilities: {
@@ -91,442 +67,133 @@ export class ServeCommand extends Command {
 
       // Register tools
       server.setRequestHandler(ListToolsRequestSchema, async () => {
-        return {
-          tools: [
-            {
-              name: 'inspect',
-              description: 'Get snapshot metadata and directory structure',
-              inputSchema: {
-                type: 'object',
-                properties: {},
-              },
+        const tools = [];
+
+        // 1. Dynamic Tool Mapping from Registry
+        const allCommands = registry.getCommandNames();
+        for (const cmdName of allCommands) {
+          // Skip 'serve' itself to avoid confusion
+          if (cmdName === 'serve') continue;
+          
+          const cmd = registry.get(cmdName)!;
+          tools.push(this.commandToTool(cmd));
+        }
+
+        // 2. Add specific MCP-only tools
+        tools.push({
+          name: 'load_snapshot',
+          description: 'Load a project snapshot from a file path',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Path to the .json snapshot file' },
             },
-            {
-              name: 'search',
-              description: 'Search for a regex pattern in the snapshot',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  pattern: { type: 'string', description: 'Regex pattern to search for' },
-                },
-                required: ['pattern'],
-              },
-            },
-            {
-              name: 'query',
-              description: 'Read the content of a specific file path',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  path: { type: 'string', description: 'Path to the file' },
-                },
-                required: ['path'],
-              },
-            },
-            {
-              name: 'jq_query',
-              description: 'Execute a jq filter against the loaded snapshot',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  filter: { type: 'string', description: 'jq filter string' },
-                },
-                required: ['filter'],
-              },
-            },
-            {
-              name: 'summarize',
-              description: 'Provide a token-efficient map of specific files by stripping implementation details',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  paths: { 
-                    type: 'array', 
-                    items: { type: 'string' },
-                    description: 'List of file paths to summarize'
-                  },
-                },
-                required: ['paths'],
-              },
-            },
-            {
-              name: 'list_directory',
-              description: 'Provide scoped, localized tree inspection to mimic standard ls navigation',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  path: { type: 'string', description: 'Path to the directory (e.g., src/components)' },
-                },
-                required: ['path'],
-              },
-            },
-            {
-              name: 'find_references',
-              description: 'Cross-file reference tracing for a specific symbol',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  symbol: { type: 'string', description: 'Symbol name to trace' },
-                },
-                required: ['symbol'],
-              },
-            },
-            {
-              name: 'query_graph_node',
-              description: 'Get structural relationships for a specific node in the knowledge graph',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  nodeId: { type: 'string', description: 'ID of the node (file path or symbol ID)' },
-                },
-                required: ['nodeId'],
-              },
-            },
-            {
-              name: 'get_shortest_path',
-              description: 'Find the connection path between two nodes in the knowledge graph',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  source: { type: 'string', description: 'Source node ID' },
-                  target: { type: 'string', description: 'Target node ID' },
-                },
-                required: ['source', 'target'],
-              },
-            },
-            {
-              name: 'get_dependency_chain',
-              description: 'Find the shortest path of imports/calls between two files in the knowledge graph',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  sourcePath: { type: 'string', description: 'Source file path' },
-                  targetPath: { type: 'string', description: 'Target file path' },
-                },
-                required: ['sourcePath', 'targetPath'],
-              },
-            },
-            {
-              name: 'get_blast_radius',
-              description: 'Traverses outbound edges from the specified file to see what downstream modules are affected by it',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  filePath: { type: 'string', description: 'Path to the starting file' },
-                  depth: { type: 'number', description: 'Maximum traversal depth', default: 1 },
-                },
-                required: ['filePath'],
-              },
-            },
-            {
-              name: 'get_module_community',
-              description: 'Returns all nodes sharing a specific Louvain community ID',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  communityId: { type: 'number', description: 'The community ID' },
-                },
-                required: ['communityId'],
-              },
-            },
-            {
-              name: 'get_community_context',
-              description: 'Get all symbols belonging to the same modular community as the given node',
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  nodeId: { type: 'string', description: 'ID of the node' },
-                },
-                required: ['nodeId'],
-              },
-            },
-          ],
-        };
+            required: ['path'],
+          },
+        });
+
+        // Override some tools for better schema if needed, but dynamic mapping handles most
+        return { tools };
       });
 
       server.setRequestHandler(CallToolRequestSchema, async (request) => {
-        const checkGraph = async () => {
-          const g = await loadGraph();
-          if (!g) {
+        const { name, arguments: toolArgs } = request.params;
+
+        // Handle specific MCP-only tools
+        if (name === 'load_snapshot') {
+          const { path } = toolArgs as { path: string };
+          try {
+            this.snapshot = await loadSnapshotFromFile(path, options);
+            this.snapshotFile = path;
             return {
-              content: [{
-                type: 'text',
-                text: 'Directive: No knowledge graph snapshot found. Please instruct the user to run "jref graph build" first to enable graph analytics tools.'
-              }],
+              content: [{ type: 'text', text: `Successfully loaded snapshot from ${path}` }]
+            };
+          } catch (err) {
+            throw new McpError(ErrorCode.InternalError, `Failed to load snapshot: ${(err as Error).message}`);
+          }
+        }
+
+        // 3. Handle Dynamic Commands
+        const command = registry.get(name);
+        if (command) {
+          if (!this.snapshot && !['pack', 'config', 'alias', 'bin-setup', 'get', 'set'].includes(name)) {
+            return {
+              content: [{ type: 'text', text: 'Directive: No snapshot loaded. Use "load_snapshot" or "pack" to establish context.' }],
               isError: true
             };
           }
-          return g;
-        };
 
-        switch (request.params.name) {
-          case 'inspect': {
-            const { calculateMetadata } = await import('../utils/streaming-json.js');
+          // Special case for 'inspect' to include roadmap and instruction
+          if (name === 'inspect' && this.snapshot) {
             return {
               content: [
                 {
                   type: 'text',
                   text: JSON.stringify({
-                    metadata: calculateMetadata(snapshot),
-                    directoryStructure: snapshot.directoryStructure,
+                    metadata: calculateMetadata(this.snapshot),
+                    directoryStructure: this.snapshot.directoryStructure,
+                    instruction: this.snapshot.instruction,
+                    roadmap: this.snapshot.roadmap,
                   }, null, 2),
                 },
               ],
             };
           }
 
-          case 'search': {
-            const { pattern } = request.params.arguments as { pattern: string };
-            const results = [];
-            try {
-              const regex = new RegExp(pattern, 'i');
-              for (const [filePath, content] of Object.entries(snapshot.files)) {
-                if (regex.test(content)) {
-                  results.push(filePath);
-                }
-              }
-            } catch (err) {
-              throw new McpError(ErrorCode.InvalidParams, `Invalid regex: ${(err as Error).message}`);
+          // Build CLI-style arguments from toolArgs
+          const cliArgs: string[] = [];
+          
+          if (toolArgs) {
+            // Add positional arguments first
+            if (Array.isArray(toolArgs.args)) {
+              cliArgs.push(...toolArgs.args);
             }
 
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ results }, null, 2),
-                },
-              ],
-            };
-          }
+            // Map named parameters back to flags
+            for (const [key, value] of Object.entries(toolArgs)) {
+              if (key === 'args') continue;
 
-          case 'query': {
-            const { path } = request.params.arguments as { path: string };
-            const content = snapshot.files[path];
-            if (content === undefined) {
-              throw new McpError(ErrorCode.InvalidParams, `File not found: ${path}`);
-            }
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: content,
-                },
-              ],
-            };
-          }
-
-          case 'jq_query': {
-            const { filter } = request.params.arguments as { filter: string };
-            try {
-              const jq = (await import('jq-wasm')).default;
-              const result = await jq.json(snapshot, filter);
-              return {
-                content: [
-                  {
-                    type: 'text',
-                    text: JSON.stringify(result, null, 2),
-                  },
-                ],
-              };
-            } catch (err) {
-              throw new McpError(ErrorCode.InvalidParams, `jq error: ${(err as Error).message}`);
-            }
-          }
-
-          case 'summarize': {
-            const { paths } = request.params.arguments as { paths: string[] };
-            const summarizedFiles: Record<string, string> = {};
-            
-            for (const path of paths) {
-              const content = snapshot.files[path];
-              if (content !== undefined) {
-                // Skip summarization for non-code files
-                if (path.endsWith('.json') || path.endsWith('.md') || path.endsWith('.txt')) {
-                  summarizedFiles[path] = content;
-                } else {
-                  summarizedFiles[path] = stripImplementation(content);
-                }
+              // Convert camelCase back to kebab-case for flag
+              const flag = '--' + key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+              
+              if (typeof value === 'boolean') {
+                if (value) cliArgs.push(flag);
+              } else if (value !== undefined && value !== null) {
+                cliArgs.push(flag, String(value));
               }
             }
+          }
+          
+          const cliOptions: CLIOptions = { ...options, json: true };
+          
+          // Execute and capture output
+          let stdout = '';
+          let stderr = '';
+          
+          setOutputHandler((data, type) => {
+            if (type === 'stdout') stdout += data + '\n';
+            else stderr += data + '\n';
+          });
+
+          try {
+            const result = await command.execute(cliArgs, cliOptions, {
+              ...context,
+              snapshot: this.snapshot || undefined
+            });
 
             return {
               content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(summarizedFiles, null, 2),
-                },
+                { type: 'text', text: stdout || (result.success ? 'Success' : 'No output') },
+                ...(stderr ? [{ type: 'text', text: `Error Output: ${stderr}` }] : [])
               ],
+              isError: !result.success
             };
+          } finally {
+            setOutputHandler(null);
           }
-
-          case 'list_directory': {
-            const { path } = request.params.arguments as { path: string };
-            const tree = parseDirectoryStructure(snapshot.directoryStructure || '');
-            // Normalize path: remove trailing slash and handle empty/root
-            const normalizedPath = path === '.' || path === '/' || path === '' ? '' : path.replace(/\/$/, '');
-            const node = findNodeByPath(tree, normalizedPath);
-            
-            if (!node) {
-              throw new McpError(ErrorCode.InvalidParams, `Path not found: ${path}`);
-            }
-
-            const children = node.children.map(child => ({
-              name: child.name,
-              isDirectory: child.isDirectory,
-              path: child.path,
-              type: child.isDirectory ? 'directory' : 'file'
-            }));
-
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(children, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'find_references': {
-            const { symbol } = request.params.arguments as { symbol: string };
-            const results = [];
-            
-            for (const [filePath, content] of Object.entries(snapshot.files)) {
-              const lines = content.split('\n');
-              const matches = [];
-              for (let i = 0; i < lines.length; i++) {
-                if (lines[i].includes(symbol)) {
-                  matches.push({
-                    line: i + 1,
-                    context: lines[i].trim(),
-                  });
-                }
-              }
-              if (matches.length > 0) {
-                results.push({
-                  filePath,
-                  matches,
-                });
-              }
-            }
-
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify(results, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'query_graph_node': {
-            const g = await checkGraph();
-            if (g.isError) return g;
-            const { nodeId } = request.params.arguments as { nodeId: string };
-            const node = g.nodes.find((n: any) => n.id === nodeId);
-            if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
-            
-            const edges = g.edges.filter((e: any) => e.source === nodeId || e.target === nodeId);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ node, edges }, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'get_shortest_path': 
-          case 'get_dependency_chain': {
-            const graphRes = await checkGraph();
-            if (graphRes.isError) return graphRes;
-            
-            const source = (request.params.arguments as any).source || (request.params.arguments as any).sourcePath;
-            const target = (request.params.arguments as any).target || (request.params.arguments as any).targetPath;
-            
-            const { createGraph } = await import('../utils/graph-analysis.js');
-            const g = createGraph(graphRes);
-
-            const { bidirectional } = await import('graphology-shortest-path');
-            const path = bidirectional(g, source, target);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ path }, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'get_blast_radius': {
-            const graphRes = await checkGraph();
-            if (graphRes.isError) return graphRes;
-            const { filePath, depth } = request.params.arguments as { filePath: string, depth?: number };
-            
-            const { createGraph, getBlastRadius } = await import('../utils/graph-analysis.js');
-            const g = createGraph(graphRes);
-            const radius = getBlastRadius(g, filePath, depth || 1);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ radius }, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'get_module_community': {
-            const graphRes = await checkGraph();
-            if (graphRes.isError) return graphRes;
-            const { communityId } = request.params.arguments as { communityId: number };
-            
-            const { getCommunityNodes } = await import('../utils/graph-analysis.js');
-            const nodes = getCommunityNodes(graphRes, communityId);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ communityId, nodes }, null, 2),
-                },
-              ],
-            };
-          }
-
-          case 'get_community_context': {
-            const g = await checkGraph();
-            if (g.isError) return g;
-            const { nodeId } = request.params.arguments as { nodeId: string };
-            const node = g.nodes.find((n: any) => n.id === nodeId);
-            if (!node) throw new McpError(ErrorCode.InvalidParams, `Node not found: ${nodeId}`);
-            
-            const communityId = node.community;
-            if (communityId === undefined) {
-               return { content: [{ type: 'text', text: 'Node does not belong to a community' }] };
-            }
-            
-            const communityNodes = g.nodes.filter((n: any) => n.community === communityId);
-            
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({ communityId, nodes: communityNodes.map((n: any) => n.id) }, null, 2),
-                },
-              ],
-            };
-          }
-
-          default:
-            throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${request.params.name}`);
         }
+
+        throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       });
 
       console.error('MCP: Connecting transport...');
@@ -535,19 +202,10 @@ export class ServeCommand extends Command {
       
       console.error('jref MCP server running on stdio');
       
-      // Keep alive until transport closes or process is terminated
       await new Promise<void>((resolve) => {
-        transport.onclose = () => {
-          console.error('MCP: Transport closed');
-          resolve();
-        };
-        
-        const cleanup = () => {
-           console.error('MCP: Process terminating...');
-           transport.close().then(() => resolve());
-        };
-        process.on('SIGINT', cleanup);
-        process.on('SIGTERM', cleanup);
+        transport.onclose = () => resolve();
+        process.on('SIGINT', () => transport.close().then(resolve));
+        process.on('SIGTERM', () => transport.close().then(resolve));
       });
 
       return this.success();
@@ -555,6 +213,43 @@ export class ServeCommand extends Command {
     } catch (err) {
       return this.error(`Serve failed: ${(err as Error).message}`, options);
     }
+  }
+
+  private commandToTool(cmd: Command) {
+    const { name, description, options } = cmd.definition;
+    
+    const properties: any = {
+      args: {
+        type: 'array',
+        items: { type: 'string' },
+        description: 'Positional arguments for the command'
+      }
+    };
+    
+    // Map options to named properties
+    for (const opt of options) {
+      const match = opt.flags.match(/--([a-zA-Z0-9-]+)/);
+      if (match) {
+        const flagName = match[1];
+        const paramName = flagName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+        
+        const isString = opt.flags.includes('<') || opt.flags.includes('[');
+        
+        properties[paramName] = {
+          type: isString ? 'string' : 'boolean',
+          description: opt.description
+        };
+      }
+    }
+
+    return {
+      name,
+      description,
+      inputSchema: {
+        type: 'object',
+        properties,
+      }
+    };
   }
 
   protected parseArgs(args: string[]): { snapshotFile?: string } {

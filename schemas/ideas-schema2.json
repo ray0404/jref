@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Formalized \"Cache, Falling Back to Network\" Service Worker Strategy",
+    "description": "The project currently registers a service worker via sw.ts utilizing Workbox and precacheAndRoute. Implementing a strictly defined \"cache, falling back to network\" routing strategy for all static assets guarantees instantaneous load times upon subsequent visits without a server round-trip. This specifically ensures the heavy Xenova WASM binaries and the modular pixel art assets mapped in the nanobanana-output directory are persistently available offline.",
+    "priority": "LOW",
+    "status": "UNDETERMINED",
+    "complexity": "LOW"
+  },
+  {
+    "title": "IndexedDB Blob Optimization & Chunking",
+    "description": "Currently, the saveAsset function serializes binary blobs via FileReader.readAsDataURL and encrypts the resulting Base64 string before storing it in the assets table via Dexie. Base64 encoding artificially inflates payload size by approximately 33%. Refactoring this pipeline to extract the raw ArrayBuffer, encrypt the byte stream directly utilizing the Web Crypto API, and storing it as a true binary Blob within IndexedDB will drastically reduce memory overhead and prevent the UI thread from dropping frames during garbage collection.",
+    "priority": "HIGH",
+    "status": "PLANNED",
+    "complexity": "MEDIUM",
+    "plan": "# Implementation Plan: IndexedDB Blob Optimization & Chunking\n\n## Objective\nMigrate the storage of binary assets (like audio recordings) from CryptoJS Base64 strings to native Web Crypto API (`AES-GCM`) using raw `ArrayBuffer`/`Blob`. This will reduce memory overhead and storage size by approximately 33% and prevent the UI thread from dropping frames during garbage collection.\n\n## Key Context & Files\n- **Current State**: `useNoteStore.ts`'s `saveAsset` function serializes binary blobs via `FileReader.readAsDataURL` and encrypts the Base64 string.\n- **Target Files**:\n  - `src/utils/webCrypto.ts` (New/Updated)\n  - `src/stores/useNoteStore.ts`\n  - `src/db/db.ts`\n  - `src/utils/migration.ts` (New/Updated)\n\n## Implementation Steps\n1. **Web Crypto Utilities**: Implement robust `encryptBlob` and `decryptBlob` functions in `src/utils/webCrypto.ts` utilizing the `crypto.subtle` API (AES-GCM). This requires implementing PBKDF2 for key derivation from the user's password.\n2. **Schema Update**: Update the Dexie `Asset` interface in `src/db/db.ts` to support `data: Blob | ArrayBuffer | string` to allow for a graceful migration from the old Base64 format to the new binary format.\n3. **Store Refactoring**: \n   - Modify `saveAsset` in `useNoteStore.ts` to pass the raw `Blob` directly to `encryptBlob`, and store the resulting encrypted `Blob` in Dexie.\n   - Modify `getAsset` to check if the data is a `Blob` (new format) or a `string` (old format). If it's a `Blob`, use `decryptBlob`.\n4. **Chunking Strategy (Optional but recommended)**: If audio files exceed a certain threshold (e.g., 5MB), implement a chunking mechanism in Dexie to store the file in multiple smaller records to avoid exceeding single-transaction memory limits on low-end mobile devices.\n5. **Background Migration**: Create a background task that slowly iterates over old string-based assets, decrypts them via CryptoJS, re-encrypts them via Web Crypto, and saves them as Blobs.\n\n## Verification & Testing\n- **Unit Testing**: Add tests in `src/utils/encryption.test.ts` to assert that a Blob encrypted and then decrypted matches the original binary content.\n- **Performance Profiling**: Record a Memory Profile in Chrome DevTools while saving a 10-minute audio recording. Verify that the memory spike is significantly lower compared to the Base64 approach.\n- **Compatibility**: Ensure old text-based recordings still play correctly."
+  },
+  {
+    "title": "Data Structure Lifecycle Management",
+    "description": "The application relies on encrypted FSNode records to establish hierarchical parent-child relationships for sorting notes and tasks. Hardcoding a formal organizational paradigm utilizing strict _arch, _dev, and _ver logical root partitions allows for explicit lifecycle separation of active quests, archived reference scrolls, and version-controlled project documentation directly within the file-tree interface.",
+    "priority": "LOW",
+    "status": "UNDETERMINED",
+    "complexity": "LOW"
+  },
+  {
+    "title": "WASM-Powered Audio DSP Pipeline",
+    "description": "The useAudioRecorder.ts hook captures raw microphone input as a WebM audio blob. Before feeding this data into the local transcription queue, a custom WebAssembly (WASM) module can be engineered to perform Digital Signal Processing (DSP) operations directly within the browser's audio execution context. Utilizing an AudioWorkletNode, the raw float32 PCM data can be routed through a WASM-compiled noise gate, dynamic range compressor, or parametric equalizer. This ensures a pristine signal for the local Whisper inference engine while laying the groundwork for a robust, native-level audio editing experience.",
+    "priority": "MEDIUM",
+    "status": "UNDETERMINED",
+    "complexity": "HIGH"
+  },
+  {
+    "title": "Local-First Semantic Search via Vector Embeddings",
+    "description": "The existing environment successfully implements a background Web Worker that executes the @xenova/transformers library for speech-to-text inference. This exact same local runtime can instantiate a lightweight feature-extraction transformer (such as all-MiniLM-L6-v2). As Markdown content is saved to the database, the application can generate dense vector embeddings of the text and persist them alongside the primary records. Integrating a client-side cosine similarity algorithm unlocks sophisticated, meaning-based semantic search entirely offline, bypassing the limitations of rigid string matching.",
+    "priority": "HIGH",
+    "status": "PLANNED",
+    "complexity": "HIGH"
+  },
+  {
+    "title": "JSON Snapshot CLI Bridge",
+    "description": "The application natively supports exporting the entire Dexie database as a structured JSON snapshot payload containing the raw arrays of notes, tasks, and folder structures. A complementary Python-based command-line interface tool can be engineered to parse these pixel-keep-backup.json payloads directly in a terminal environment. This CLI utility would map the hierarchical tree structure, handling complex binary extraction and graph visualization, effectively bridging the gap between the web-based PWA and sophisticated, script-driven terminal workflows.",
+    "priority": "HIGH",
+    "status": "PLANNED",
+    "complexity": "MEDIUM",
+    "plan": "# Implementation Plan: JSON Snapshot CLI Bridge\n\n## Objective\nDevelop a Python-based Command-Line Interface (CLI) utility to parse, visualize, and interact with the `pixel-keep-backup.json` snapshots exported from the web app. This bridges the gap between the secure web environment and advanced terminal workflows.\n\n## Key Context & Files\n- **Current State**: The PWA can export the entire Dexie database (Notes, Tasks, FS Nodes, Assets) as a single JSON file. Data is encrypted using CryptoJS (AES).\n- **Target Files**:\n  - `cli/pixelkeep.py` (New)\n  - `cli/requirements.txt` (New)\n\n## Implementation Steps\n1. **CLI Scaffold**: Create a new `cli` directory in the repository root. Initialize a Python script utilizing `argparse` or `Click` for command routing (e.g., `pixelkeep inspect <file>`, `pixelkeep export <file>`).\n2. **Decryption Module**: Implement a decryption module in Python using the `pycryptodome` library. The logic must perfectly mirror the CryptoJS AES implementation used in the frontend (including handling the specific key derivation and IV logic that CryptoJS defaults to).\n3. **Tree Reconstruction**: The backup JSON contains a flat array of `fs_nodes`. Implement an algorithm to parse these nodes and reconstruct the parent-child relationships (Folders -> Notes/Tasks) into a standard tree data structure.\n4. **Visualization**: Add a `tree` command that prints the decrypted folder structure to the terminal (similar to the Unix `tree` command), masking sensitive note titles if the password isn't provided, or showing them if authenticated.\n5. **Extraction**: Add an `export` command that decrypts a specific note or all notes and writes them to the local file system as plain `.md` files.\n\n## Verification & Testing\n- **Integration Test**: Export a backup from a local development instance containing known test data and a specific password.\n- **CLI Validation**: Run `python pixelkeep.py export test-backup.json -p <password>` and verify that the outputted Markdown files perfectly match the original plaintext content."
+  },
+  {
+    "title": "Plain Text Accounting (PTA) Parser",
+    "description": "A specialized parsing module could be integrated into the NoteEditor component, designed to identify code blocks specifically formatted for Plain Text Accounting ledgers. By parsing these syntactic blocks client-side during the render cycle, the PWA can calculate running financial transactions and units, rendering visual summaries overlaid on the raw text. A dedicated export function could then extract these specific blocks into a strictly formatted .journal file compatible with external TUI accounting tools.",
+    "priority": "HIGH",
+    "status": "PLANNED",
+    "complexity": "MEDIUM",
+    "plan": "# Implementation Plan: Plain Text Accounting (PTA) Parser\n\n## Objective\nIntegrate a specialized Plain Text Accounting (PTA) parser into the Markdown rendering pipeline. This will allow users to write Beancount or Ledger-style transaction blocks inside their notes and have them automatically rendered as interactive financial summaries and balance sheets.\n\n## Key Context & Files\n- **Current State**: `NoteDetails.tsx` uses `marked` and `DOMPurify` to render Markdown into raw HTML.\n- **Target Files**:\n  - `src/utils/ptaParser.ts` (New)\n  - `src/components/PTASummary.tsx` (New)\n  - `src/views/NoteDetails.tsx`\n\n## Implementation Steps\n1. **Define PTA Subset**: Support a strict subset of Ledger/Beancount syntax (e.g., standard double-entry transactions with dates, payees, accounts, and amounts).\n2. **Parser Utility**: Create `src/utils/ptaParser.ts` containing a regex-based lexer and parser. It should take raw PTA text and return a structured array of transaction objects and calculated account balances.\n3. **Markdown Interception**: In `NoteDetails.tsx`, configure a custom `marked` extension or pre-processor. When a code block tagged with ````ledger` or ````pta` is encountered, extract the raw text instead of rendering it as a standard code block.\n4. **UI Component**: Develop `<PTASummary />`, a React component that takes the parsed transaction data and renders a visually appealing 8-bit themed ledger table and account balance summary.\n5. **Dynamic Injection**: Since `NoteDetails.tsx` uses `dangerouslySetInnerHTML`, the easiest integration path is to render a custom placeholder (e.g., `<div id=\"pta-block-1\"></div>`), and then use a `useEffect` hook with `ReactDOM.createPortal` or direct React root rendering to inject the `<PTASummary />` into the placeholders after the HTML is set.\n\n## Verification & Testing\n- **Unit Testing**: Write robust tests for `ptaParser.ts` ensuring it correctly calculates balances across multiple accounts (e.g., Assets, Expenses) and handles unbalanced transactions gracefully.\n- **UI Validation**: Create a note with a ````ledger` block containing 5 transactions. Verify that the UI correctly renders the table and that the total balances match the expected mathematical output."
+  },
+  {
+    "title": "Model Context Protocol (MCP) Node Exposure",
+    "description": "To transform the application from a static local repository into an active knowledge graph, the encrypted database could be architected to act as a Model Context Protocol (MCP) server. By exposing the sanitized local data through a WebSocket relay or a dedicated browser extension bridge, orchestrated AI agents can dynamically query the \"Scrolls\" and \"Quest Log\" records. This allows external CLI frameworks to inject the PWA's personal knowledge base as contextual framing during complex inference execution.",
+    "priority": "HIGH",
+    "status": "PLANNED",
+    "complexity": "HIGH"
+  },
+  {
+    "title": "Dynamic Shell-Themed Code Blocks",
+    "description": "The application currently sanitizes and renders Markdown into HTML via marked and DOMPurify. For notes flagged with specific tags (e.g., bash, cli), a custom rendering override can dynamically style standard code blocks to mimic a personalized shell prompt environment. Implementing a specific CSS structure where the colon separator is forced white and the prompt indicator renders in red creates a highly tailored, immersive reading experience when reviewing command-line snippets.",
+    "priority": "MEDIUM",
+    "status": "UNDETERMINED",
+    "complexity": "LOW"
+  }
+]
