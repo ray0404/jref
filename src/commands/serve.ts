@@ -10,7 +10,6 @@ import {
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { setOutputHandler } from '../utils/output.js';
-import { parseDirectoryStructure, findNodeByPath } from '../utils/ui.js';
 
 export class ServeCommand extends Command {
   readonly definition: CommandDefinition = {
