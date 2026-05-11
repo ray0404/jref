@@ -16,7 +16,6 @@ test-pack-root/
 test_*.js
 compare_outputs.js
 midjrefupdate.json
-repomix-output.json
 hermes*.json
 
 JREF*.json
