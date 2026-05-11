@@ -249,19 +249,57 @@ jref validate HEAD~1 --depth 2
 
 ### openapi
 
-Transform an OpenAPI/RESTful specification into a queryable jref snapshot.
+Transform an OpenAPI/RESTful specification (JSON or YAML) into a queryable `jref` snapshot. This command effectively "unpacks" a monolithic API spec into a virtual filesystem, where each endpoint and schema is treated as a discrete file.
 
 ```bash
-jref openapi <spec.json>
+jref openapi <spec.json|spec.yaml>
+```
+
+**Key Features:**
+- **JSON & YAML Support**: Automatically detects and parses both formats (useful for specs like VeniceAI's `venice-api.yaml`).
+- **Virtual Mapping**:
+    - **Paths**: `GET /chat/completions` becomes `paths/chat/completions/GET.json`.
+    - **Schemas**: `components/schemas/Model` becomes `components/schemas/Model.json`.
+    - **Metadata**: Global info and servers are mapped to `metadata/`.
+- **Agent-Friendly**: Provides a structured, navigable tree for AI agents to explore large APIs without reading the entire raw spec.
+
+**Workflows:**
+
+#### 1. API Exploration (Human)
+Unpack a large spec to browse it interactively. This is much faster than scrolling through thousands of lines of YAML.
+```bash
+# Browse VeniceAI API in the interactive TUI
+jref openapi schemas/venice-api.yaml | jref ui
+```
+
+#### 2. Agentic Tool Construction (AI Agent)
+AI agents often struggle with massive context windows when reading raw 500KB+ OpenAPI files. `jref` allows them to "grep" or "query" only the relevant endpoint they need to understand.
+```bash
+# AI agent needs to understand the completions endpoint specifically
+jref openapi venice-api.yaml | jref query --path "paths/chat/completions/POST.json" --raw
+```
+
+#### 3. Documentation Generation
+Convert the spec into a snapshot and then extract it to a directory to create a static documentation skeleton.
+```bash
+# Create a local directory structure representing the API
+jref openapi venice-api.yaml | jref extract --output ./api-docs/
+```
+
+#### 4. Semantic API Search
+If a snapshot is created with semantic chunking, agents can perform natural language queries against the API.
+```bash
+# Find endpoints related to "image generation"
+jref openapi venice-api.yaml | jref query --semantic "How do I generate images?"
 ```
 
 **Examples:**
 ```bash
-# Transform and save
-jref openapi api.json > snapshot.json
+# Convert VeniceAI spec to snapshot
+jref openapi schemas/venice-api.yaml > venice-snapshot.json
 
-# Browse the virtual API structure
-jref openapi api.json | jref ui
+# Extract just the schemas for code generation
+jref openapi api.json | jref extract --paths "components/schemas/*" --output ./models/
 ```
 
 ### serve

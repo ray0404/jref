@@ -1,17 +1,18 @@
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { resolve } from 'path';
+import { parse as parseYaml } from 'yaml';
 
 export default class OpenAPICommand extends Command {
   readonly definition: CommandDefinition = {
     name: 'openapi',
     description: 'Transform an OpenAPI/RESTful spec into a queryable jref snapshot',
-    usage: 'jref openapi <spec.json>',
+    usage: 'jref openapi <spec.json|spec.yaml>',
     options: [],
     examples: [
       'jref openapi tailscale-api.json > tailscale-snapshot.json',
-      'jref openapi tailscale-api.json | jref query --path "/tailnet/{tailnet}/devices/GET.json"'
+      'jref openapi venice-api.yaml | jref query --path "/chat/completions/POST.json"'
     ],
     workflows: [
       'API Exploration: Unpack a monolithic OpenAPI spec into a virtual filesystem.',
@@ -27,13 +28,51 @@ export default class OpenAPICommand extends Command {
     try {
       const { specPath } = this.parseArgs(args) as { specPath?: string };
       if (!specPath && !context.stdin) {
-        return this.error('Requires an OpenAPI JSON file path or stdin.', options);
+        return this.error('Requires an OpenAPI JSON/YAML file path or stdin.', options);
       }
 
-      // Load the raw OpenAPI spec (bypassing jref's getSnapshot to avoid Zod schema failure)
-      const rawSpec = specPath 
-        ? JSON.parse(readFileSync(resolve(process.cwd(), specPath), 'utf-8'))
-        : JSON.parse(context.stdin!);
+      let content = '';
+      if (specPath) {
+        const fullPath = resolve(process.cwd(), specPath);
+        if (!existsSync(fullPath)) {
+          return this.error(`File not found: ${specPath}`, options);
+        }
+        content = readFileSync(fullPath, 'utf-8');
+      } else {
+        content = context.stdin!;
+      }
+
+      if (!content.trim()) {
+        return this.error('Empty spec content.', options);
+      }
+
+      // Detect if it's YAML or JSON
+      let rawSpec: any;
+      const trimmed = content.trim();
+      const isYaml = specPath?.endsWith('.yaml') || 
+                     specPath?.endsWith('.yml') || 
+                     trimmed.startsWith('openapi:') || 
+                     trimmed.startsWith('swagger:') ||
+                     (!trimmed.startsWith('{') && !trimmed.startsWith('['));
+
+      try {
+        if (isYaml) {
+          rawSpec = parseYaml(content);
+        } else {
+          rawSpec = JSON.parse(content);
+        }
+      } catch (parseErr) {
+        // Fallback: try the other one if explicit detection fails
+        try {
+          rawSpec = isYaml ? JSON.parse(content) : parseYaml(content);
+        } catch {
+          throw new Error(`Failed to parse spec as either JSON or YAML: ${(parseErr as Error).message}`);
+        }
+      }
+
+      if (!rawSpec || typeof rawSpec !== 'object' || Array.isArray(rawSpec)) {
+        throw new Error('Parsed spec is not a valid OpenAPI object.');
+      }
 
       const virtualSnapshot = this.translateToSnapshot(rawSpec);
 
