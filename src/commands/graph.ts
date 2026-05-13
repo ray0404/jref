@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import pLimit from 'p-limit';
 import { networkInterfaces } from 'os';
 import { fileURLToPath } from 'url';
 import { Command, CommandDefinition } from '../utils/command.js';
@@ -214,23 +215,29 @@ export class GraphCommand extends Command {
       if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
         // Build from directory
         const files = this.getAllFiles(target);
-        for (const file of files) {
-          const content = fs.readFileSync(file, 'utf8');
-          const relPath = path.relative(target, file);
-          fileContents[relPath] = content;
-          const { nodes, edges } = await extractGraphFromSource(file, content, target);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
-        }
+        const limit = pLimit(10);
+        await Promise.all(
+          files.map(file => limit(async () => {
+            const content = await fs.promises.readFile(file, 'utf8');
+            const relPath = path.relative(target, file);
+            fileContents[relPath] = content;
+            const { nodes, edges } = await extractGraphFromSource(file, content, target);
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }))
+        );
       } else {
         // Try to load as a snapshot
         const snapshot = await this.getSnapshot(context, options, target);
         fileContents = snapshot.files;
-        for (const [filePath, content] of Object.entries(snapshot.files)) {
-          const { nodes, edges } = await extractGraphFromSource(filePath, content);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
-        }
+        const limit = pLimit(10);
+        await Promise.all(
+          Object.entries(snapshot.files).map(([filePath, content]) => limit(async () => {
+            const { nodes, edges } = await extractGraphFromSource(filePath, content);
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }))
+        );
       }
 
       // Merge and deduplicate
