@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ValidateCommand } from './validate.js';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 
 vi.mock('child_process', () => ({
-  execSync: vi.fn()
+  execFileSync: vi.fn()
 }));
 
 vi.mock('fs', async () => {
@@ -33,7 +33,7 @@ describe('ValidateCommand', () => {
   });
 
   it('should handle no changes detected', async () => {
-    (execSync as any).mockReturnValue('');
+    (execFileSync as any).mockReturnValue('');
     const result = await command.execute(['main'], {}, { stdinIsPipe: false });
     expect(result.success).toBe(true);
     expect(result.output).toContain('No local changes detected');
@@ -41,9 +41,9 @@ describe('ValidateCommand', () => {
 
   it('should generate a validation snapshot with blast radius', async () => {
     // Setup git mocks
-    (execSync as any).mockImplementation((cmd: string) => {
-      if (cmd.includes('diff')) return 'src/utils/output.ts\n';
-      if (cmd.includes('ls-files')) return 'src/utils/output.ts\nsrc/utils/command.ts\npackage.json\n';
+    (execFileSync as any).mockImplementation((cmd: string, args?: string[]) => {
+      if (args && args.includes('diff')) return 'src/utils/output.ts\n';
+      if (args && args.includes('ls-files')) return 'src/utils/output.ts\nsrc/utils/command.ts\npackage.json\n';
       return '';
     });
 
@@ -76,9 +76,9 @@ describe('ValidateCommand', () => {
   });
 
   it('should respect --all flag', async () => {
-    (execSync as any).mockImplementation((cmd: string) => {
-        if (cmd.includes('diff')) return 'src/utils/output.ts\n';
-        if (cmd.includes('ls-files')) return 'src/utils/output.ts\nsrc/utils/command.ts\npackage.json\n';
+    (execFileSync as any).mockImplementation((cmd: string, args?: string[]) => {
+        if (args && args.includes('diff')) return 'src/utils/output.ts\n';
+        if (args && args.includes('ls-files')) return 'src/utils/output.ts\nsrc/utils/command.ts\npackage.json\n';
         return '';
     });
     (existsSync as any).mockReturnValue(true);

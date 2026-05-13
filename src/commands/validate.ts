@@ -1,7 +1,7 @@
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { existsSync, readFileSync, writeFileSync, lstatSync } from 'fs';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { buildDependentGraph, getBlastRadius } from '../utils/dependency.js';
 
@@ -117,7 +117,7 @@ export class ValidateCommand extends Command {
   private getChangedFiles(target: string): string[] {
     try {
       // Get names of changed files (both staged and unstaged)
-      const output = execSync(`git diff --name-only ${target}`, { encoding: 'utf8' });
+      const output = execFileSync('git', ['diff', '--name-only', target], { encoding: 'utf8' });
       return output
         .split('\n')
         .map(f => f.trim())
@@ -132,7 +132,7 @@ export class ValidateCommand extends Command {
    */
   private getAllTrackedFiles(): string[] {
     try {
-      const output = execSync('git ls-files', { encoding: 'utf8' });
+      const output = execFileSync('git', ['ls-files'], { encoding: 'utf8' });
       return output
         .split('\n')
         .map(f => f.trim())
