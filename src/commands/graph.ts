@@ -104,9 +104,8 @@ export class GraphCommand extends Command {
         uniqueWasms.set(info.wasm, info.url);
       }
 
-      for (const [wasm, url] of uniqueWasms.entries()) {
-        await ensureWasm(wasm, url);
-      }
+      const downloadPromises = Array.from(uniqueWasms.entries()).map(([wasm, url]) => ensureWasm(wasm, url));
+      await Promise.all(downloadPromises);
 
       return this.success('All WASM binaries updated successfully.');
     } catch (err) {
