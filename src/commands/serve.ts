@@ -98,98 +98,14 @@ export class ServeCommand extends Command {
       server.setRequestHandler(CallToolRequestSchema, async (request) => {
         const { name, arguments: toolArgs } = request.params;
 
-        // Handle specific MCP-only tools
         if (name === 'load_snapshot') {
           const { path } = toolArgs as { path: string };
-          try {
-            this.snapshot = await loadSnapshotFromFile(path, options);
-            this.snapshotFile = path;
-            return {
-              content: [{ type: 'text', text: `Successfully loaded snapshot from ${path}` }]
-            };
-          } catch (err) {
-            throw new McpError(ErrorCode.InternalError, `Failed to load snapshot: ${(err as Error).message}`);
-          }
+          return await this.handleLoadSnapshot(path, options);
         }
 
-        // 3. Handle Dynamic Commands
         const command = registry.get(name);
         if (command) {
-          if (!this.snapshot && !['pack', 'config', 'alias', 'bin-setup', 'get', 'set'].includes(name)) {
-            return {
-              content: [{ type: 'text', text: 'Directive: No snapshot loaded. Use "load_snapshot" or "pack" to establish context.' }],
-              isError: true
-            };
-          }
-
-          // Special case for 'inspect' to include roadmap and instruction
-          if (name === 'inspect' && this.snapshot) {
-            return {
-              content: [
-                {
-                  type: 'text',
-                  text: JSON.stringify({
-                    metadata: calculateMetadata(this.snapshot),
-                    directoryStructure: this.snapshot.directoryStructure,
-                    instruction: this.snapshot.instruction,
-                    roadmap: this.snapshot.roadmap,
-                  }, null, 2),
-                },
-              ],
-            };
-          }
-
-          // Build CLI-style arguments from toolArgs
-          const cliArgs: string[] = [];
-          
-          if (toolArgs) {
-            // Add positional arguments first
-            if (Array.isArray(toolArgs.args)) {
-              cliArgs.push(...toolArgs.args);
-            }
-
-            // Map named parameters back to flags
-            for (const [key, value] of Object.entries(toolArgs)) {
-              if (key === 'args') continue;
-
-              // Convert camelCase back to kebab-case for flag
-              const flag = '--' + key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
-              
-              if (typeof value === 'boolean') {
-                if (value) cliArgs.push(flag);
-              } else if (value !== undefined && value !== null) {
-                cliArgs.push(flag, String(value));
-              }
-            }
-          }
-          
-          const cliOptions: CLIOptions = { ...options, json: true };
-          
-          // Execute and capture output
-          let stdout = '';
-          let stderr = '';
-          
-          setOutputHandler((data, type) => {
-            if (type === 'stdout') stdout += data + '\n';
-            else stderr += data + '\n';
-          });
-
-          try {
-            const result = await command.execute(cliArgs, cliOptions, {
-              ...context,
-              snapshot: this.snapshot || undefined
-            });
-
-            return {
-              content: [
-                { type: 'text', text: stdout || (result.success ? 'Success' : 'No output') },
-                ...(stderr ? [{ type: 'text', text: `Error Output: ${stderr}` }] : [])
-              ],
-              isError: !result.success
-            };
-          } finally {
-            setOutputHandler(null);
-          }
+          return await this.handleDynamicCommand(name, toolArgs, command, options, context);
         }
 
         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
@@ -211,6 +127,97 @@ export class ServeCommand extends Command {
 
     } catch (err) {
       return this.error(`Serve failed: ${(err as Error).message}`, options);
+    }
+  }
+
+
+  private async handleLoadSnapshot(path: string, options: CLIOptions) {
+    try {
+      this.snapshot = await loadSnapshotFromFile(path, options);
+      this.snapshotFile = path;
+      return {
+        content: [{ type: 'text', text: `Successfully loaded snapshot from ${path}` }]
+      };
+    } catch (err) {
+      throw new McpError(ErrorCode.InternalError, `Failed to load snapshot: ${(err as Error).message}`);
+    }
+  }
+
+  private async handleDynamicCommand(
+    name: string,
+    toolArgs: any,
+    command: Command,
+    options: CLIOptions,
+    context: CommandContext
+  ) {
+    if (!this.snapshot && !['pack', 'config', 'alias', 'bin-setup', 'get', 'set'].includes(name)) {
+      return {
+        content: [{ type: 'text', text: 'Directive: No snapshot loaded. Use "load_snapshot" or "pack" to establish context.' }],
+        isError: true
+      };
+    }
+
+    if (name === 'inspect' && this.snapshot) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              metadata: calculateMetadata(this.snapshot),
+              directoryStructure: this.snapshot.directoryStructure,
+              instruction: this.snapshot.instruction,
+              roadmap: this.snapshot.roadmap,
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    const cliArgs: string[] = [];
+
+    if (toolArgs) {
+      if (Array.isArray(toolArgs.args)) {
+        cliArgs.push(...toolArgs.args);
+      }
+
+      for (const [key, value] of Object.entries(toolArgs)) {
+        if (key === 'args') continue;
+
+        const flag = '--' + key.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+
+        if (typeof value === 'boolean') {
+          if (value) cliArgs.push(flag);
+        } else if (value !== undefined && value !== null) {
+          cliArgs.push(flag, String(value));
+        }
+      }
+    }
+
+    const cliOptions: CLIOptions = { ...options, json: true };
+
+    let stdout = '';
+    let stderr = '';
+
+    setOutputHandler((data, type) => {
+      if (type === 'stdout') stdout += data + '\n';
+      else stderr += data + '\n';
+    });
+
+    try {
+      const result = await command.execute(cliArgs, cliOptions, {
+        ...context,
+        snapshot: this.snapshot || undefined
+      });
+
+      return {
+        content: [
+          { type: 'text', text: stdout || (result.success ? 'Success' : 'No output') },
+          ...(stderr ? [{ type: 'text', text: `Error Output: ${stderr}` }] : [])
+        ],
+        isError: !result.success
+      };
+    } finally {
+      setOutputHandler(null);
     }
   }
 
