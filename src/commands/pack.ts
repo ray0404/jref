@@ -3,7 +3,7 @@
  * Create a snapshot from a local directory using Repomix programmatic API
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync } from 'fs';
 import { resolve, relative, join } from 'path';
@@ -37,7 +37,7 @@ interface PackFlags {
 }
 
 export class PackCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'pack',
     description: 'Create a snapshot from a local directory or remote repository',
     usage: 'jref pack [directory|url] [options]',

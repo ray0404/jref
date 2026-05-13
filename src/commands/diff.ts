@@ -1,5 +1,5 @@
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { existsSync, readFileSync, readdirSync, lstatSync } from 'fs';
 import { join, relative } from 'path';
@@ -8,7 +8,7 @@ import { createHash } from 'crypto';
 
 export class DiffCommand extends Command {
   // ... (definition remains same)
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'diff',
     description: 'Compare snapshot against local filesystem',
     usage: 'jref diff [options] [file.json]',

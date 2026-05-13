@@ -1,9 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as http from 'http';
+import pLimit from 'p-limit';
 import { networkInterfaces } from 'os';
 import { fileURLToPath } from 'url';
-import { Command, CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import { CLIOptions, CommandContext, CommandResult, GraphSnapshot } from '../types/index.js';
 import { extractGraphFromSource, ensureWasm, CORE_WASM_URL, LANGUAGE_REGISTRY } from '../utils/graph-ast.js';
 import { analyzeGraph, generateGraphReport } from '../utils/graph-analysis.js';
@@ -18,7 +19,7 @@ const __dirname = path.dirname(__filename);
  * Build or query a project knowledge graph
  */
 export class GraphCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'graph',
     description: 'Build or query a project knowledge graph',
     usage: 'jref graph <subcommand> [target] [options]',
@@ -104,9 +105,8 @@ export class GraphCommand extends Command {
         uniqueWasms.set(info.wasm, info.url);
       }
 
-      for (const [wasm, url] of uniqueWasms.entries()) {
-        await ensureWasm(wasm, url);
-      }
+      const downloadPromises = Array.from(uniqueWasms.entries()).map(([wasm, url]) => ensureWasm(wasm, url));
+      await Promise.all(downloadPromises);
 
       return this.success('All WASM binaries updated successfully.');
     } catch (err) {
@@ -214,23 +214,29 @@ export class GraphCommand extends Command {
       if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
         // Build from directory
         const files = this.getAllFiles(target);
-        for (const file of files) {
-          const content = fs.readFileSync(file, 'utf8');
-          const relPath = path.relative(target, file);
-          fileContents[relPath] = content;
-          const { nodes, edges } = await extractGraphFromSource(file, content, target);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
-        }
+        const limit = pLimit(10);
+        await Promise.all(
+          files.map(file => limit(async () => {
+            const content = await fs.promises.readFile(file, 'utf8');
+            const relPath = path.relative(target, file);
+            fileContents[relPath] = content;
+            const { nodes, edges } = await extractGraphFromSource(file, content, target);
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }))
+        );
       } else {
         // Try to load as a snapshot
         const snapshot = await this.getSnapshot(context, options, target);
         fileContents = snapshot.files;
-        for (const [filePath, content] of Object.entries(snapshot.files)) {
-          const { nodes, edges } = await extractGraphFromSource(filePath, content);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
-        }
+        const limit = pLimit(10);
+        await Promise.all(
+          Object.entries(snapshot.files).map(([filePath, content]) => limit(async () => {
+            const { nodes, edges } = await extractGraphFromSource(filePath, content);
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }))
+        );
       }
 
       // Merge and deduplicate

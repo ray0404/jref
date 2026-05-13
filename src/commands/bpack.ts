@@ -4,7 +4,7 @@
  * Mirrors tar but outputs JSON.
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { readFileSync, readdirSync, existsSync } from 'fs';
 import { resolve, relative, join } from 'path';
@@ -20,7 +20,7 @@ interface BPackFlags {
 }
 
 export class BPackCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'bpack',
     description: 'Archive a directory into a JSON snapshot (supports binary)',
     usage: 'jref bpack [directory] [options]',

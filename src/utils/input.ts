@@ -4,8 +4,11 @@
  * Supports: cat snapshot.json | jref inspect
  */
 
-import { openSync } from 'fs';
+import { openSync, readFileSync, statSync, createReadStream } from 'fs';
 import tty from 'tty';
+import { Readable } from 'stream';
+import type { CommandContext } from '../types/index.js';
+
 
 /**
  * Check if stdin is a pipe (non-interactive mode)
@@ -104,4 +107,20 @@ export function readStdinSync(): string {
   const chunks: string[] = [];
   // Note: Node.js doesn't natively support easy sync stdin reads
   return chunks.join('');
+}
+
+/**
+ * Gets an optimal input stream or string based on file size.
+ * Uses readFileSync for files < 8MB for better performance,
+ * otherwise falls back to streaming.
+ */
+export function getOptimalInputStream(filePath: string | undefined, context: CommandContext): string | NodeJS.ReadableStream {
+  if (filePath) {
+    const stats = statSync(filePath);
+    if (stats.size < 8 * 1024 * 1024) { // 8MB
+      return readFileSync(filePath, 'utf8');
+    }
+    return createReadStream(filePath);
+  }
+  return context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
 }

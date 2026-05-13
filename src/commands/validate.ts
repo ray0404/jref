@@ -1,4 +1,4 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { existsSync, readFileSync, writeFileSync, lstatSync } from 'fs';
 import { execSync } from 'child_process';
@@ -12,7 +12,7 @@ interface ValidateFlags {
 }
 
 export class ValidateCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'validate',
     description: 'Analyze git diff blast radius and generate AI validation context',
     usage: 'jref validate <target-branch> [options]',

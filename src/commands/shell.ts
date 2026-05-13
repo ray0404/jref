@@ -3,14 +3,14 @@
  * Start an interactive Node.js REPL with the snapshot context
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import * as repl from 'node:repl';
 import * as vm from 'node:vm';
 import { writeFileSync } from 'node:fs';
 
 export class ShellCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'shell',
     description: 'Start an interactive Node.js REPL with the snapshot context',
     usage: 'jref shell [snapshot.json]',

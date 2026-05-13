@@ -33,6 +33,14 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Mount** - Expose snapshots as virtual filesystems via WebDAV
 - **Git** - Virtualized or local Git operations with a high-fidelity interactive TUI (diffing, staging, commits)
 
+## High Performance
+
+jref is optimized for speed and efficiency, especially when dealing with large repositories:
+- **Concurrent Graph Extraction** - Uses `p-limit` to parallelize symbol analysis with intelligent resource bounding.
+- **Parallel Git Status** - Leverages asynchronous I/O to check file statuses across snapshots in parallel.
+- **WASM Concurrency** - Orchestrates simultaneous retrieval of required WASM binaries for AST analysis.
+- **Memory-Efficient Streaming** - Processes multi-gigabyte snapshots using custom streaming JSON parsers.
+
 ## Target Environments
 
 - Termux (Android/ARM)
