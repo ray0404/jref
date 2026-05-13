@@ -190,13 +190,12 @@ export class GitCommand extends Command {
 
         case 'status':
           const filePaths = Object.keys(snapshot.files);
-          const statusResult = [];
-          for (const filepath of filePaths) {
+          const statusPromises = filePaths.map(async (filepath) => {
             const status = await git.status({ ...gitOpts, filepath });
-            if (status !== 'unmodified') {
-              statusResult.push({ filepath, status });
-            }
-          }
+            return { filepath, status };
+          });
+          const statuses = await Promise.all(statusPromises);
+          const statusResult = statuses.filter(s => s.status !== 'unmodified');
           resultData = statusResult;
           break;
 
