@@ -320,21 +320,44 @@ export class PackCommand extends Command {
           console.error(`🧠 Generating semantic embeddings for code chunks...`);
         }
         if (result.processedFiles) {
+          // Accumulate chunks
+          const chunksToEmbed: { chunk: any, file: string }[] = [];
           for (const file of result.processedFiles) {
             // Only chunk text files that look like code
             const isCode = /\.(ts|tsx|js|jsx|py|zig|rs|c|cpp|h|hpp)$/.test(file.path);
             if (isCode) {
               const chunks = chunkCode(file.path, file.content);
               for (const chunk of chunks) {
+                chunksToEmbed.push({ chunk, file: file.path });
+              }
+            }
+          }
+
+          // Process chunks with bounded concurrency to avoid memory/CPU exhaustion
+          const concurrencyLimit = 5;
+          let i = 0;
+          const executing = new Set<Promise<void>>();
+
+          while (i < chunksToEmbed.length) {
+            if (executing.size >= concurrencyLimit) {
+              await Promise.race(executing);
+            }
+            if (i < chunksToEmbed.length) {
+              const { chunk, file } = chunksToEmbed[i];
+              const p = (async () => {
                 try {
                   chunk.embedding = await generateEmbedding(chunk.content);
                   allChunks.push(chunk);
                 } catch (err) {
-                  if (!options.silent) console.error(`⚠️  Failed to embed chunk in ${file.path}: ${(err as Error).message}`);
+                  if (!options.silent) console.error(`⚠️  Failed to embed chunk in ${file}: ${(err as Error).message}`);
                 }
-              }
+              })().finally(() => executing.delete(p));
+
+              executing.add(p);
+              i++;
             }
           }
+          await Promise.all(executing);
         }
         if (!options.silent) {
           console.error(`✅ Generated ${allChunks.length} semantic chunks.`);
