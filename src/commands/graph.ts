@@ -214,22 +214,46 @@ export class GraphCommand extends Command {
       if (fs.existsSync(target) && fs.statSync(target).isDirectory()) {
         // Build from directory
         const files = this.getAllFiles(target);
+        // Pre-read files to populate fileContents sequentially
         for (const file of files) {
           const content = fs.readFileSync(file, 'utf8');
           const relPath = path.relative(target, file);
           fileContents[relPath] = content;
-          const { nodes, edges } = await extractGraphFromSource(file, content, target);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
+        }
+
+        // Parallelize graph extraction
+        // Note: Using chunking to prevent EMFILE or memory explosion for large repos
+        const chunkSize = 50;
+        for (let i = 0; i < files.length; i += chunkSize) {
+          const chunk = files.slice(i, i + chunkSize);
+          const promises = chunk.map(file => {
+            const relPath = path.relative(target, file);
+            return extractGraphFromSource(file, fileContents[relPath], target);
+          });
+          const results = await Promise.all(promises);
+          for (const { nodes, edges } of results) {
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }
         }
       } else {
         // Try to load as a snapshot
         const snapshot = await this.getSnapshot(context, options, target);
         fileContents = snapshot.files;
-        for (const [filePath, content] of Object.entries(snapshot.files)) {
-          const { nodes, edges } = await extractGraphFromSource(filePath, content);
-          allNodes.push(...nodes);
-          allEdges.push(...edges);
+
+        // Parallelize graph extraction using chunks
+        const entries = Object.entries(snapshot.files);
+        const chunkSize = 50;
+        for (let i = 0; i < entries.length; i += chunkSize) {
+          const chunk = entries.slice(i, i + chunkSize);
+          const promises = chunk.map(([filePath, content]) =>
+            extractGraphFromSource(filePath, content)
+          );
+          const results = await Promise.all(promises);
+          for (const { nodes, edges } of results) {
+            allNodes.push(...nodes);
+            allEdges.push(...edges);
+          }
         }
       }
 
