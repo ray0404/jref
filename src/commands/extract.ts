@@ -11,12 +11,13 @@ import type {
   CommandContext
 } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
-import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
+import { mkdir, writeFile, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { promisify } from 'util';
 import { Readable } from 'stream';
 import micromatch from 'micromatch';
 import { decodeBase64 } from '../utils/binary.js';
+import { getOptimalInputStream } from '../utils/input.js';
 import * as readline from 'readline';
 
 const mkdirAsync = promisify(mkdir);
@@ -135,12 +136,7 @@ export class ExtractCommand extends Command {
             return this.success();
           }
         } else {
-          let input: string | NodeJS.ReadableStream;
-          if (filePath) {
-            input = createReadStream(filePath);
-          } else {
-            input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
-          }
+          const input = getOptimalInputStream(filePath, context);
 
           await processSnapshot(input, {
             onMetadata: (key, value) => {
@@ -189,18 +185,7 @@ export class ExtractCommand extends Command {
           results.push(res);
         }
       } else {
-        // Determine if we should read fully or stream
-        let input: string | NodeJS.ReadableStream;
-        if (filePath) {
-          const stats = statSync(filePath);
-          if (stats.size < 8 * 1024 * 1024) { // 8MB
-            input = readFileSync(filePath, 'utf8');
-          } else {
-            input = createReadStream(filePath);
-          }
-        } else {
-          input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
-        }
+        const input = getOptimalInputStream(filePath, context);
 
         // Use streaming processor to avoid OOM
         await processSnapshot(input, {

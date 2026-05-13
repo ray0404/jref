@@ -6,11 +6,11 @@
 import { Command, type CommandDefinition } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
-import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
+import { mkdir, writeFile, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { promisify } from 'util';
-import { Readable } from 'stream';
 import { decodeBase64 } from '../utils/binary.js';
+import { getOptimalInputStream } from '../utils/input.js';
 
 const mkdirAsync = promisify(mkdir);
 const writeFileAsync = promisify(writeFile);
@@ -81,12 +81,7 @@ export class BExtractCommand extends Command {
           pipedBuffer = Buffer.from(content, 'utf8');
         };
 
-        let input: string | NodeJS.ReadableStream;
-        if (filePath) {
-          input = createReadStream(filePath);
-        } else {
-          input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
-        }
+        const input = getOptimalInputStream(filePath, context);
 
         await processSnapshot(input, {
           onMetadata: (key, value) => {
@@ -110,18 +105,7 @@ export class BExtractCommand extends Command {
       const encodings: Record<string, string> = {};
       const results: { path: string; size: number; success: boolean }[] = [];
 
-      // Determine if we should read fully or stream
-      let input: string | NodeJS.ReadableStream;
-      if (filePath) {
-        const stats = statSync(filePath);
-        if (stats.size < 8 * 1024 * 1024) { // 8MB
-          input = readFileSync(filePath, 'utf8');
-        } else {
-          input = createReadStream(filePath);
-        }
-      } else {
-        input = context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin;
-      }
+      const input = getOptimalInputStream(filePath, context);
 
       await processSnapshot(input, {
         onMetadata: (key, value) => {
