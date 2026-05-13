@@ -4,7 +4,7 @@
  * Supports Node.js scripts and any other executable scripts with shebangs
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync, createReadStream, rmSync } from 'fs';
@@ -24,7 +24,7 @@ interface RunFlags {
 }
 
 export class RunCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'run',
     description: 'Execute a script directly from the snapshot',
     usage: 'jref run --path <script-path> [file] [script-args...]',

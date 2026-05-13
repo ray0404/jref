@@ -1,4 +1,4 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, JrefConfig } from '../types/index.js';
 import { loadConfig, saveConfig, DEFAULT_CONFIG } from '../utils/config.js';
 import { printTable } from '../utils/output.js';
@@ -8,7 +8,7 @@ import { ConfigUI } from '../components/ConfigUI.js';
 import { reestablishTTY } from '../utils/input.js';
 
 export class ConfigCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'config',
     description: 'Manage jref configuration (local and global)',
     usage: 'jref config [action] [key] [value] [options]',

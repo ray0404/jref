@@ -4,7 +4,7 @@
  * Supports streaming for large JSON snapshots
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, SearchResult, SearchMatch } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { createReadStream } from 'fs';
@@ -20,7 +20,7 @@ interface SearchFlags {
 }
 
 export class SearchCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'search',
     description: 'High-speed regex or keyword searching across all file entries',
     usage: 'jref search <pattern> [options] [file]',

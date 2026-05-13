@@ -1,9 +1,9 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { getValueByPath } from '../utils/path-resolver.js';
 
 export class GetCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'get',
     description: 'Retrieve a value from a snapshot using dot/bracket notation',
     usage: 'jref get <path> [snapshot.json]',

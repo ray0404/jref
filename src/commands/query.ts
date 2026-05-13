@@ -5,7 +5,7 @@
  * Supports streaming for large JSON snapshots
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { createReadStream } from 'fs';
@@ -23,7 +23,7 @@ interface QueryFlags {
 }
 
 export class QueryCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'query',
     description: 'Get content of a specific file path or perform semantic search from the snapshot',
     usage: 'jref query [options] [file]',

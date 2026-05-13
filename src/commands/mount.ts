@@ -1,11 +1,11 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { v2 as webdav } from 'webdav-server';
 import { JrefFileSystem } from '../utils/webdav-vfs.js';
 import fs from 'fs';
 
 export class MountCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'mount',
     description: 'Mount a snapshot as a WebDAV virtual drive',
     usage: 'jref mount <snapshot.json> [options]',

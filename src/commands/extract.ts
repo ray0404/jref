@@ -4,7 +4,7 @@
  * Supports streaming for large snapshots and wildcard pattern matching
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type {
   CLIOptions,
   CommandResult,
@@ -33,7 +33,7 @@ interface ExtractFlags {
 }
 
 export class ExtractCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'extract',
     description: 'Unpack files from snapshot to local filesystem',
     usage: 'jref extract [options] [file] [patterns...]',

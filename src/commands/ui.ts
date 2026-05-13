@@ -4,7 +4,7 @@
  * Designed for mobile/Termux users who find typing long file paths tedious
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { loadSnapshot } from '../utils/streaming-json.js';
 import { parseDirectoryStructure } from '../utils/ui.js';
@@ -19,7 +19,7 @@ interface UIFlags {
 }
 
 export class UICommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'ui',
     description: 'Interactive TUI for browsing project snapshots (mobile-friendly)',
     usage: 'jref ui [file]',

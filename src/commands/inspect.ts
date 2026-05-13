@@ -4,7 +4,7 @@
  * Supports streaming for large JSON snapshots
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { printTable, printHeader } from '../utils/output.js';
@@ -13,7 +13,7 @@ import { Readable } from 'stream';
 import { getMagicNumbers, detectMimeType } from '../utils/binary.js';
 
 export class InspectCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'inspect',
     description: 'View directoryStructure and metadata without loading entire file',
     usage: 'jref inspect [options] [file]',

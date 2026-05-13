@@ -1,10 +1,10 @@
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { stripImplementation } from '../utils/format.js';
 
 export class SummarizeCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'summarize',
     description: 'Generate token-efficient architectural map by stripping implementation details',
     usage: 'jref summarize [file.json]',

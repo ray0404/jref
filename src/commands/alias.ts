@@ -1,9 +1,9 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { loadAliasConfig, saveAliasConfig } from '../utils/alias.js';
 
 export class AliasCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'alias',
     description: 'Manage command aliases',
     usage: 'jref alias <subcommand> [options]',
