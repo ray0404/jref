@@ -130,6 +130,81 @@ function printVersion(options: CLIOptions = {}): void {
   }
 }
 
+
+/**
+ * Expand command aliases using the dynamic alias module
+ */
+async function expandCommandAliases(initialRemainingArgs: string[], options: CLIOptions): Promise<string[]> {
+  try {
+    const { loadAliasConfig, expandAliases, logDebug } = await import('./utils/alias.js');
+    try {
+      const aliasConfig = loadAliasConfig();
+      return expandAliases(initialRemainingArgs, aliasConfig);
+    } catch (err) {
+      const msg = `Alias expansion failed: ${(err as Error).message}`;
+      logDebug(msg);
+      printError(msg, options);
+    }
+  } catch (err) {
+    // If we can't even import the alias utility, just proceed
+  }
+  return initialRemainingArgs;
+}
+
+/**
+ * Resolve the command name, handling jbin alias
+ */
+function resolveCommandName(remainingArgs: string[]): { commandName: string, commandArgs: string[] } {
+  let commandName = remainingArgs[0];
+  let commandArgs = remainingArgs.slice(1);
+
+  // Detect jbin alias
+  const baseName = basename(process.argv[1] || '');
+  const execBaseName = basename(process.argv[0] || '');
+
+  if (baseName === 'jbin' || execBaseName === 'jbin') {
+    commandName = 'bin';
+    commandArgs = remainingArgs;
+  }
+
+  return { commandName, commandArgs };
+}
+
+
+
+/**
+ * Execute command and handle resulting output/exit
+ */
+async function executeCommand(command: any, commandArgs: string[], options: CLIOptions, commandName: string): Promise<void> {
+  // Check for stdin input
+  const stdinIsPipe = isStdinPiped();
+  let stdinData = '';
+
+  // DON'T consume stdin if we're running the serve command,
+  // as it needs stdin to remain open for the MCP protocol.
+  if (stdinIsPipe && commandName !== 'serve') {
+    stdinData = await readFromInput();
+  }
+
+  // Create command context
+  const context: CommandContext = {
+    stdin: stdinData,
+    stdinIsPipe
+  };
+
+  // Execute command
+  try {
+    const result = await command.execute(commandArgs, options, context);
+    if (result.output) {
+      process.stdout.write(result.output + '\n');
+    }
+    exit(result.exitCode);
+  } catch (err) {
+    printError(`Fatal error: ${(err as Error).message}`, options);
+    exit(1);
+  }
+}
+
 /**
  * Main CLI handler
  */
@@ -146,21 +221,7 @@ async function main(): Promise<void> {
   const { remainingArgs: initialRemainingArgs, options } = parseGlobalOptions(args, config);
 
   // Expand aliases
-  let remainingArgs = initialRemainingArgs;
-  try {
-    const { loadAliasConfig, expandAliases, logDebug } = await import('./utils/alias.js');
-    try {
-      const aliasConfig = loadAliasConfig();
-      remainingArgs = expandAliases(initialRemainingArgs, aliasConfig);
-    } catch (err) {
-      const msg = `Alias expansion failed: ${(err as Error).message}`;
-      logDebug(msg);
-      printError(msg, options);
-      // Proceed with initial args
-    }
-  } catch (err) {
-    // If we can't even import the alias utility, just proceed
-  }
+  let remainingArgs = await expandCommandAliases(initialRemainingArgs, options);
 
   // Load plugins from local directory
   try {
@@ -191,17 +252,7 @@ async function main(): Promise<void> {
   }
 
   // Get command name
-  let commandName = remainingArgs[0];
-  let commandArgs = remainingArgs.slice(1);
-
-  // Detect jbin alias
-  const baseName = basename(process.argv[1] || '');
-  const execBaseName = basename(process.argv[0] || '');
-  
-  if (baseName === 'jbin' || execBaseName === 'jbin') {
-    commandName = 'bin';
-    commandArgs = remainingArgs;
-  }
+  let { commandName, commandArgs } = resolveCommandName(remainingArgs);
 
   // Find command
   const command = registry.get(commandName);
@@ -219,33 +270,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  // Check for stdin input
-  const stdinIsPipe = isStdinPiped();
-  let stdinData = '';
-
-  // DON'T consume stdin if we're running the serve command, 
-  // as it needs stdin to remain open for the MCP protocol.
-  if (stdinIsPipe && commandName !== 'serve') {
-    stdinData = await readFromInput();
-  }
-
-  // Create command context
-  const context: CommandContext = {
-    stdin: stdinData,
-    stdinIsPipe
-  };
-
-  // Execute command
-  try {
-    const result = await command.execute(commandArgs, options, context);
-    if (result.output) {
-      process.stdout.write(result.output + '\n');
-    }
-    exit(result.exitCode);
-  } catch (err) {
-    printError(`Fatal error: ${(err as Error).message}`, options);
-    exit(1);
-  }
+  await executeCommand(command, commandArgs, options, commandName);
 }
 
 // Export for testing
