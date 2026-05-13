@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as http from 'http';
 import { networkInterfaces } from 'os';
 import { fileURLToPath } from 'url';
-import { Command, CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import { CLIOptions, CommandContext, CommandResult, GraphSnapshot } from '../types/index.js';
 import { extractGraphFromSource, ensureWasm, CORE_WASM_URL, LANGUAGE_REGISTRY } from '../utils/graph-ast.js';
 import { analyzeGraph, generateGraphReport } from '../utils/graph-analysis.js';
@@ -18,7 +18,7 @@ const __dirname = path.dirname(__filename);
  * Build or query a project knowledge graph
  */
 export class GraphCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'graph',
     description: 'Build or query a project knowledge graph',
     usage: 'jref graph <subcommand> [target] [options]',

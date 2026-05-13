@@ -1,9 +1,9 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { unflattenLines } from '../utils/flatten.js';
 
 export class UnflattenCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'unflatten',
     description: 'Reconstruct a jref snapshot from flattened assignments',
     usage: 'jref unflatten [assignments.txt]',

@@ -3,7 +3,7 @@
  * Dedicated command for unpacking binary archives.
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync, createReadStream, readFileSync, statSync } from 'fs';
@@ -24,7 +24,7 @@ interface BExtractFlags {
 }
 
 export class BExtractCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'bextract',
     description: 'Unpack a JSON binary archive',
     usage: 'jref bextract [file] [options]',

@@ -1,4 +1,4 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { runTool } from '../utils/tool-runner.js';
 import { parserRegistry } from '../parsers/index.js';
@@ -6,7 +6,7 @@ import { appendFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
 export class ToolCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'tool',
     description: 'Execute a tool and normalize its output to JSON',
     usage: 'jref tool [options] <command> [args...]',

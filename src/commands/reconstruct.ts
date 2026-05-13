@@ -4,7 +4,7 @@
  * Compares local files against the snapshot contents
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ReconstructResult } from '../types/index.js';
 import { loadSnapshot } from '../utils/streaming-json.js';
 import { readdirSync, readFileSync, statSync } from 'fs';
@@ -18,7 +18,7 @@ interface ReconstructFlags {
 }
 
 export class ReconstructCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'reconstruct',
     description: 'Verify if a local directory matches the snapshot (dry-run mode)',
     usage: 'jref reconstruct [options] [file]',

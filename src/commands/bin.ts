@@ -3,7 +3,7 @@
  * Executes scripts embedded within jref snapshots located in $JREF_BIN_PATH
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { RunCommand } from './run.js';
 import { existsSync, appendFileSync, mkdirSync } from 'fs';
@@ -11,7 +11,7 @@ import { join, resolve } from 'path';
 import { homedir } from 'os';
 
 export class BinCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'bin',
     description: 'Execute a script from a snapshot in $JREF_BIN_PATH',
     usage: 'jref bin <snapshot-name> <script-path> [args...] [-- script-args...]',

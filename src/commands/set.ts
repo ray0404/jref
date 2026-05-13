@@ -1,9 +1,9 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { setValueByPath } from '../utils/path-resolver.js';
 
 export class SetCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'set',
     description: 'Update or add a value in a snapshot using dot/bracket notation',
     usage: 'jref set <path> <value> [snapshot.json]',

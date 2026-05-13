@@ -1,10 +1,10 @@
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { loadSnapshotFromFile } from '../utils/streaming-json.js';
 
 export class PatchCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'patch',
     description: 'Update/add files and metadata in a snapshot',
     usage: 'jref patch [path] [content] [file.json]',

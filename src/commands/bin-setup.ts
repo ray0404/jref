@@ -3,14 +3,14 @@
  * Creates a global jbin symlink for easy access to the bin command
  */
 
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext } from '../types/index.js';
 import { symlinkSync, existsSync, readlinkSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { printSuccess, printWarning } from '../utils/output.js';
 
 export class BinSetupCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'bin-setup',
     description: 'Setup global jbin symlink for executing embedded scripts',
     usage: 'jref bin-setup',

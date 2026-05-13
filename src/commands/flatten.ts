@@ -1,10 +1,10 @@
-import { Command, type CommandDefinition } from '../utils/command.js';
+import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { loadSnapshotFromFile } from '../utils/streaming-json.js';
 import { flattenObject } from '../utils/flatten.js';
 
 export class FlattenCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'flatten',
     description: 'Flatten a nested jref snapshot into a list of assignments',
     usage: 'jref flatten [snapshot.json]',

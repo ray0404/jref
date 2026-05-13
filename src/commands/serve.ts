@@ -1,4 +1,4 @@
-import { Command, type CommandDefinition, registry } from '../utils/command.js';
+import { Command, registry } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { loadSnapshotFromFile, calculateMetadata } from '../utils/streaming-json.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
@@ -12,7 +12,7 @@ import {
 import { setOutputHandler } from '../utils/output.js';
 
 export class ServeCommand extends Command {
-  readonly definition: CommandDefinition = {
+  readonly definition = {
     name: 'serve',
     description: 'Start an MCP server to expose jref capabilities to AI agents',
     usage: 'jref serve [snapshot.json]',
