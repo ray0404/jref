@@ -106,4 +106,67 @@ describe('Path Resolver', () => {
       expect(obj.list[1]).toEqual({ id: 2 });
     });
   });
+
+  describe('parsePath edge cases', () => {
+    it('should parse escaped quotes in dot-quoted notation', () => {
+      expect(parsePath('files."src/main\\"ts"')).toEqual(['files', 'src/main"ts']);
+      expect(parsePath("files.'src/main\\'ts'")).toEqual(['files', "src/main'ts"]);
+    });
+
+    it('should parse dot-quoted notation that ends right after the quote', () => {
+      expect(parsePath('"src/main.ts"')).toEqual(['src/main.ts']);
+      expect(parsePath("'src/main.ts'")).toEqual(['src/main.ts']);
+    });
+
+    it('should handle unclosed quotes', () => {
+      expect(parsePath('files."src/main')).toEqual(['files', 'src/main']);
+      expect(parsePath("files['src/main")).toEqual(['files', 'src/main']);
+      expect(parsePath("files[src/main")).toEqual(['files', 'src/main']);
+    });
+
+    it('should handle extra brackets', () => {
+      expect(parsePath('a[0]]')).toEqual(['a', '0', ']']);
+    });
+  });
+
+  describe('getValueByPath edge cases', () => {
+    it('should handle null or non-object values gracefully', () => {
+      const obj = { a: null, b: "string", c: 42 };
+      expect(getValueByPath(obj, 'a.x')).toBeUndefined();
+      expect(getValueByPath(obj, 'b.x')).toBeUndefined();
+      expect(getValueByPath(obj, 'c.x')).toBeUndefined();
+      expect(getValueByPath(null, 'a')).toBeUndefined();
+      expect(getValueByPath(undefined, 'a')).toBeUndefined();
+      expect(getValueByPath({}, 'a')).toBeUndefined();
+    });
+  });
+
+  describe('setValueByPath edge cases', () => {
+    it('should handle setting values on non-objects by creating intermediate objects', () => {
+      const obj = { a: null, b: "string", c: 42 };
+      setValueByPath(obj, 'a.x', 1);
+      expect(obj.a).toEqual({ x: 1 });
+
+      setValueByPath(obj, 'b.x', 2);
+      expect(obj.b).toEqual({ x: 2 });
+
+      setValueByPath(obj, 'c.x', 3);
+      expect(obj.c).toEqual({ x: 3 });
+    });
+
+    it('should handle setting with empty path (which does nothing)', () => {
+      const obj = { a: 1 };
+      setValueByPath(obj, '', 2);
+      expect(obj).toEqual({ a: 1 }); // Still a:1
+    });
+  });
+
+
+  describe('parsePath with dot-quoted edge case', () => {
+    it('should push current token before dot-quoted notation', () => {
+      // In parsePath, line 63-65 pushes currentToken when seeing " or '
+      expect(parsePath('a"b"')).toEqual(['a', 'b']);
+    });
+  });
+
 });
