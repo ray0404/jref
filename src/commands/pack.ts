@@ -13,7 +13,7 @@ import { generateInstruction } from '../utils/instruction.js';
 import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
 import { chunkCode } from '../utils/chunking.js';
 import { generateEmbedding } from '../utils/embeddings.js';
-import { generateFileHashMap, getDeltaPaths, type FileHashMap } from '../utils/hashing.js';
+import { generateFileHashMap, getDeltaPaths } from '../utils/hashing.js';
 import { readFromInput } from '../utils/input.js';
 
 interface PackFlags {
@@ -160,7 +160,7 @@ export class PackCommand extends Command {
       // Handle --delta flag
       let deltaPaths: string[] | undefined;
       if (flags.delta) {
-        let remoteHashMap: FileHashMap;
+        let remoteHashMap: Record<string, string>;
         if (typeof flags.delta === 'string' && existsSync(flags.delta)) {
           remoteHashMap = JSON.parse(readFileSync(flags.delta, 'utf8'));
         } else {
