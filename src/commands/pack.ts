@@ -7,7 +7,7 @@ import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync } from 'fs';
 import { resolve, relative, join } from 'path';
-import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand } from 'repomix';
+import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { generateInstruction } from '../utils/instruction.js';
 import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
@@ -135,6 +135,8 @@ export class PackCommand extends Command {
     options: CLIOptions,
     _context: CommandContext
   ): Promise<CommandResult> {
+    const originalLog = console.log;
+
     try {
       const { flags, targetDir } = this.parseArgs(args);
       
@@ -190,6 +192,18 @@ export class PackCommand extends Command {
       }
 
       const outputStyle = flags.outputStyle || 'json';
+      const outputFileName = `repomix-output.${outputStyle === 'json' ? 'json' : outputStyle === 'markdown' ? 'md' : outputStyle === 'xml' ? 'xml' : 'txt'}`;
+
+      // Always redirect console.log to console.error during repomix calls
+      // to ensure stats and progress don't pollute stdout (critical for piping)
+      console.log = (...args: any[]) => {
+        console.error(...args);
+      };
+
+      // Apply silent mode to repomix if requested
+      if (options.silent) {
+        setLogLevel(-1); // SILENT
+      }
 
       if (isRemote && targetDir) {
         if (!options.silent) {
@@ -198,6 +212,7 @@ export class PackCommand extends Command {
         
         // Prepare CLI-style options for remote action
         const cliOptions: any = {
+          output: outputFileName,
           style: outputStyle,
           securityCheck: true,
           fileSummary: !!flags.summary,
@@ -220,27 +235,45 @@ export class PackCommand extends Command {
 
         // If not JSON, we need to read the generated file
         if (outputStyle !== 'json') {
+          // Repomix remote action copies output to current directory
+          const outputFilePath = resolve(process.cwd(), outputFileName);
+          
+          if (existsSync(outputFilePath)) {
+            const output = readFileSync(outputFilePath, 'utf8');
+            // Clean up
+            unlinkSync(outputFilePath);
+            
+            // Restore logger before returning
+            console.log = originalLog;
+
+            if (options.json || options.silent) {
+              return this.success(output);
+            }
+            process.stdout.write(output + '\n');
+            return this.success();
+          }
+          
+          // Fallback: check result.outputFiles
           const outputFiles = result.outputFiles as string[] | undefined;
           if (outputFiles && outputFiles.length > 0) {
-            const outputFilePath = outputFiles[0];
-            if (existsSync(outputFilePath)) {
-              const output = readFileSync(outputFilePath, 'utf8');
-              // Clean up temp file
-              unlinkSync(outputFilePath);
-              
-              if (options.json || options.silent) {
-                return this.success(output);
-              }
+            const path = outputFiles[0];
+            if (existsSync(path)) {
+              const output = readFileSync(path, 'utf8');
+              if (existsSync(path)) unlinkSync(path);
+              console.log = originalLog;
+              if (options.json || options.silent) return this.success(output);
               process.stdout.write(output + '\n');
               return this.success();
             }
           }
+
+          // If we requested a specific style but couldn't find the file, it's an error
+          console.log = originalLog;
+          return this.error(`Failed to find generated ${outputStyle} file for remote repository.`, options);
         }
 
       } else {
-        const outputFileName = `repomix-output.${outputStyle === 'json' ? 'json' : outputStyle === 'markdown' ? 'md' : outputStyle === 'xml' ? 'xml' : 'txt'}`;
-
-        // Prepare repomix configuration
+        // Prepare repomix configuration for local packing
         const config: any = {
           cwd: rootDir,
           input: {
@@ -300,6 +333,9 @@ export class PackCommand extends Command {
             // Clean up
             unlinkSync(outputFilePath);
 
+            // Restore logger
+            console.log = originalLog;
+
             if (options.json || options.silent) {
               return this.success(output);
             }
@@ -308,6 +344,9 @@ export class PackCommand extends Command {
           }
         }
       }
+
+      // Restore logger for the rest of processing
+      console.log = originalLog;
       
       if (!options.silent) {
         console.error(`✅ Packed ${result.processedFiles?.length || 0} files.`);
