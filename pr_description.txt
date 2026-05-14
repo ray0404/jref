@@ -1,0 +1,17 @@
+🧪 Add missing tests for readFromInput pipe handling
+
+🎯 **What:** The testing gap addressed
+This PR introduces a comprehensive test suite for `src/utils/input.ts` to ensure that standard input (stdin) piping logic is robustly tested. It specifically addresses testing gaps around the `readFromInput` pipe handling.
+
+📊 **Coverage:** What scenarios are now tested
+- `isStdinPiped`: Validated logic for determining if standard input is TTY or piped.
+- `readFromInput`:
+  - Immediate resolution in TTY mode.
+  - Streaming data chunk collection on pipe mode (`data` & `end` events).
+  - Proper error rejection on stream failures (`error` event).
+  - Timeout functionality to unblock CLI execution when no data comes in.
+- `reestablishTTY`: Replacing standard I/O correctly when switching back from non-interactive streams.
+- `getOptimalInputStream`: File sizes vs input streaming efficiency checks.
+
+✨ **Result:** The improvement in test coverage
+We now have unit tests ensuring core CLI IO logic is safe against regressions. The new tests pass successfully and achieve comprehensive coverage.
