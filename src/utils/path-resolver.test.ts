@@ -79,6 +79,34 @@ describe('Path Resolver', () => {
       expect(getValueByPath(obj, 'a.x.y')).toBeUndefined();
       expect(getValueByPath(obj, 'files.nonexistent')).toBeUndefined();
     });
+
+    it('should return undefined when traversing through null', () => {
+      const objWithNull = { a: null };
+      expect(getValueByPath(objWithNull, 'a.b')).toBeUndefined();
+    });
+
+    it('should return undefined when traversing through a primitive value', () => {
+      const objWithPrimitive = { a: 42, b: 'string' };
+      expect(getValueByPath(objWithPrimitive, 'a.b')).toBeUndefined();
+      expect(getValueByPath(objWithPrimitive, 'b.c')).toBeUndefined();
+    });
+
+    it('should return the root object for an empty path', () => {
+      expect(getValueByPath(obj, '')).toEqual(obj);
+    });
+
+    it('should correctly return falsy values', () => {
+      const objWithFalsy = { a: 0, b: false, c: null, d: '' };
+      expect(getValueByPath(objWithFalsy, 'a')).toBe(0);
+      expect(getValueByPath(objWithFalsy, 'b')).toBe(false);
+      expect(getValueByPath(objWithFalsy, 'c')).toBe(null);
+      expect(getValueByPath(objWithFalsy, 'd')).toBe('');
+    });
+
+    it('should handle null or undefined root objects', () => {
+      expect(getValueByPath(null, 'a.b')).toBeUndefined();
+      expect(getValueByPath(undefined, 'a.b')).toBeUndefined();
+    });
   });
 
   describe('setValueByPath', () => {
