@@ -456,151 +456,273 @@ export function SnapshotBrowser({ tree, files, encodings, graph, onExit }: Snaps
     }
   });
 
-  if (viewMode === 'graph' && selectedFile) {
-    const fileName = getFileName(selectedFile);
+if (viewMode === 'graph' && selectedFile) {
+    return React.createElement(GraphView, {
+      selectedFile,
+      relevantEdges,
+      getFileName
+    });
+  }
+
+  if (viewMode === 'file' && selectedFile) {
+    return React.createElement(FileView, {
+      selectedFile,
+      files,
+      encodings,
+      scrollOffset,
+      isCompactMode,
+      statusMessage,
+      getFileName,
+      truncatePath,
+      formatBytes
+    });
+  }
+
+  if (viewMode === 'search') {
+    return React.createElement(SearchView, {
+      searchType,
+      searchQuery,
+      searchResults,
+      selectedIndex,
+      isCompactMode,
+      getFileName,
+      truncatePath
+    });
+  }
+
+  // Tree view
+  return React.createElement(TreeView, {
+    flatTreeItems,
+    scrollOffset,
+    selectedIndex,
+    selectedPaths,
+    encodings,
+    isCompactMode,
+    statusMessage
+  });
+}
+
+
+
+interface GraphViewProps {
+  selectedFile: string | null;
+  relevantEdges: Array<{
+    source: string;
+    target: string;
+    relation: string;
+  }>;
+  getFileName: (path: string) => string;
+}
+
+export function GraphView({ selectedFile, relevantEdges, getFileName }: GraphViewProps) {
+  if (!selectedFile) return null;
+  const fileName = getFileName(selectedFile);
+  return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
+    React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
+      React.createElement(Text, { color: 'cyan', bold: true }, `🔗 KNOWLEDGE GRAPH: ${fileName}`)
+    ),
+    React.createElement(Box, { key: 'instr', paddingX: 1 },
+      React.createElement(Text, { color: 'yellow', dimColor: true }, 'Esc Back • ↑↓ Navigate')
+    ),
+    React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: 1, borderStyle: 'single', borderColor: 'gray' },
+      relevantEdges.length === 0
+        ? React.createElement(Text, { color: 'gray', italic: true }, 'No relationships found in graph.')
+        : relevantEdges.map((edge, idx) => {
+            const isSource = edge.source === selectedFile;
+            const otherId = isSource ? edge.target : edge.source;
+            const direction = isSource ? '──▶' : '◀──';
+            const color = isSource ? 'green' : 'blue';
+
+            return React.createElement(Box, { key: idx },
+              React.createElement(Text, { color }, [
+                isSource ? 'self' : otherId,
+                ` ${direction} (${edge.relation}) ${direction} `,
+                isSource ? otherId : 'self'
+              ])
+            );
+          })
+    )
+  ]);
+}
+
+
+interface FileViewProps {
+  selectedFile: string | null;
+  files: Record<string, string>;
+  encodings: Record<string, string>;
+  scrollOffset: number;
+  isCompactMode: boolean;
+  statusMessage: string | null;
+  getFileName: (path: string) => string;
+  truncatePath: (path: string, maxLength?: number) => string;
+  formatBytes: (bytes: number) => string;
+}
+
+export function FileView({
+  selectedFile,
+  files,
+  encodings,
+  scrollOffset,
+  isCompactMode,
+  statusMessage,
+  getFileName,
+  truncatePath,
+  formatBytes
+}: FileViewProps) {
+  if (!selectedFile) return null;
+
+  const isBinary = encodings[selectedFile] === 'base64';
+  const fileName = getFileName(selectedFile);
+
+  if (isBinary) {
+    const decodedSize = Buffer.byteLength(files[selectedFile], 'base64');
     return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
-      React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'cyan', paddingX: 1 },
-        React.createElement(Text, { color: 'cyan', bold: true }, `🔗 KNOWLEDGE GRAPH: ${fileName}`)
+      React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'magenta', paddingX: 1 },
+        React.createElement(Text, { color: 'magenta', bold: true }, `📦 BINARY ASSET: ${selectedFile}`)
       ),
-      React.createElement(Box, { key: 'instr', paddingX: 1 },
-        React.createElement(Text, { color: 'yellow', dimColor: true }, 'Esc Back • ↑↓ Navigate')
-      ),
-      React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: 1, borderStyle: 'single', borderColor: 'gray' },
-        relevantEdges.length === 0 
-          ? React.createElement(Text, { color: 'gray', italic: true }, 'No relationships found in graph.')
-          : relevantEdges.map((edge, idx) => {
-              const isSource = edge.source === selectedFile;
-              const otherId = isSource ? edge.target : edge.source;
-              const direction = isSource ? '──▶' : '◀──';
-              const color = isSource ? 'green' : 'blue';
-              
-              return React.createElement(Box, { key: idx },
-                React.createElement(Text, { color }, [
-                  isSource ? 'self' : otherId,
-                  ` ${direction} (${edge.relation}) ${direction} `,
-                  isSource ? otherId : 'self'
-                ])
-              );
-            })
+      React.createElement(Box, { key: 'content', flexGrow: 1, alignItems: 'center', justifyContent: 'center', borderStyle: 'single', borderColor: 'gray' },
+        React.createElement(Box, { flexDirection: 'column', alignItems: 'center' }, [
+          React.createElement(Text, { key: 'msg', color: 'yellow', bold: true }, '[ Binary Data Placeholder ]'),
+          React.createElement(Text, { key: 'name', color: 'white' }, `Filename: ${fileName}`),
+          React.createElement(Text, { key: 'size', color: 'cyan' }, `Decoded Size: ${formatBytes(decodedSize)}`),
+          React.createElement(Box, { key: 'pad', marginY: 1 }),
+          React.createElement(Text, { key: 'hint', color: 'gray', dimColor: true }, 'Rendering Base64 strings is disabled to maintain performance.'),
+          React.createElement(Text, { key: 'esc', color: 'green' }, 'Press any key to return')
+        ])
       )
     ]);
   }
 
-  if (viewMode === 'file' && selectedFile) {
-    const isBinary = encodings[selectedFile] === 'base64';
-    const fileName = getFileName(selectedFile);
+  const content = files[selectedFile] || 'File not found';
+  const lines = content.split('\n');
+  const visibleLinesCount = isCompactMode ? 15 : 20;
+  const slicedLines = lines.slice(scrollOffset, scrollOffset + visibleLinesCount);
+  const headerText = isCompactMode
+    ? `${fileName} (${lines.length})`
+    : `📄 ${truncatePath(selectedFile)} (${lines.length} lines)`;
 
-    if (isBinary) {
-      const decodedSize = Buffer.byteLength(files[selectedFile], 'base64');
-      return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
-        React.createElement(Box, { key: 'header', borderStyle: 'round', borderColor: 'magenta', paddingX: 1 },
-          React.createElement(Text, { color: 'magenta', bold: true }, `📦 BINARY ASSET: ${selectedFile}`)
-        ),
-        React.createElement(Box, { key: 'content', flexGrow: 1, alignItems: 'center', justifyContent: 'center', borderStyle: 'single', borderColor: 'gray' },
-          React.createElement(Box, { flexDirection: 'column', alignItems: 'center' }, [
-            React.createElement(Text, { key: 'msg', color: 'yellow', bold: true }, '[ Binary Data Placeholder ]'),
-            React.createElement(Text, { key: 'name', color: 'white' }, `Filename: ${fileName}`),
-            React.createElement(Text, { key: 'size', color: 'cyan' }, `Decoded Size: ${formatBytes(decodedSize)}`),
-            React.createElement(Box, { key: 'pad', marginY: 1 }),
-            React.createElement(Text, { key: 'hint', color: 'gray', dimColor: true }, 'Rendering Base64 strings is disabled to maintain performance.'),
-            React.createElement(Text, { key: 'esc', color: 'green' }, 'Press any key to return')
-          ])
-        )
-      ]);
-    }
+  return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
+    // Header
+    React.createElement(Box, { key: 'header', borderStyle: isCompactMode ? 'single' : 'round', borderColor: 'green', paddingX: isCompactMode ? 0 : 1 },
+      React.createElement(Text, { color: 'green', bold: true }, headerText)
+    ),
 
-    const content = files[selectedFile] || 'File not found';
-    const lines = content.split('\n');
-    const visibleLinesCount = isCompactMode ? 15 : 20;
-    const slicedLines = lines.slice(scrollOffset, scrollOffset + visibleLinesCount);
-    const headerText = isCompactMode
-      ? `${fileName} (${lines.length})`
-      : `📄 ${truncatePath(selectedFile)} (${lines.length} lines)`;
+    // Instructions
+    !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
+      React.createElement(Text, { color: 'yellow', dimColor: true }, '↑↓ Scroll • Esc Back • y Yank')
+    ) : null,
 
-    return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
-      // Header
-      React.createElement(Box, { key: 'header', borderStyle: isCompactMode ? 'single' : 'round', borderColor: 'green', paddingX: isCompactMode ? 0 : 1 },
-        React.createElement(Text, { color: 'green', bold: true }, headerText)
-      ),
+    // Status Bar
+    statusMessage ? React.createElement(Box, { key: 'status', paddingX: 1 },
+      React.createElement(Text, { color: 'green', bold: true }, `✨ ${statusMessage}`)
+    ) : null,
 
-      // Instructions
-      !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
-        React.createElement(Text, { color: 'yellow', dimColor: true }, '↑↓ Scroll • Esc Back • y Yank')
-      ) : null,
+    // Content
+    React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
+      slicedLines.map((line, index) => {
+        const lineNum = scrollOffset + index + 1;
+        const lineNumText = isCompactMode
+          ? lineNum.toString().padStart(2, ' ')
+          : lineNum.toString().padStart(4, ' ');
 
-      // Status Bar
-      statusMessage ? React.createElement(Box, { key: 'status', paddingX: 1 },
-        React.createElement(Text, { color: 'green', bold: true }, `✨ ${statusMessage}`)
-      ) : null,
-
-      // Content
-      React.createElement(Box, { key: 'content', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
-        slicedLines.map((line, index) => {
-          const lineNum = scrollOffset + index + 1;
-          const lineNumText = isCompactMode
-            ? lineNum.toString().padStart(2, ' ')
-            : lineNum.toString().padStart(4, ' ');
-
-          return React.createElement(Text, { key: scrollOffset + index, color: 'white' }, [
-            React.createElement(Text, { key: 'line-num', color: 'gray', dimColor: true },
-              lineNumText + (isCompactMode ? '' : ':')
-            ),
-            isCompactMode ? '' : ' ',
-            line || ' '
-          ]);
-        }).concat(lines.length > visibleLinesCount ? [
-          React.createElement(Box, { key: 'scroll-info', paddingTop: 1 },
-            React.createElement(Text, { color: 'gray', dimColor: true },
-              isCompactMode
-                ? `${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)}/${lines.length}`
-                : `Lines ${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)} of ${lines.length}`
-            )
+        return React.createElement(Text, { key: scrollOffset + index, color: 'white' }, [
+          React.createElement(Text, { key: 'line-num', color: 'gray', dimColor: true },
+            lineNumText + (isCompactMode ? '' : ':')
+          ),
+          isCompactMode ? '' : ' ',
+          line || ' '
+        ]);
+      }).concat(lines.length > visibleLinesCount ? [
+        React.createElement(Box, { key: 'scroll-info', paddingTop: 1 },
+          React.createElement(Text, { color: 'gray', dimColor: true },
+            isCompactMode
+              ? `${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)}/${lines.length}`
+              : `Lines ${scrollOffset + 1}-${Math.min(scrollOffset + visibleLinesCount, lines.length)} of ${lines.length}`
           )
-        ] : [])
-      )
-    ].filter(Boolean));
-  }
+        )
+      ] : [])
+    )
+  ].filter(Boolean));
+}
 
-  if (viewMode === 'search') {
-    const headerText = isCompactMode ? '🔍' : `🔍 Search Files (${searchType})`;
-    const queryDisplay = isCompactMode ? `${searchQuery}_` : `Query: ${searchQuery}_`;
 
-    return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
-      // Header
-      React.createElement(Box, { key: 'header', borderStyle: isCompactMode ? 'single' : 'round', borderColor: 'magenta', paddingX: isCompactMode ? 0 : 1 },
-        React.createElement(Text, { color: 'magenta', bold: true }, headerText)
-      ),
+interface SearchViewProps {
+  searchType: 'filename' | 'content';
+  searchQuery: string;
+  searchResults: string[];
+  selectedIndex: number;
+  isCompactMode: boolean;
+  getFileName: (path: string) => string;
+  truncatePath: (path: string, maxLength?: number) => string;
+}
 
-      // Search input
-      React.createElement(Box, { key: 'search-input', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
-        React.createElement(Text, { color: 'cyan' }, queryDisplay)
-      ),
+export function SearchView({
+  searchType,
+  searchQuery,
+  searchResults,
+  selectedIndex,
+  isCompactMode,
+  getFileName,
+  truncatePath
+}: SearchViewProps) {
+  const headerText = isCompactMode ? '🔍' : `🔍 Search Files (${searchType})`;
+  const queryDisplay = isCompactMode ? `${searchQuery}_` : `Query: ${searchQuery}_`;
 
-      // Instructions
-      !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
-        React.createElement(Text, { color: 'yellow', dimColor: true }, 'Type to search • Tab Toggle Mode • ↑↓ Navigate • Enter Select • Esc Back')
-      ) : null,
+  return React.createElement(Box, { flexDirection: 'column', height: '100%' }, [
+    // Header
+    React.createElement(Box, { key: 'header', borderStyle: isCompactMode ? 'single' : 'round', borderColor: 'magenta', paddingX: isCompactMode ? 0 : 1 },
+      React.createElement(Text, { color: 'magenta', bold: true }, headerText)
+    ),
 
-      // Results
-      React.createElement(Box, { key: 'results', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
-        searchResults.length === 0
-          ? React.createElement(Text, { color: 'gray', italic: true },
-              searchQuery ? 'No matches' : 'Type to search...'
-            )
-          : searchResults.slice(0, 10).map((file, index) => {
-              const color = index === selectedIndex ? 'cyan' : 'white';
-              const bgColor = index === selectedIndex ? 'gray' : undefined;
-              const displayName = isCompactMode ? getFileName(file) : truncatePath(file);
-              const icon = isCompactMode ? '•' : '📄';
-              return React.createElement(Box, { key: file },
-                React.createElement(Text, { color, backgroundColor: bgColor }, `${icon} ${displayName}`)
-              );
-            })
-      )
-    ].filter(Boolean));
-  }
+    // Search input
+    React.createElement(Box, { key: 'search-input', paddingX: isCompactMode ? 0 : 1, paddingY: 0 },
+      React.createElement(Text, { color: 'cyan' }, queryDisplay)
+    ),
 
-  // Tree view
+    // Instructions
+    !isCompactMode ? React.createElement(Box, { key: 'instructions', paddingX: 1, paddingY: 0 },
+      React.createElement(Text, { color: 'yellow', dimColor: true }, 'Type to search • Tab Toggle Mode • ↑↓ Navigate • Enter Select • Esc Back')
+    ) : null,
+
+    // Results
+    React.createElement(Box, { key: 'results', flexDirection: 'column', flexGrow: 1, paddingX: isCompactMode ? 0 : 1 },
+      searchResults.length === 0
+        ? React.createElement(Text, { color: 'gray', italic: true },
+            searchQuery ? 'No matches' : 'Type to search...'
+          )
+        : searchResults.slice(0, 10).map((file, index) => {
+            const color = index === selectedIndex ? 'cyan' : 'white';
+            const bgColor = index === selectedIndex ? 'gray' : undefined;
+            const displayName = isCompactMode ? getFileName(file) : truncatePath(file);
+            const icon = isCompactMode ? '•' : '📄';
+            return React.createElement(Box, { key: file },
+              React.createElement(Text, { color, backgroundColor: bgColor }, `${icon} ${displayName}`)
+            );
+          })
+    )
+  ].filter(Boolean));
+}
+
+
+interface TreeViewProps {
+  flatTreeItems: FlatTreeItem[];
+  scrollOffset: number;
+  selectedIndex: number;
+  selectedPaths: Set<string>;
+  encodings: Record<string, string>;
+  isCompactMode: boolean;
+  statusMessage: string | null;
+}
+
+export function TreeView({
+  flatTreeItems,
+  scrollOffset,
+  selectedIndex,
+  selectedPaths,
+  encodings,
+  isCompactMode,
+  statusMessage
+}: TreeViewProps) {
   const visibleLines = isCompactMode ? 15 : 20;
   const visibleItems = flatTreeItems.slice(scrollOffset, scrollOffset + visibleLines);
   const headerText = isCompactMode
@@ -656,7 +778,8 @@ export function SnapshotBrowser({ tree, files, encodings, graph, onExit }: Snaps
                 indent,
                 prefix,
                 prefix ? ' ' : '',
-                isSelected ? '[*] ' : '',
+                isSelected ? '[*]' : '', // fix string formatting for selected
+                isSelected ? ' ' : '',
                 icon,
                 ' ',
                 node.name,
