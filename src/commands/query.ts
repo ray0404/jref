@@ -140,7 +140,12 @@ export class QueryCommand extends Command {
       // Output content
       this.outputContent(content, flags, options);
 
-      return this.success();
+      return this.success(undefined, {
+        path: flags.path,
+        content,
+        lineCount: content.split('\n').length,
+        byteSize: Buffer.byteLength(content, 'utf8')
+      });
     } catch (err) {
       return this.error(`Query failed: ${(err as Error).message}`, options);
     }
@@ -215,7 +220,7 @@ export class QueryCommand extends Command {
       .slice(0, topK);
 
     if (options.json) {
-      return this.success(JSON.stringify(results, null, 2));
+      return this.success(JSON.stringify(results, null, 2), results);
     }
 
     // Create a micro-snapshot for the results
@@ -240,7 +245,7 @@ export class QueryCommand extends Command {
 
     if (options.raw) {
       process.stdout.write(JSON.stringify(microSnapshot, null, 2));
-      return this.success();
+      return this.success(undefined, microSnapshot);
     }
 
     console.log(`\n🔍 Semantic Search Results for: "${query}"`);
@@ -258,7 +263,7 @@ export class QueryCommand extends Command {
       console.log('─'.repeat(50));
     });
 
-    return this.success();
+    return this.success(undefined, microSnapshot);
   }
 
   private extractImports(content: string): string[] {

@@ -14,6 +14,8 @@ const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
 const RED = '\x1b[31m';
 
+export type OutputHandler = (data: string, type: 'stdout' | 'stderr') => void;
+
 /**
  * Format output based on CLI options
  */
@@ -42,13 +44,23 @@ export function formatOutput(
   return JSON.stringify(data, null, 2);
 }
 
-let outputHandler: ((data: string, type: 'stdout' | 'stderr') => void) | null = null;
+let globalOutputHandler: OutputHandler | null = null;
 
 /**
  * Set a custom output handler to redirect all prints
+ * Returns the previous handler
  */
-export function setOutputHandler(handler: ((data: string, type: 'stdout' | 'stderr') => void) | null): void {
-  outputHandler = handler;
+export function setOutputHandler(handler: OutputHandler | null): OutputHandler | null {
+  const previous = globalOutputHandler;
+  globalOutputHandler = handler;
+  return previous;
+}
+
+/**
+ * Resolve the appropriate output handler
+ */
+function resolveHandler(handler?: OutputHandler | null): OutputHandler | null {
+  return handler || globalOutputHandler;
 }
 
 /**
@@ -56,11 +68,13 @@ export function setOutputHandler(handler: ((data: string, type: 'stdout' | 'stde
  */
 export function printOutput(
   data: unknown,
-  options: CLIOptions = {}
+  options: CLIOptions = {},
+  handler?: OutputHandler | null
 ): void {
   const formatted = formatOutput(data, options);
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     console.log(formatted);
   }
@@ -69,7 +83,7 @@ export function printOutput(
 /**
  * Print error to stderr
  */
-export function printError(message: string, options: CLIOptions = {}): void {
+export function printError(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
   if (options.json) {
     formatted = JSON.stringify({ error: message });
@@ -79,8 +93,9 @@ export function printError(message: string, options: CLIOptions = {}): void {
     formatted = message;
   }
 
-  if (outputHandler) {
-    outputHandler(formatted, 'stderr');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stderr');
   } else {
     console.error(formatted);
   }
@@ -89,7 +104,7 @@ export function printError(message: string, options: CLIOptions = {}): void {
 /**
  * Print success message
  */
-export function printSuccess(message: string, options: CLIOptions = {}): void {
+export function printSuccess(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
   if (options.json) {
     formatted = JSON.stringify({ success: true, message });
@@ -99,8 +114,9 @@ export function printSuccess(message: string, options: CLIOptions = {}): void {
     formatted = message;
   }
 
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     console.log(formatted);
   }
@@ -109,15 +125,16 @@ export function printSuccess(message: string, options: CLIOptions = {}): void {
 /**
  * Print result message (generic output)
  */
-export function printResult(message: string, options: CLIOptions = {}): void {
+export function printResult(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   if (options.silent || (options.json && !options.raw)) {
     return;
   }
   
-  const formatted = options.raw ? message : message;
+  const formatted = message;
+  const activeHandler = resolveHandler(handler);
 
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     process.stdout.write(formatted + '\n');
   }
@@ -126,7 +143,7 @@ export function printResult(message: string, options: CLIOptions = {}): void {
 /**
  * Print warning message
  */
-export function printWarning(message: string, options: CLIOptions = {}): void {
+export function printWarning(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
   if (options.json) {
     formatted = JSON.stringify({ warning: message });
@@ -136,8 +153,9 @@ export function printWarning(message: string, options: CLIOptions = {}): void {
     formatted = message;
   }
 
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     console.log(formatted);
   }
@@ -146,7 +164,7 @@ export function printWarning(message: string, options: CLIOptions = {}): void {
 /**
  * Print info message
  */
-export function printInfo(message: string, options: CLIOptions = {}): void {
+export function printInfo(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
   if (options.json) {
     formatted = JSON.stringify({ info: message });
@@ -156,8 +174,9 @@ export function printInfo(message: string, options: CLIOptions = {}): void {
     formatted = message;
   }
 
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     console.log(formatted);
   }
@@ -169,18 +188,21 @@ export function printInfo(message: string, options: CLIOptions = {}): void {
 export function printTable(
   headers: string[],
   rows: string[][],
-  options: CLIOptions = {}
+  options: CLIOptions = {},
+  handler?: OutputHandler | null
 ): void {
   if (options.json) {
-    printOutput({ headers, rows }, options);
+    printOutput({ headers, rows }, options, handler);
     return;
   }
+
+  const activeHandler = resolveHandler(handler);
 
   if (options.silent || options.raw) {
     // In silent/raw mode, just output tab-separated
     for (const row of rows) {
-      if (outputHandler) {
-        outputHandler(row.join('\t'), 'stdout');
+      if (activeHandler) {
+        activeHandler(row.join('\t'), 'stdout');
       } else {
         console.log(row.join('\t'));
       }
@@ -195,9 +217,9 @@ export function printTable(
 
   // Print header
   const headerRow = headers.map((h, i) => h.padEnd(widths[i])).join('  ');
-  if (outputHandler) {
-    outputHandler(BOLD + headerRow + RESET, 'stdout');
-    outputHandler(widths.map((w) => '-'.repeat(w)).join('  '), 'stdout');
+  if (activeHandler) {
+    activeHandler(BOLD + headerRow + RESET, 'stdout');
+    activeHandler(widths.map((w) => '-'.repeat(w)).join('  '), 'stdout');
   } else {
     console.log(BOLD + headerRow + RESET);
     console.log(widths.map((w) => '-'.repeat(w)).join('  '));
@@ -206,8 +228,8 @@ export function printTable(
   // Print rows
   for (const row of rows) {
     const r = row.map((cell, i) => (cell || '').padEnd(widths[i])).join('  ');
-    if (outputHandler) {
-      outputHandler(r, 'stdout');
+    if (activeHandler) {
+      activeHandler(r, 'stdout');
     } else {
       console.log(r);
     }
@@ -219,14 +241,16 @@ export function printTable(
  */
 export function printProgress(
   message: string,
-  options: CLIOptions = {}
+  options: CLIOptions = {},
+  handler?: OutputHandler | null
 ): void {
   if (options.silent || options.raw) {
     return;
   }
   const formatted = `${DIM}${message}${RESET}`;
-  if (outputHandler) {
-    outputHandler(formatted, 'stdout');
+  const activeHandler = resolveHandler(handler);
+  if (activeHandler) {
+    activeHandler(formatted, 'stdout');
   } else {
     console.log(formatted);
   }
@@ -235,20 +259,29 @@ export function printProgress(
 /**
  * Print ASCII art header (hidden in silent/raw mode)
  */
-export function printHeader(options: CLIOptions = {}): void {
+export function printHeader(options: CLIOptions = {}, handler?: OutputHandler | null): void {
   if (options.silent || options.raw) {
     return;
   }
 
-  console.log(`${BOLD}${CYAN}`);
-  console.log('  ██╗     ██╗   ██╗███████╗███████╗██╗  ██╗');
-  console.log('  ██║     ██║   ██║██╔════╝██╔════╝╚██╗██╔╝');
-  console.log('  ██║     ██║   ██║█████╗  █████╗   ╚███╔╝ ');
-  console.log('  ██║     ██║   ██║██╔══╝  ██╔══╝   ██╔██╗ ');
-  console.log('  ███████╗╚██████╔╝██║     ███████╗██╔╝ ██╗');
-  console.log('  ╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝');
-  console.log(`${RESET}${DIM}JSON Reference CLI - v1.2.0${RESET}`);
-  console.log();
+  const activeHandler = resolveHandler(handler);
+  const write = (text: string) => {
+    if (activeHandler) {
+      activeHandler(text, 'stdout');
+    } else {
+      console.log(text);
+    }
+  };
+
+  write(`${BOLD}${CYAN}`);
+  write('  ██╗     ██╗   ██╗███████╗███████╗██╗  ██╗');
+  write('  ██║     ██║   ██║██╔════╝██╔════╝╚██╗██╔╝');
+  write('  ██║     ██║   ██║█████╗  █████╗   ╚███╔╝ ');
+  write('  ██║     ██║   ██║██╔══╝  ██╔══╝   ██╔██╗ ');
+  write('  ███████╗╚██████╔╝██║     ███████╗██╔╝ ██╗');
+  write('  ╚══════╝ ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═╝');
+  write(`${RESET}${DIM}JSON Reference CLI - v1.3.2${RESET}`);
+  write('');
 }
 
 /**

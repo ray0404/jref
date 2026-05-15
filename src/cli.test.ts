@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { main } from './index.js';
+import { main } from './cli.js';
 import { registry } from './utils/command.js';
 
 // Mock the command module to prevent real registration during tests

@@ -175,6 +175,17 @@ export class InspectCommand extends Command {
       // If no specific flags, show everything
       const showAll = !showMeta && !showStructure && !showFiles && !showSummary;
 
+      const inspectData = {
+        metadata,
+        directoryStructure: snapshot.directoryStructure,
+        filePaths: Object.keys(fileSizes),
+        encodings,
+        mimeTypes,
+        instruction: snapshot.instruction,
+        fileSummary: snapshot.fileSummary,
+        userProvidedHeader: snapshot.userProvidedHeader
+      };
+
       if (options.json) {
         const result: Record<string, unknown> = {};
 
@@ -212,7 +223,7 @@ export class InspectCommand extends Command {
         }
       }
 
-      return this.success();
+      return this.success(undefined, inspectData);
     } catch (err) {
       return this.error(`Inspect failed: ${(err as Error).message}`, options);
     }

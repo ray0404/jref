@@ -97,6 +97,33 @@ jref diff snapshot.json
 jref serve snapshot.json
 ```
 
+## Programmatic Usage (Library)
+
+`jref` can be used as a TypeScript/JavaScript library in your own projects.
+
+```typescript
+import { pack, query, buildGraph } from 'jref';
+
+// Create a snapshot programmatically
+const snapshot = await pack('./src', { 
+  compress: true,
+  semantic: true 
+});
+
+// Query a file from the snapshot
+const { content } = await query(snapshot, { 
+  path: 'src/index.ts' 
+});
+
+// Perform a semantic search
+const results = await query(snapshot, { 
+  semantic: 'How does authentication work?' 
+});
+
+// Build a dependency graph
+const graph = await buildGraph(snapshot);
+```
+
 ## Data Schema
 
 jref works with JSON snapshots following this schema:

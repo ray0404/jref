@@ -1,0 +1,6 @@
+[2026-05-15T22:38:58.889Z] Circular alias detected: recursive -> recursive
+[2026-05-15T22:38:58.897Z] Circular alias detected: cycle1 -> cycle2 -> cycle1
+[2026-05-15T22:41:03.394Z] Circular alias detected: recursive -> recursive
+[2026-05-15T22:41:03.401Z] Circular alias detected: cycle1 -> cycle2 -> cycle1
+[2026-05-15T22:56:47.063Z] Circular alias detected: recursive -> recursive
+[2026-05-15T22:56:47.070Z] Circular alias detected: cycle1 -> cycle2 -> cycle1

@@ -277,7 +277,7 @@ export class GraphCommand extends Command {
       const report = generateGraphReport(analysis);
       fs.writeFileSync(reportFileName, report);
 
-      return this.success(`Graph built successfully!\n- Graph: ${outputFileName} (${format})\n- Report: ${reportFileName}`);
+      return this.success(`Graph built successfully!\n- Graph: ${outputFileName} (${format})\n- Report: ${reportFileName}`, analysis.graph);
     } catch (err) {
       return this.error(`Failed to build graph: ${(err as Error).message}`, options);
     }
@@ -304,9 +304,9 @@ export class GraphCommand extends Command {
       const results = queryGraph(graph, queryStr);
       
       if (options.json) {
-        return this.success(JSON.stringify(results, null, 2));
+        return this.success(JSON.stringify(results, null, 2), results);
       } else {
-        return this.success(`Query results for "${queryStr}":\n${results.map(r => `- ${r}`).join('\n')}`);
+        return this.success(`Query results for "${queryStr}":\n${results.map(r => `- ${r}`).join('\n')}`, results);
       }
     } catch (err) {
       return this.error(`Query failed: ${(err as Error).message}`, options);

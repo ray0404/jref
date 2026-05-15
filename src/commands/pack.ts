@@ -572,11 +572,11 @@ export class PackCommand extends Command {
       const output = JSON.stringify(snapshot, null, 2);
       
       if (options.json || options.silent) {
-        return this.success(output);
+        return this.success(output, snapshot);
       }
 
       process.stdout.write(output + '\n');
-      return this.success();
+      return this.success(undefined, snapshot);
 
     } catch (err) {
       if ((err as any).code === 'EPIPE') {

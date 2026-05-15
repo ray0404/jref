@@ -229,7 +229,7 @@ export class ExtractCommand extends Command {
         this.outputResults(results, options);
       }
 
-      return this.success();
+      return this.success(undefined, { results, outputDir });
     } catch (err) {
       return this.error(`Extract failed: ${(err as Error).message}`, options);
     }

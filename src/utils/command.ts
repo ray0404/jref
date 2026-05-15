@@ -9,7 +9,14 @@ import type {
   CommandContext,
   ProjectSnapshot
 } from '../types/index.js';
-import { printError, printOutput } from './output.js';
+import { 
+  printError, 
+  printOutput, 
+  printSuccess, 
+  printWarning, 
+  printInfo, 
+  printProgress 
+} from './output.js';
 
 export interface CommandOption {
   flags: string;
@@ -108,9 +115,10 @@ export abstract class Command {
    */
   protected print(
     data: unknown,
-    options: CLIOptions
+    options: CLIOptions,
+    context?: CommandContext
   ): void {
-    printOutput(data, options);
+    printOutput(data, options, context?.outputHandler);
   }
 
   /**
@@ -119,9 +127,10 @@ export abstract class Command {
   protected error(
     message: string,
     options: CLIOptions,
-    exitCode: 1 | 2 = 1
+    exitCode: 1 | 2 = 1,
+    context?: CommandContext
   ): CommandResult {
-    printError(message, options);
+    printError(message, options, context?.outputHandler);
     return {
       success: false,
       exitCode,
@@ -130,13 +139,42 @@ export abstract class Command {
   }
 
   /**
+   * Print success message (human mode only)
+   */
+  protected printSuccess(message: string, options: CLIOptions = {}, context?: CommandContext): void {
+    printSuccess(message, options, context?.outputHandler);
+  }
+
+  /**
+   * Print warning message (human mode only)
+   */
+  protected printWarning(message: string, options: CLIOptions = {}, context?: CommandContext): void {
+    printWarning(message, options, context?.outputHandler);
+  }
+
+  /**
+   * Print info message (human mode only)
+   */
+  protected printInfo(message: string, options: CLIOptions = {}, context?: CommandContext): void {
+    printInfo(message, options, context?.outputHandler);
+  }
+
+  /**
+   * Print progress indicator
+   */
+  protected printProgress(message: string, options: CLIOptions = {}, context?: CommandContext): void {
+    printProgress(message, options, context?.outputHandler);
+  }
+
+  /**
    * Create success result
    */
-  protected success(output?: string): CommandResult {
+  protected success<T = any>(output?: string, data?: T): CommandResult<T> {
     return {
       success: true,
       exitCode: 0,
-      output
+      output,
+      data
     };
   }
 

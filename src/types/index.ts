@@ -138,14 +138,16 @@ export interface CommandContext {
   stdinIsPipe: boolean;
   snapshot?: ProjectSnapshot;
   metadata?: SnapshotMetadata;
+  outputHandler?: (data: string, type: 'stdout' | 'stderr') => void;
 }
 
 export type CommandExitCode = 0 | 1 | 2;
 
-export interface CommandResult {
+export interface CommandResult<T = any> {
   success: boolean;
   exitCode: CommandExitCode;
   output?: string;
+  data?: T;
   error?: string;
 }
 

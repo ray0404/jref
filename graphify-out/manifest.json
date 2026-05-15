@@ -1,0 +1,742 @@
+{
+  "/home/Ray0404/Documents/Projects/jref/get_file.py": {
+    "mtime": 1777218772.3387318,
+    "ast_hash": "74950841b87713c272969dd34a61ac74",
+    "semantic_hash": "74950841b87713c272969dd34a61ac74"
+  },
+  "/home/Ray0404/Documents/Projects/jref/compare_outputs.js": {
+    "mtime": 1778882632.9634204,
+    "ast_hash": "f3bf5c79672c5b706193fd1366783635",
+    "semantic_hash": "f3bf5c79672c5b706193fd1366783635"
+  },
+  "/home/Ray0404/Documents/Projects/jref/test_repomix_output.js": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "48b83332949d913da1dc30a0c4df9c78",
+    "semantic_hash": "48b83332949d913da1dc30a0c4df9c78"
+  },
+  "/home/Ray0404/Documents/Projects/jref/add_test_coverage.py": {
+    "mtime": 1777218772.3267322,
+    "ast_hash": "56d65a1d14e950fe022d1e36df1a8eb6",
+    "semantic_hash": "56d65a1d14e950fe022d1e36df1a8eb6"
+  },
+  "/home/Ray0404/Documents/Projects/jref/vitest.config.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "ac802dc05d64c44e8f0ca5daa44d2fb5",
+    "semantic_hash": "ac802dc05d64c44e8f0ca5daa44d2fb5"
+  },
+  "/home/Ray0404/Documents/Projects/jref/package.json": {
+    "mtime": 1778884654.2515216,
+    "ast_hash": "90911076de06b86c6fa33b1b29b7dedb",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/test-shell-snapshot.json": {
+    "mtime": 1778884809.2621868,
+    "ast_hash": "1306c3b690e24a3275cfd62cf0133de3",
+    "semantic_hash": "1306c3b690e24a3275cfd62cf0133de3"
+  },
+  "/home/Ray0404/Documents/Projects/jref/test_imports.js": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "ebe74be1cf7609ed2ec2da3c81fc1b3b",
+    "semantic_hash": "ebe74be1cf7609ed2ec2da3c81fc1b3b"
+  },
+  "/home/Ray0404/Documents/Projects/jref/make_test.py": {
+    "mtime": 1777218772.3387318,
+    "ast_hash": "4a8e34cad683e0c541a6e0edf79863bd",
+    "semantic_hash": "4a8e34cad683e0c541a6e0edf79863bd"
+  },
+  "/home/Ray0404/Documents/Projects/jref/tsconfig.json": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "ba26440a7bf470cc017eba60f720d816",
+    "semantic_hash": "ba26440a7bf470cc017eba60f720d816"
+  },
+  "/home/Ray0404/Documents/Projects/jref/repomix-output.json": {
+    "mtime": 1778884852.7922704,
+    "ast_hash": "a8a82603471f5da85ab5861b42e2f9f7",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/test-extracted/src/main.ts": {
+    "mtime": 1778884815.9185007,
+    "ast_hash": "b7d5573556fd81c54c02732d9f95afd3",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/project-snapshot-schema.json": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "547db9f4c8890795215616a69b3de109",
+    "semantic_hash": "547db9f4c8890795215616a69b3de109"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/ideas-schema2.json": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "101467abc026863f5158619b5ee99ad1",
+    "semantic_hash": "101467abc026863f5158619b5ee99ad1"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/repomix-config-schema.json": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "0aaa71c9897f4261824fdc63f3b03569",
+    "semantic_hash": "0aaa71c9897f4261824fdc63f3b03569"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/graph-snapshot-schema.json": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "9663a20d27947ee4a28b1c34c19561af",
+    "semantic_hash": "9663a20d27947ee4a28b1c34c19561af"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/gemini-session-schema.json": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "91e2cf0a4ba9cd5a0eba54d911d81a90",
+    "semantic_hash": "91e2cf0a4ba9cd5a0eba54d911d81a90"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/ideas-schema1.json": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "1bf2749fe3bd7a03fa771bfeaa412f17",
+    "semantic_hash": "1bf2749fe3bd7a03fa771bfeaa412f17"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/repomix-default-config.json": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "deae4986f1c27c3dcdb66e2d9a9bbf79",
+    "semantic_hash": "deae4986f1c27c3dcdb66e2d9a9bbf79"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/development-blueprint-schema.json": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "554cde3ff45e725f1d683fa9619f4287",
+    "semantic_hash": "554cde3ff45e725f1d683fa9619f4287"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/tree-output-schema.json": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "cc743991d8dc394154a83a57d232ce1b",
+    "semantic_hash": "cc743991d8dc394154a83a57d232ce1b"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/api/oai-api.json": {
+    "mtime": 1778882632.967418,
+    "ast_hash": "5af4b528342392e0d5d2d919c2972af5",
+    "semantic_hash": "5af4b528342392e0d5d2d919c2972af5"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/api/ts-api.json": {
+    "mtime": 1778882632.967418,
+    "ast_hash": "67e1a551f328016dc6e26f87f1f2636c",
+    "semantic_hash": "67e1a551f328016dc6e26f87f1f2636c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/api/venice/venice-api.json": {
+    "mtime": 1778882632.9714158,
+    "ast_hash": "f0f782212b71e16a299648f097e1e0ef",
+    "semantic_hash": "f0f782212b71e16a299648f097e1e0ef"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/assets/sample-snapshot.json": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "59daad451cecfe9dc1a63469fed27b16",
+    "semantic_hash": "59daad451cecfe9dc1a63469fed27b16"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/index.ts": {
+    "mtime": 1778884649.5913448,
+    "ast_hash": "a2754850bc7fc8be842ebb73861053c7",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/api.test.ts": {
+    "mtime": 1778884668.6840792,
+    "ast_hash": "602f06b2c7e17d06b0d4510234c2728f",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/cli.test.ts": {
+    "mtime": 1778884622.4263496,
+    "ast_hash": "19890ebd7c2656aa11159ed13ebae6b6",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/cli.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "2c7338ad588a127d5d6ef57689558214",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/components/TUI.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "d7d55edcb624bcdc443ded2581c24858",
+    "semantic_hash": "d7d55edcb624bcdc443ded2581c24858"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/components/TUI.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "1433e4c9a402937b6cb5c8a9f2e67720",
+    "semantic_hash": "1433e4c9a402937b6cb5c8a9f2e67720"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/components/GitUI.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "1d4f12d93dcfc87cf6104734d54686c4",
+    "semantic_hash": "1d4f12d93dcfc87cf6104734d54686c4"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/components/ConfigUI.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "9dba9a939df767f63e55319b58032bdc",
+    "semantic_hash": "9dba9a939df767f63e55319b58032bdc"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/components/GitUI.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "f178a55958557f72df0f2d4c31ea1ef8",
+    "semantic_hash": "f178a55958557f72df0f2d4c31ea1ef8"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/search.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "ebc49ee7f683a302493cdd4fd43764e4",
+    "semantic_hash": "ebc49ee7f683a302493cdd4fd43764e4"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/mount.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "910f1ea60d2e03d09f008ed3101c8f7b",
+    "semantic_hash": "910f1ea60d2e03d09f008ed3101c8f7b"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/inspect.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "5315443136f29fa3bb8061bd9018ddc6",
+    "semantic_hash": "5315443136f29fa3bb8061bd9018ddc6"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/topology.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "a2ec74f31ecc36e44b33fb7b5b033e71",
+    "semantic_hash": "a2ec74f31ecc36e44b33fb7b5b033e71"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bin.ts": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "085a30194db6fae1d0e52b08f9493324",
+    "semantic_hash": "085a30194db6fae1d0e52b08f9493324"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/tool.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "a64f02bc5da707a849f55aa6e39c2b74",
+    "semantic_hash": "a64f02bc5da707a849f55aa6e39c2b74"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/git.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "3928ebd5960fb5409d51c23cb1c660fc",
+    "semantic_hash": "3928ebd5960fb5409d51c23cb1c660fc"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/set.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "ed86cbbe664f0f494d6d2bd63de67b7a",
+    "semantic_hash": "ed86cbbe664f0f494d6d2bd63de67b7a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/unflatten.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "1f53dd9860379d8dedc5e7b0205b959c",
+    "semantic_hash": "1f53dd9860379d8dedc5e7b0205b959c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/search.test.ts": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "812ad822f3688e48c400fe053f3aa5d8",
+    "semantic_hash": "812ad822f3688e48c400fe053f3aa5d8"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/graph.test.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "213a87c7ba4586839e9bbf27fa07b588",
+    "semantic_hash": "213a87c7ba4586839e9bbf27fa07b588"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/query.ts": {
+    "mtime": 1778884582.5810082,
+    "ast_hash": "504d5b859199545a648fa760b7e8078c",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/patch.test.ts": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "901c775f70845c9b086fa42f94ca17fe",
+    "semantic_hash": "901c775f70845c9b086fa42f94ca17fe"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/extract.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "c3ef2a6ee1f07dbfa0a26864ed8294cd",
+    "semantic_hash": "c3ef2a6ee1f07dbfa0a26864ed8294cd"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/validate.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "1535c39dc11c1b72e5752f530c4179df",
+    "semantic_hash": "1535c39dc11c1b72e5752f530c4179df"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/flatten.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "892fada563aa309998b129f464ea246a",
+    "semantic_hash": "892fada563aa309998b129f464ea246a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/diff.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "6a5bca9d2a69a36ead2bde279434ed4c",
+    "semantic_hash": "6a5bca9d2a69a36ead2bde279434ed4c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/ui.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "167677a495f0423db1bb375e7f4d681e",
+    "semantic_hash": "167677a495f0423db1bb375e7f4d681e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/pack.test.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "840c350fd30e87a36691b45b81759b49",
+    "semantic_hash": "840c350fd30e87a36691b45b81759b49"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/serve.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "1f9f001c9fec0e44a50daf7e5c56e203",
+    "semantic_hash": "1f9f001c9fec0e44a50daf7e5c56e203"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/query.test.ts": {
+    "mtime": 1777178376.4817898,
+    "ast_hash": "30339fa263ec06d194001a7f9870dbe5",
+    "semantic_hash": "30339fa263ec06d194001a7f9870dbe5"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/tool.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "ad092234866dfd0090c6697f52a83f08",
+    "semantic_hash": "ad092234866dfd0090c6697f52a83f08"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bin-setup.ts": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "763fb1361e1ac0c79b4b77e2ba880abf",
+    "semantic_hash": "763fb1361e1ac0c79b4b77e2ba880abf"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/git.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "0f90060dfc5020badd0ff35358300261",
+    "semantic_hash": "0f90060dfc5020badd0ff35358300261"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/pack.ts": {
+    "mtime": 1778884505.0828865,
+    "ast_hash": "eb9b2a8f62b96b5aafaf9acc3ced8ccf",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/patch.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "7418b9bc635a54bf9334c86729d25e1f",
+    "semantic_hash": "7418b9bc635a54bf9334c86729d25e1f"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/graph.ts": {
+    "mtime": 1778884595.4974265,
+    "ast_hash": "3cb72ee4eb1059657aaa0a398d167bd6",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/inspect.ts": {
+    "mtime": 1778884775.7606363,
+    "ast_hash": "30075b31d2f1d918763de85a609d6d36",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/extract.ts": {
+    "mtime": 1778884762.2600265,
+    "ast_hash": "1312af5ddb6145f4c64c70cab559100e",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/run.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "809de2c34e2d1fc3590f6a418b969b05",
+    "semantic_hash": "809de2c34e2d1fc3590f6a418b969b05"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/summarize.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "86be35e1da42cf75323c4ccd2c28207d",
+    "semantic_hash": "86be35e1da42cf75323c4ccd2c28207d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bextract.ts": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "00b8fe0d09b4b853fa49a13f916153f1",
+    "semantic_hash": "00b8fe0d09b4b853fa49a13f916153f1"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/shell.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "53c7a7ad91b5cd971a83299f607b3f74",
+    "semantic_hash": "53c7a7ad91b5cd971a83299f607b3f74"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/ui.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "7aadaa8118a89d682d57bf0f544a2b64",
+    "semantic_hash": "7aadaa8118a89d682d57bf0f544a2b64"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/diff.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "505eddaf1a6b1e17a71ff61a81cbe1d8",
+    "semantic_hash": "505eddaf1a6b1e17a71ff61a81cbe1d8"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/summarize.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "3c510789e1be720e90bbe88bee2b5b2e",
+    "semantic_hash": "3c510789e1be720e90bbe88bee2b5b2e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/topology.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "b3928177275086a885ce4a7a74f1d7b7",
+    "semantic_hash": "b3928177275086a885ce4a7a74f1d7b7"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bextract.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "9366f0758212ba24449409b23ce01658",
+    "semantic_hash": "9366f0758212ba24449409b23ce01658"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/sync.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "8fe628dd5087ca9a7e2a00699419f3f6",
+    "semantic_hash": "8fe628dd5087ca9a7e2a00699419f3f6"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/config.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "b6ec13c7eb3e545887c04176e4cc5b43",
+    "semantic_hash": "b6ec13c7eb3e545887c04176e4cc5b43"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/mount.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "2dfae0f10a03d087cff750661d88db2a",
+    "semantic_hash": "2dfae0f10a03d087cff750661d88db2a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/alias.ts": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "99897ba9b8e907fc7ab97560f4036a00",
+    "semantic_hash": "99897ba9b8e907fc7ab97560f4036a00"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/shell.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "7d06c3ff2b3b555d246894835293f40d",
+    "semantic_hash": "7d06c3ff2b3b555d246894835293f40d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/config.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "7547ca69e7f2a668c6bb83cddf93cff9",
+    "semantic_hash": "7547ca69e7f2a668c6bb83cddf93cff9"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/reconstruct.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "1331f3f159225491aa05215574a8453f",
+    "semantic_hash": "1331f3f159225491aa05215574a8453f"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/semantic.test.ts": {
+    "mtime": 1778388465.804878,
+    "ast_hash": "81b02e79c8e8f089fea71d7848d0548b",
+    "semantic_hash": "81b02e79c8e8f089fea71d7848d0548b"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/get.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "03b4ab80f74650ce96b78181bd4cf30c",
+    "semantic_hash": "03b4ab80f74650ce96b78181bd4cf30c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/serve.test.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "3964492f48234ba27efab5cc3523989d",
+    "semantic_hash": "3964492f48234ba27efab5cc3523989d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/get.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "c0e31c9488398b025f2aa35a38abb944",
+    "semantic_hash": "c0e31c9488398b025f2aa35a38abb944"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bpack.ts": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "d57962b9384b836bedd845bb1ea1274a",
+    "semantic_hash": "d57962b9384b836bedd845bb1ea1274a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/set.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "ae2f90a08309b118b242e507cfba5773",
+    "semantic_hash": "ae2f90a08309b118b242e507cfba5773"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/run.test.ts": {
+    "mtime": 1778882632.987406,
+    "ast_hash": "d8ef37e1017bd1b8000cbe40cd5a9b8f",
+    "semantic_hash": "d8ef37e1017bd1b8000cbe40cd5a9b8f"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/bin.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "03364e6c2e7bba03f9e40abdf9da825e",
+    "semantic_hash": "03364e6c2e7bba03f9e40abdf9da825e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/alias.test.ts": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "dea452ecc88727de880c1ae748715e41",
+    "semantic_hash": "dea452ecc88727de880c1ae748715e41"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/commands/validate.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "70394cbaad410f28605a38f199508c48",
+    "semantic_hash": "70394cbaad410f28605a38f199508c48"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/parsers/index.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "9bc3697b6889dfedb32b1c1794165187",
+    "semantic_hash": "9bc3697b6889dfedb32b1c1794165187"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/parsers/ls.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "c09c776c85893f774c1809281ec1bec0",
+    "semantic_hash": "c09c776c85893f774c1809281ec1bec0"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/plugins/openapi.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "11f5ca34c775a0310faf6e2f5f7d0f7d",
+    "semantic_hash": "11f5ca34c775a0310faf6e2f5f7d0f7d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/plugins/openapi.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "62acc2da592047d5e75c3b72ba4eb8af",
+    "semantic_hash": "62acc2da592047d5e75c3b72ba4eb8af"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/types/index.ts": {
+    "mtime": 1778884476.1182933,
+    "ast_hash": "19cbf67af2358674581b6c25c510f463",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/api/query.ts": {
+    "mtime": 1778884638.9909494,
+    "ast_hash": "22b427e20e883679c111cb53a9f2a7b2",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/api/pack.ts": {
+    "mtime": 1778884633.7307565,
+    "ast_hash": "c19907f1762face6995de81c7bd64e7f",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/api/graph.ts": {
+    "mtime": 1778884644.9951723,
+    "ast_hash": "96adad942464aeee474e2b3c0f9a62b7",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/chunking.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "32948ee2553584fba0b7d5c472f45fbc",
+    "semantic_hash": "32948ee2553584fba0b7d5c472f45fbc"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/path-resolver.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "a007db304a2d5447d023780101fa99b0",
+    "semantic_hash": "a007db304a2d5447d023780101fa99b0"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/instruction.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "870b7ad5dc6b2cad1d2678328c30a2e2",
+    "semantic_hash": "870b7ad5dc6b2cad1d2678328c30a2e2"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/flatten.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "98c1ce2fcc111cab04edbc73abff126e",
+    "semantic_hash": "98c1ce2fcc111cab04edbc73abff126e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/embeddings.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "93d7b9e28cade34014f303bc44444a0e",
+    "semantic_hash": "93d7b9e28cade34014f303bc44444a0e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/git.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "a3029ebc591f9816e88ecf7349bdd4cb",
+    "semantic_hash": "a3029ebc591f9816e88ecf7349bdd4cb"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-analysis.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "3db6c765409ec8879bfa6c83fe5a7011",
+    "semantic_hash": "3db6c765409ec8879bfa6c83fe5a7011"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/command.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "efc69dfa577bf161f1491854020a00f3",
+    "semantic_hash": "efc69dfa577bf161f1491854020a00f3"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/format.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "d63a5ce7517612d9539eb48a6a50f3fe",
+    "semantic_hash": "d63a5ce7517612d9539eb48a6a50f3fe"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/flatten.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "a0cdd15d5dcdf6f19461c08182352b09",
+    "semantic_hash": "a0cdd15d5dcdf6f19461c08182352b09"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/ui.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "060306b056777a9f2cfba9944d418314",
+    "semantic_hash": "060306b056777a9f2cfba9944d418314"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-semantic.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "cbabe973fe6ba91745f7fbc71bd64fd1",
+    "semantic_hash": "cbabe973fe6ba91745f7fbc71bd64fd1"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/webdav-vfs.test.ts": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "a58e173084ea2f42e96cf12370d902a9",
+    "semantic_hash": "a58e173084ea2f42e96cf12370d902a9"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-ast.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "919c8fd7a5b86752bf01a9b986c8df0a",
+    "semantic_hash": "919c8fd7a5b86752bf01a9b986c8df0a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/webdav-vfs.ts": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "5c323316f9c64abb9fbb984d419016a7",
+    "semantic_hash": "5c323316f9c64abb9fbb984d419016a7"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/path-resolver.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "09ea7130c3a796056385ec2f6061a65c",
+    "semantic_hash": "09ea7130c3a796056385ec2f6061a65c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/streaming-json.test.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "50bbbea8c17eb773e6ee65be32edd38c",
+    "semantic_hash": "50bbbea8c17eb773e6ee65be32edd38c"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/tool-runner.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "174d079bbd7b07038c2382c1fee4863d",
+    "semantic_hash": "174d079bbd7b07038c2382c1fee4863d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-analysis.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "9d96bf4aa8fc1cf00cf8d70be766c620",
+    "semantic_hash": "9d96bf4aa8fc1cf00cf8d70be766c620"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-ast.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "c9d37af607292f7b1888de37c78b8f53",
+    "semantic_hash": "c9d37af607292f7b1888de37c78b8f53"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/output.ts": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "95725fc2d7675d051b95c6ebec23c7e9",
+    "semantic_hash": "95725fc2d7675d051b95c6ebec23c7e9"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/graph-semantic.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "3d873f6e9ab8cc3b87cd41604afa1c56",
+    "semantic_hash": "3d873f6e9ab8cc3b87cd41604afa1c56"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/ui.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "d735b01cde446f1eb6286eed62e99851",
+    "semantic_hash": "d735b01cde446f1eb6286eed62e99851"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/output.test.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "54c406f0f0b18021d0ca910f81b2011a",
+    "semantic_hash": "54c406f0f0b18021d0ca910f81b2011a"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/chunking.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "62c82ddd92bfc9a3fa9295794333302d",
+    "semantic_hash": "62c82ddd92bfc9a3fa9295794333302d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/alias.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "926cc08ed7166b8f826d57d90a97bb58",
+    "semantic_hash": "926cc08ed7166b8f826d57d90a97bb58"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/command.ts": {
+    "mtime": 1778884486.2544868,
+    "ast_hash": "02c7f17586cf6180e05605721aa81706",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/binary.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "ff1039b43f7a978c42982d0487e7f6bd",
+    "semantic_hash": "ff1039b43f7a978c42982d0487e7f6bd"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/config.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "63a7a287ba68e04f11fe2d0224139a03",
+    "semantic_hash": "63a7a287ba68e04f11fe2d0224139a03"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/hashing.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "54546aba8e034cec70a60032c2e147ca",
+    "semantic_hash": "54546aba8e034cec70a60032c2e147ca"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/input.ts": {
+    "mtime": 1778882632.9914036,
+    "ast_hash": "fec53de8222fdfc350dd65cb25574bc0",
+    "semantic_hash": "fec53de8222fdfc350dd65cb25574bc0"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/binary.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "785ed68c2e84b0e3197f2408705af377",
+    "semantic_hash": "785ed68c2e84b0e3197f2408705af377"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/streaming-json.ts": {
+    "mtime": 1778882632.9954014,
+    "ast_hash": "59e196b6c4f2c5eaeb8d1d5f2c372c9e",
+    "semantic_hash": "59e196b6c4f2c5eaeb8d1d5f2c372c9e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/format.ts": {
+    "mtime": 1777178376.4857898,
+    "ast_hash": "db148cbcbaf6e5b3b41b93af1240c48e",
+    "semantic_hash": "db148cbcbaf6e5b3b41b93af1240c48e"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/alias.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "1db4b87ecd87b0332a5e36cb7ade5e36",
+    "semantic_hash": "1db4b87ecd87b0332a5e36cb7ade5e36"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/dependency.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "a865b15413f4f44ade790543167e93a7",
+    "semantic_hash": "a865b15413f4f44ade790543167e93a7"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/utils/hashing.test.ts": {
+    "mtime": 1778388465.808878,
+    "ast_hash": "289d684cc3f9098bca263a0b2071b9fc",
+    "semantic_hash": "289d684cc3f9098bca263a0b2071b9fc"
+  },
+  "/home/Ray0404/Documents/Projects/jref/.gemini/settings.json": {
+    "mtime": 1778882981.650539,
+    "ast_hash": "8ce69198b56a0694f81e85bd4f33373b",
+    "semantic_hash": "8ce69198b56a0694f81e85bd4f33373b"
+  },
+  "/home/Ray0404/Documents/Projects/jref/GEMINI.md": {
+    "mtime": 1778882981.6465383,
+    "ast_hash": "ac94a039c7f24a0b634189e058194b7d",
+    "semantic_hash": "ac94a039c7f24a0b634189e058194b7d"
+  },
+  "/home/Ray0404/Documents/Projects/jref/refactor-library-plan.md": {
+    "mtime": 1778884332.557594,
+    "ast_hash": "897668a89d656b6482894ca37fba770d",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/GRAPH_REPORT.md": {
+    "mtime": 1778882632.9594228,
+    "ast_hash": "9a4acfc86d2d772ab5b2c9553dd852e7",
+    "semantic_hash": "9a4acfc86d2d772ab5b2c9553dd852e7"
+  },
+  "/home/Ray0404/Documents/Projects/jref/AGENTS.md": {
+    "mtime": 1778882632.9594228,
+    "ast_hash": "d7c6a235d43b880522902a251ca9aaaa",
+    "semantic_hash": "d7c6a235d43b880522902a251ca9aaaa"
+  },
+  "/home/Ray0404/Documents/Projects/jref/README.md": {
+    "mtime": 1778884787.133157,
+    "ast_hash": "95fcd1c79e50d0425d8bb76d42390b3e",
+    "semantic_hash": ""
+  },
+  "/home/Ray0404/Documents/Projects/jref/schemas/api/venice/venice-api.yaml": {
+    "mtime": 1778882632.9834085,
+    "ast_hash": "19970ebad411daf8c00f305e98d54048",
+    "semantic_hash": "19970ebad411daf8c00f305e98d54048"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/SKILL.md": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "aff1f741afd5949cf0be426f3bc17254",
+    "semantic_hash": "aff1f741afd5949cf0be426f3bc17254"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/references/cli-reference.md": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "945b454632af3f3425871370970e73ef",
+    "semantic_hash": "945b454632af3f3425871370970e73ef"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/references/graph-topology.md": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "eeff395205ad97dee85010fe3cf59871",
+    "semantic_hash": "eeff395205ad97dee85010fe3cf59871"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/references/mcp-tools.md": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "cf45afa23edf7cdd43b9ecb7a7284bcb",
+    "semantic_hash": "cf45afa23edf7cdd43b9ecb7a7284bcb"
+  },
+  "/home/Ray0404/Documents/Projects/jref/skill/jref-expert/assets/agent-prompt.txt": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "ee7bdc1ca27442ddcd5190518391d089",
+    "semantic_hash": "ee7bdc1ca27442ddcd5190518391d089"
+  },
+  "/home/Ray0404/Documents/Projects/jref/src/assets/graph-viewer.html": {
+    "mtime": 1778388465.800878,
+    "ast_hash": "1392d61893112c975b4139173857185f",
+    "semantic_hash": "1392d61893112c975b4139173857185f"
+  },
+  "/home/Ray0404/Documents/Projects/jref/docs/jref.md": {
+    "mtime": 1778882632.9634204,
+    "ast_hash": "72cd7c46a902d938fa7b3c07fbea9ce8",
+    "semantic_hash": "72cd7c46a902d938fa7b3c07fbea9ce8"
+  }
+}
