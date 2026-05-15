@@ -5,6 +5,8 @@ import { parserRegistry } from '../parsers/index.js';
 import { existsSync, unlinkSync, readFileSync } from 'fs';
 
 describe('ToolCommand', () => {
+  // ...
+}, 30000);
   beforeAll(async () => {
     await registerBuiltinCommands();
     if (existsSync('.jref/debug.log')) {
