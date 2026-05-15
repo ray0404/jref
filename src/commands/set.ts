@@ -5,19 +5,20 @@ import { setValueByPath } from '../utils/path-resolver.js';
 export class SetCommand extends Command {
   readonly definition = {
     name: 'set',
-    description: 'Update or add a value in a snapshot using dot/bracket notation',
+    description: 'Update or add a value in a snapshot (in-place by default)',
     usage: 'jref set <path> <value> [snapshot.json]',
     options: [
-      { flags: '--write, -w', description: 'Write the changes back to the source file in-place' }
+      { flags: '--stdout', description: 'Print to stdout instead of updating the file in-place' }
     ],
     examples: [
-      'jref set metadata.instruction "New instructions" snapshot.json --write',
-      'jref set "files[\'new-file.ts\']" "console.log(\'new\');" snapshot.json -w',
+      'jref set metadata.instruction "New instructions" snapshot.json',
+      'jref set "files[\'new-file.ts\']" "console.log(\'new\');" snapshot.json',
+      'jref set version 1.3.0 package.json --stdout',
       'cat snapshot.json | jref set version 2.0.0 > updated.json'
     ],
     workflows: [
       'Surgical Mutation: Update specific parts of a snapshot without full extraction.',
-      'In-place Update: Use --write to update the original file safely.',
+      'Default In-place: File arguments are updated in-place unless --stdout is used.',
       'Automation: Programmatically update metadata or content in existing snapshots.'
     ]
   };
@@ -28,7 +29,7 @@ export class SetCommand extends Command {
     context: CommandContext
   ): Promise<CommandResult> {
     try {
-      const { path, rawValue, snapshotFile, writeInPlace } = this.parseArgs(args);
+      const { path, rawValue, snapshotFile, useStdout } = this.parseArgs(args);
 
       if (!path) {
         return this.error('No path provided', options);
@@ -36,11 +37,6 @@ export class SetCommand extends Command {
 
       if (rawValue === undefined) {
         return this.error('No value provided', options);
-      }
-
-      // If we are writing in-place, we must have a file path
-      if (writeInPlace && (!snapshotFile || snapshotFile === '-')) {
-        return this.error('--write requires a valid file path', options);
       }
 
       const snapshot = await this.getJSON(context, options, snapshotFile);
@@ -82,7 +78,12 @@ export class SetCommand extends Command {
       // Output the modified snapshot
       const output = JSON.stringify(snapshot, null, 2);
       
-      if (writeInPlace && snapshotFile) {
+      // Determine if we should write in-place
+      // Default to in-place if a file is provided and --stdout is NOT set
+      const isPiped = !snapshotFile || snapshotFile === '-';
+      const shouldWriteInPlace = !isPiped && !useStdout;
+
+      if (shouldWriteInPlace && snapshotFile) {
         const { writeFileSync } = await import('fs');
         writeFileSync(snapshotFile, output, 'utf8');
         return this.success(options.silent ? '' : `✅ Updated ${snapshotFile}`);
@@ -99,16 +100,16 @@ export class SetCommand extends Command {
     path?: string;
     rawValue?: string;
     snapshotFile?: string;
-    writeInPlace?: boolean;
+    useStdout?: boolean;
   } {
     const positional = args.filter(arg => !arg.startsWith('-'));
-    const writeInPlace = args.includes('--write') || args.includes('-w');
+    const useStdout = args.includes('--stdout');
     
     return {
       path: positional[0],
       rawValue: positional[1],
       snapshotFile: positional[2],
-      writeInPlace
+      useStdout
     };
   }
 }
