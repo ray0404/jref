@@ -284,6 +284,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { BExtractCommand } = await import('../commands/bextract.js');
   const { ValidateCommand } = await import('../commands/validate.js');
   const { GraphCommand } = await import('../commands/graph.js');
+  const { TopologyCommand } = await import('../commands/topology.js');
   const { AliasCommand } = await import('../commands/alias.js');
   const { ToolCommand } = await import('../commands/tool.js');
   const { GitCommand } = await import('../commands/git.js');
@@ -316,6 +317,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new BExtractCommand());
   registry.register(new ValidateCommand());
   registry.register(new GraphCommand());
+  registry.register(new TopologyCommand());
   registry.register(new AliasCommand());
   registry.register(new ToolCommand());
   registry.register(new GitCommand());

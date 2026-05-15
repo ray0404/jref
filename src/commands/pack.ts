@@ -5,7 +5,7 @@
 
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync, mkdirSync } from 'fs';
 import { resolve, relative, join } from 'path';
 import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
@@ -15,6 +15,9 @@ import { chunkCode } from '../utils/chunking.js';
 import { generateEmbedding } from '../utils/embeddings.js';
 import { generateFileHashMap, getDeltaPaths, type FileHashMap } from '../utils/hashing.js';
 import { readFromInput } from '../utils/input.js';
+import { homedir } from 'os';
+import { createHash } from 'crypto';
+import { execSync } from 'child_process';
 
 interface PackFlags {
   instruction?: string;
@@ -143,6 +146,42 @@ export class PackCommand extends Command {
       const isRemote = targetDir && (isExplicitRemoteUrl(targetDir) || isValidShorthand(targetDir));
       let result: any;
       let rootDir = targetDir ? resolve(targetDir) : process.cwd();
+
+      // Caching Logic for Remote Repos
+      const cacheBaseDir = join(homedir(), '.jref', 'cache');
+      let cacheKey = '';
+      let cachePath = '';
+      
+      if (isRemote && targetDir) {
+        cacheKey = createHash('md5').update(`${targetDir}-${flags.branch || 'default'}-${flags.commit || 'head'}`).digest('hex');
+        cachePath = join(cacheBaseDir, `${cacheKey}.json`);
+        
+        // Try to get remote head hash if possible (online check)
+        let remoteHead = '';
+        try {
+            // Basic ping to check if remote has changed
+            remoteHead = execSync(`git ls-remote ${targetDir} ${flags.branch || 'HEAD'}`, { stdio: 'pipe' }).toString().split(/\s+/)[0];
+        } catch (err) {
+            // If offline or fail, we'll rely on cache if it exists
+        }
+
+        if (existsSync(cachePath)) {
+            const cachedData = JSON.parse(readFileSync(cachePath, 'utf8'));
+            const isFresh = remoteHead && cachedData._remoteHead === remoteHead;
+            
+            if (isFresh || !remoteHead) {
+                if (!options.silent) {
+                    console.error(`🚚 Using cached snapshot for ${targetDir} ${!remoteHead ? '(Offline Mode)' : '(Fresh)'}`);
+                }
+                const output = JSON.stringify(cachedData, null, 2);
+                if (options.json || options.silent) {
+                    return this.success(output);
+                }
+                process.stdout.write(output + '\n');
+                return this.success();
+            }
+        }
+      }
 
       if (!existsSync(rootDir) && !isRemote) {
         return this.error(`Directory not found: ${rootDir}`, options);
@@ -492,6 +531,29 @@ export class PackCommand extends Command {
       // Normal single-file output
       const snapshot = createSnapshot(allFiles, encodings);
       
+      // Save to cache if remote
+      if (isRemote && cachePath) {
+          if (!existsSync(cacheBaseDir)) {
+              mkdirSync(cacheBaseDir, { recursive: true });
+          }
+          
+          let remoteHead = '';
+          try {
+              remoteHead = execSync(`git ls-remote ${targetDir} ${flags.branch || 'HEAD'}`, { stdio: 'pipe' }).toString().split(/\s+/)[0];
+          } catch (err) {}
+
+          const cacheObject = {
+              ...snapshot,
+              _remoteHead: remoteHead,
+              _cachedAt: Date.now(),
+              _url: targetDir
+          };
+          writeFileSync(cachePath, JSON.stringify(cacheObject, null, 2));
+          if (!options.silent) {
+              console.error(`💾 Remote snapshot cached to ${cachePath}`);
+          }
+      }
+
       // If streaming mode, wrap in protocol markers
       if (flags.stream) {
         const payload = JSON.stringify({
