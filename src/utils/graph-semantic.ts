@@ -17,7 +17,7 @@ export interface SemanticExtractionOptions {
  * Infers semantic relationships between nodes using local embedding models.
  */
 export async function inferSemanticEdges(
-  nodes: GraphNode[], 
+  _nodes: GraphNode[], 
   fileContents: Record<string, string>,
   options: SemanticExtractionOptions = {}
 ): Promise<GraphEdge[]> {

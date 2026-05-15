@@ -30,8 +30,9 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Flatten** - Convert nested snapshots to flat key-value pairs
 - **Unflatten** - Restore flat snapshots to their original nested structure
 - **Shell** - Interactive JavaScript REPL for real-time snapshot manipulation
-- **Mount** - Expose snapshots as virtual filesystems via WebDAV
+- **Mount** - Expose snapshots as virtual filesystems via WebDAV (supports --proot for Termux)
 - **Git** - Virtualized or local Git operations with a high-fidelity interactive TUI (diffing, staging, commits)
+- **Topology** - Analyze project structure and complexity metrics (SLOC, cyclomatic complexity)
 
 ## High Performance
 
@@ -40,6 +41,9 @@ jref is optimized for speed and efficiency, especially when dealing with large r
 - **Parallel Git Status** - Leverages asynchronous I/O to check file statuses across snapshots in parallel.
 - **WASM Concurrency** - Orchestrates simultaneous retrieval of required WASM binaries for AST analysis.
 - **Memory-Efficient Streaming** - Processes multi-gigabyte snapshots using custom streaming JSON parsers.
+- **Remote Caching** - Automatically caches remote repository snapshots to reduce network overhead for repeated access.
+- **Termux Optimizations** - Automatically rewrites binary paths (/usr/bin/env, etc.) for seamless script execution on Android.
+
 
 ## Target Environments
 
@@ -613,6 +617,7 @@ jref mount <file.json> [options]
 
 Options:
   -p, --port <number>   Port for the WebDAV server (default: 8080)
+  --proot               Execute a proot jail binding the mount to /workspace (Termux/ARM only)
   --read-only           Mount in read-only mode
 ```
 
@@ -620,7 +625,22 @@ Options:
 ```bash
 # Mount and open in file manager
 jref mount project.json
+
+# Start a proot shell inside the snapshot virtual environment
+jref mount project.json --proot
 ```
+
+### topology
+
+Analyze project structure and complexity metrics across the codebase.
+
+```bash
+jref topology [directory|snapshot]
+```
+
+**Features:**
+- **Complexity Analysis**: Calculates cyclomatic complexity and SLOC for supported languages.
+- **Structural Mapping**: Identifies deep nesting and architectural bottlenecks.
 
 ### git
 

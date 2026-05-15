@@ -4,9 +4,9 @@
  */
 
 import { Command } from '../utils/command.js';
-import type { CLIOptions, CommandResult, CommandContext, GraphSnapshot } from '../types/index.js';
+import type { CLIOptions, CommandResult, GraphSnapshot } from '../types/index.js';
 import { readFileSync, existsSync } from 'fs';
-import { analyzeGraph, createGraph } from '../utils/graph-analysis.js';
+import { analyzeGraph } from '../utils/graph-analysis.js';
 import { extractGraphFromSource } from '../utils/graph-ast.js';
 
 export class TopologyCommand extends Command {
@@ -25,10 +25,13 @@ export class TopologyCommand extends Command {
     ]
   };
 
+  protected parseArgs(args: string[]): { positional: string[], flags: any } {
+    return { positional: args, flags: {} };
+  }
+
   async execute(
     args: string[],
-    options: CLIOptions,
-    context: CommandContext
+    options: CLIOptions
   ): Promise<CommandResult> {
     try {
       if (args.length < 2) {
@@ -51,7 +54,7 @@ export class TopologyCommand extends Command {
       const analysisA = analyzeGraph(graphA);
       const analysisB = analyzeGraph(graphB);
 
-      const report = this.generateDriftReport(analysisA, analysisB, options);
+      const report = this.generateDriftReport(analysisA, analysisB);
 
       if (!options.silent && !options.json) {
         process.stdout.write(report + '\n');
@@ -79,13 +82,13 @@ export class TopologyCommand extends Command {
     return { nodes: allNodes, edges: allEdges };
   }
 
-  private generateDriftReport(a: any, b: any, options: CLIOptions): string {
+  private generateDriftReport(a: any, b: any): string {
     let report = '# 🏗️ Architectural Drift Report\n\n';
 
     // 1. Bottleneck Analysis (Degree Centrality increase)
     report += '## 🚀 Bottleneck Evolution (Centrality Drift)\n';
-    const godNodesA = new Map(a.godNodes.map((n: any) => [n.id, n.centrality]));
-    const godNodesB = new Map(b.godNodes.map((n: any) => [n.id, n.centrality]));
+    const godNodesA = new Map<string, number>(a.godNodes.map((n: any) => [n.id, n.centrality]));
+    const godNodesB = new Map<string, number>(b.godNodes.map((n: any) => [n.id, n.centrality]));
 
     let bottleneckFound = false;
     for (const [id, centralityB] of godNodesB) {

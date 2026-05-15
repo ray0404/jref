@@ -107,6 +107,23 @@ export function printSuccess(message: string, options: CLIOptions = {}): void {
 }
 
 /**
+ * Print result message (generic output)
+ */
+export function printResult(message: string, options: CLIOptions = {}): void {
+  if (options.silent || (options.json && !options.raw)) {
+    return;
+  }
+  
+  const formatted = options.raw ? message : message;
+
+  if (outputHandler) {
+    outputHandler(formatted, 'stdout');
+  } else {
+    process.stdout.write(formatted + '\n');
+  }
+}
+
+/**
  * Print warning message
  */
 export function printWarning(message: string, options: CLIOptions = {}): void {

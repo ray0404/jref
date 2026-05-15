@@ -139,7 +139,7 @@ export function exportToGML(graph: DirectedGraph): string {
     gml += '  ]\n';
   });
 
-  graph.forEachEdge((edge, attributes, source, target) => {
+  graph.forEachEdge((_edge, attributes, source, target) => {
     gml += `  edge [\n    source "${source}"\n    target "${target}"\n`;
     for (const [key, value] of Object.entries(attributes)) {
       if (typeof value === 'string') {
@@ -185,8 +185,8 @@ export function exportToGraphML(graph: DirectedGraph): string {
     xml += '    </node>\n';
   });
 
-  graph.forEachEdge((edge, attributes, source, target) => {
-    xml += `    <edge id="${edge}" source="${source}" target="${target}">\n`;
+  graph.forEachEdge((_edge, attributes, source, target) => {
+    xml += `    <edge id="${_edge}" source="${source}" target="${target}">\n`;
     for (const [key, value] of Object.entries(attributes)) {
       xml += `      <data key="${key}">${value}</data>\n`;
     }
@@ -220,7 +220,7 @@ export function queryGraph(graph: DirectedGraph, query: string): string[] {
   }
 
   const results: string[] = [];
-  graph.forEachInboundEdge(targetId, (edge, attributes, source) => {
+  graph.forEachInboundEdge(targetId, (_edge, attributes, source) => {
     if (attributes.relation === relation || relation === '*') {
       results.push(source);
     }

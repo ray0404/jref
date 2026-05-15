@@ -21,7 +21,7 @@
 The project follows a modular, command-based architecture:
 
 - `src/index.ts`: CLI entry point, handles global flags and command routing.
-- `src/commands/`: Implementation of individual CLI commands (e.g., `pack`, `query`, `serve`).
+- `src/commands/`: Implementation of individual CLI commands (e.g., `pack`, `query`, `serve`, `topology`).
   - Commands extend the `Command` base class in `src/utils/command.ts`.
 - `src/utils/`: Shared logic and utilities.
 
@@ -31,6 +31,7 @@ According to the latest graph analysis, these are the most central symbols/files
 - `utils/streaming-json.ts`: Core streaming logic for memory-efficient snapshot processing.
 - `utils/output.ts`: Centralized output and formatting hub.
 - `utils/binary.ts`: Binary detection and encoding management.
+- `utils/graph-analysis.ts`: Central logic for graph-based dependency mapping.
 
 Understanding these files is critical for understanding how the entire system communicates and handles data.
 
@@ -75,6 +76,9 @@ Understanding these files is critical for understanding how the entire system co
 - `summarize`: Interface-only architectural maps.
 - `list_directory`: Scoped file navigation.
 - `graph`: Symbol dependency tracing.
+- `Resources`: Direct access to snapshot files via `jref://` scheme.
+- `Prompts`: Pre-defined templates for architectural review and validation.
+- `Roadmap`: CRDT-backed real-time roadmap state management.
 
 ## 📂 Key Snapshot Schema
 

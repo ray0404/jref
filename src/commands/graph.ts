@@ -9,7 +9,7 @@ import { CLIOptions, CommandContext, CommandResult, GraphSnapshot } from '../typ
 import { extractGraphFromSource, ensureWasm, CORE_WASM_URL, LANGUAGE_REGISTRY } from '../utils/graph-ast.js';
 import { analyzeGraph, generateGraphReport, createGraph, exportToGML, exportToGraphML, queryGraph } from '../utils/graph-analysis.js';
 import { inferSemanticEdges } from '../utils/graph-semantic.js';
-import { printInfo, printSuccess, printResult } from '../utils/output.js';
+import { printInfo, printSuccess } from '../utils/output.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -289,7 +289,7 @@ export class GraphCommand extends Command {
   private async queryGraph(
     queryStr: string,
     options: CLIOptions & { output?: string },
-    context: CommandContext
+    _context: CommandContext
   ): Promise<CommandResult> {
     const graphFile = options.output || 'graph-snapshot.json';
 
