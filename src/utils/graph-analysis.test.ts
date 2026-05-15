@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createGraph, getBlastRadius, getCommunityNodes } from './graph-analysis.js';
+import { createGraph, getBlastRadius, getCommunityNodes, exportToGML, exportToGraphML, queryGraph } from './graph-analysis.js';
 import { GraphSnapshot } from '../types/index.js';
 
 describe('Graph Analysis Utils', () => {
@@ -33,10 +33,7 @@ describe('Graph Analysis Utils', () => {
     expect(radiusB).toContain('C');
     expect(radiusB.length).toBe(2);
 
-    // C is imported by D. So C affects D.
-    // But C also affects things that import it.
-    // Wait, B affects C (inbound to B is C). C affects D (inbound to C is D).
-    // So blast radius of B at depth 2 should include D.
+    // B affects C, and C affects D. Blast radius B at depth 2 includes D.
     const radiusB2 = getBlastRadius(graph, 'B', 2);
     expect(radiusB2).toContain('A');
     expect(radiusB2).toContain('C');
@@ -54,5 +51,37 @@ describe('Graph Analysis Utils', () => {
     expect(nodes2).toContain('C');
     expect(nodes2).toContain('D');
     expect(nodes2.length).toBe(2);
+  });
+
+  it('should export to GML', () => {
+    const graph = createGraph(mockSnapshot);
+    // Add centrality to one node manually for test if analyzeGraph not called
+    graph.setNodeAttribute('A', 'centrality', 0.5);
+    const gml = exportToGML(graph);
+    expect(gml).toContain('graph [');
+    expect(gml).toContain('node [');
+    expect(gml).toContain('id "A"');
+    expect(gml).toContain('centrality 0.5');
+    expect(gml).toContain('edge [');
+    expect(gml).toContain('source "A"');
+    expect(gml).toContain('target "B"');
+  });
+
+  it('should export to GraphML', () => {
+    const graph = createGraph(mockSnapshot);
+    const graphml = exportToGraphML(graph);
+    expect(graphml).toContain('<graphml');
+    expect(graphml).toContain('<node id="A"');
+    expect(graphml).toContain('source="A" target="B"');
+  });
+
+  it('should execute a simple Cypher-like query', () => {
+    const graph = createGraph(mockSnapshot);
+    // Find all nodes that import B
+    const query = 'MATCH (n)-[r:imports]->(m:B) RETURN n';
+    const results = queryGraph(graph, query);
+    expect(results).toContain('A');
+    expect(results).toContain('C');
+    expect(results.length).toBe(2);
   });
 });

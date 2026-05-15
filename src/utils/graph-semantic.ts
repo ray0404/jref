@@ -1,38 +1,96 @@
-import { GraphNode, GraphEdge } from '../types/index.js';
+import * as path from 'path';
+import * as os from 'os';
+import { pipeline, env } from '@xenova/transformers';
+import { GraphNode, GraphEdge, CodeChunk } from '../types/index.js';
+import { chunkCode } from './chunking.js';
 
 /**
- * Utility for semantic graph extraction using an LLM.
- * This phase processes markdown files, inline comments, and unstructured text 
- * to establish conceptual links.
+ * Utility for semantic graph extraction using local embeddings.
  */
 
 export interface SemanticExtractionOptions {
-  apiKey?: string;
   model?: string;
+  threshold?: number;
 }
 
 /**
- * Infers semantic relationships between nodes using an LLM or local analysis.
+ * Infers semantic relationships between nodes using local embedding models.
  */
 export async function inferSemanticEdges(
-  _nodes: GraphNode[], 
-  _fileContents: Record<string, string>,
-  _options: SemanticExtractionOptions = {}
+  nodes: GraphNode[], 
+  fileContents: Record<string, string>,
+  options: SemanticExtractionOptions = {}
 ): Promise<GraphEdge[]> {
-  // Placeholder for Phase 3: Semantic Extraction & Inference
-  // This would typically involve:
-  // 1. Chunking text from documentation and code comments.
-  // 2. Sending chunks and symbol names to an LLM with a specific prompt.
-  // 3. Parsing the LLM response (JSON) into GraphEdge objects.
-  
-  // Example of what might be inferred:
-  // { source: "docs/architecture.md", target: "src/utils/graph-ast.ts", relation: "rationale_for", confidence: "INFERRED", weight: 1.0 }
-  
-  return [];
+  const modelName = options.model || 'Xenova/all-MiniLM-L6-v2';
+  const threshold = options.threshold || 0.85;
+
+  // Configure cache directory
+  env.cacheDir = path.join(os.homedir(), '.jref', 'models');
+
+  try {
+    const extractor = await pipeline('feature-extraction', modelName);
+    
+    // 1. Chunk and embed all files
+    const chunks: CodeChunk[] = [];
+    for (const [filePath, content] of Object.entries(fileContents)) {
+      const fileChunks = chunkCode(filePath, content);
+      chunks.push(...fileChunks);
+    }
+
+    // 2. Generate embeddings for each chunk
+    for (const chunk of chunks) {
+      const result = await extractor(chunk.content, { pooling: 'mean', normalize: true });
+      chunk.embedding = Array.from(result.data as Float32Array);
+    }
+
+    const edges: GraphEdge[] = [];
+
+    // 3. Compare chunks to generate semantic edges
+    for (let i = 0; i < chunks.length; i++) {
+      for (let j = i + 1; j < chunks.length; j++) {
+        const chunkA = chunks[i];
+        const chunkB = chunks[j];
+
+        if (chunkA.embedding && chunkB.embedding) {
+          const similarity = cosineSimilarity(chunkA.embedding, chunkB.embedding);
+          
+          if (similarity > threshold) {
+            edges.push({
+              source: chunkA.filePath, // Simplified: edge between files
+              target: chunkB.filePath,
+              relation: 'semantic_similarity',
+              confidence: 'INFERRED',
+              weight: similarity
+            });
+          }
+        }
+      }
+    }
+
+    return edges;
+  } catch (err) {
+    console.warn(`Semantic inference failed: ${(err as Error).message}`);
+    return [];
+  }
 }
 
 /**
- * Builds a prompt for the LLM to perform semantic extraction.
+ * Calculates cosine similarity between two vectors.
+ */
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+/**
+ * Builds a prompt for the LLM to perform semantic extraction (Legacy/External).
  */
 export function buildSemanticPrompt(nodes: GraphNode[], chunks: { path: string, content: string }[]): string {
   const symbolList = nodes.map(n => `- ${n.id} (${n.label}, type: ${n.type})`).join('\n');

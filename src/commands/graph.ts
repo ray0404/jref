@@ -7,9 +7,9 @@ import { fileURLToPath } from 'url';
 import { Command } from '../utils/command.js';
 import { CLIOptions, CommandContext, CommandResult, GraphSnapshot } from '../types/index.js';
 import { extractGraphFromSource, ensureWasm, CORE_WASM_URL, LANGUAGE_REGISTRY } from '../utils/graph-ast.js';
-import { analyzeGraph, generateGraphReport } from '../utils/graph-analysis.js';
+import { analyzeGraph, generateGraphReport, createGraph, exportToGML, exportToGraphML, queryGraph } from '../utils/graph-analysis.js';
 import { inferSemanticEdges } from '../utils/graph-semantic.js';
-import { printInfo, printSuccess } from '../utils/output.js';
+import { printInfo, printSuccess, printResult } from '../utils/output.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,17 +27,17 @@ export class GraphCommand extends Command {
       { flags: '-o, --output <file>', description: 'Output file for the graph', defaultValue: 'graph-snapshot.json' },
       { flags: '--no-llm', description: 'Skip semantic extraction using LLM', defaultValue: false },
       { flags: '-p, --port <number>', description: 'Port for the graph UI server', defaultValue: '8080' },
+      { flags: '-f, --format <format>', description: 'Export format (json, gml, graphml)', defaultValue: 'json' },
     ],
     examples: [
       'jref graph build .',
-      'jref graph build snapshot.json',
-      'jref graph wasm-update',
+      'jref graph build snapshot.json -f graphml',
+      'jref graph query "MATCH (n)-[r:imports]->(m:src/index.ts) RETURN n"',
       'jref graph ui',
-      'jref graph query "concept"'
     ]
   };
 
-  protected parseArgs(args: string[]): { subcommand: string, target: string, flags: { output?: string, noLlm?: boolean, port?: string } } {
+  protected parseArgs(args: string[]): { subcommand: string, target: string, flags: { output?: string, noLlm?: boolean, port?: string, format?: string } } {
     const flags: any = {};
     let subcommand = '';
     let target = '';
@@ -50,6 +50,8 @@ export class GraphCommand extends Command {
         flags.noLlm = true;
       } else if (arg === '-p' || arg === '--port') {
         flags.port = args[++i];
+      } else if (arg === '-f' || arg === '--format') {
+        flags.format = args[++i];
       } else if (!arg.startsWith('-')) {
         if (!subcommand) {
           subcommand = arg;
@@ -79,7 +81,9 @@ export class GraphCommand extends Command {
     if (subcommand === 'build') {
       return await this.buildGraph(target, mergedOptions, context);
     } else if (subcommand === 'query') {
-      return await this.queryGraph(target, args.slice(2), mergedOptions, context);
+      // For query, the target is actually part of the query if not provided separately
+      const queryStr = target && !target.startsWith('.') ? target : args.slice(2).join(' ');
+      return await this.queryGraph(queryStr, mergedOptions, context);
     } else if (subcommand === 'wasm-update') {
       return await this.updateWasm(options);
     } else if (subcommand === 'ui' || subcommand === 'serve') {
@@ -200,14 +204,14 @@ export class GraphCommand extends Command {
    */
   private async buildGraph(
     target: string,
-    options: CLIOptions & { output?: string, noLlm?: boolean },
+    options: CLIOptions & { output?: string, noLlm?: boolean, format?: string },
     context: CommandContext
   ): Promise<CommandResult> {
     let allNodes: any[] = [];
     let allEdges: any[] = [];
     let fileContents: Record<string, string> = {};
     
-    const outputFileName = options.output || 'graph-snapshot.json';
+    const outputFileName = options.output || `graph-snapshot.${options.format || 'json'}`;
     const reportFileName = 'GRAPH_REPORT.md';
 
     try {
@@ -252,29 +256,61 @@ export class GraphCommand extends Command {
       const initialSnapshot: GraphSnapshot = { nodes: uniqueNodes, edges: allEdges };
       const analysis = analyzeGraph(initialSnapshot);
       
+      // Handle different export formats
+      let outputContent: string;
+      const format = options.format || 'json';
+      
+      if (format === 'gml') {
+        const graph = createGraph(analysis.graph);
+        outputContent = exportToGML(graph);
+      } else if (format === 'graphml') {
+        const graph = createGraph(analysis.graph);
+        outputContent = exportToGraphML(graph);
+      } else {
+        outputContent = JSON.stringify(analysis.graph, null, 2);
+      }
+
       // Save graph
-      fs.writeFileSync(outputFileName, JSON.stringify(analysis.graph, null, 2));
+      fs.writeFileSync(outputFileName, outputContent);
       
       // Save report
       const report = generateGraphReport(analysis);
       fs.writeFileSync(reportFileName, report);
 
-      return this.success(`Graph built successfully!\n- Graph: ${outputFileName}\n- Report: ${reportFileName}`);
+      return this.success(`Graph built successfully!\n- Graph: ${outputFileName} (${format})\n- Report: ${reportFileName}`);
     } catch (err) {
       return this.error(`Failed to build graph: ${(err as Error).message}`, options);
     }
   }
 
   /**
-   * Placeholder for graph querying
+   * Executes a graph traversal query
    */
   private async queryGraph(
-    _target: string,
-    queryArgs: string[],
-    _options: CLIOptions,
-    _context: CommandContext
+    queryStr: string,
+    options: CLIOptions & { output?: string },
+    context: CommandContext
   ): Promise<CommandResult> {
-    return this.success(`Querying graph for: ${queryArgs.join(' ')} (Not fully implemented yet)`);
+    const graphFile = options.output || 'graph-snapshot.json';
+
+    if (!fs.existsSync(graphFile)) {
+      return this.error(`Graph file not found: ${graphFile}. Run 'jref graph build' first.`, options);
+    }
+
+    try {
+      const graphData = JSON.parse(fs.readFileSync(graphFile, 'utf8'));
+      const graph = createGraph(graphData);
+      
+      const results = queryGraph(graph, queryStr);
+      
+      if (options.json) {
+        return this.success(JSON.stringify(results, null, 2));
+      } else {
+        return this.success(`Query results for "${queryStr}":\n${results.map(r => `- ${r}`).join('\n')}`);
+      }
+    } catch (err) {
+      return this.error(`Query failed: ${(err as Error).message}`, options);
+    }
   }
 
   /**

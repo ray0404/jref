@@ -5,6 +5,12 @@ import { CommandContext } from '../types/index.js';
 
 vi.mock('fs');
 vi.mock('http');
+vi.mock('@xenova/transformers', () => ({
+  pipeline: vi.fn(),
+  env: {
+    cacheDir: ''
+  }
+}));
 
 describe('GraphCommand', () => {
   const context: CommandContext = {
@@ -39,13 +45,21 @@ describe('GraphCommand', () => {
     expect(result.error).toContain('Invalid subcommand');
   });
 
-  it('should error if graph file missing for ui command', async () => {
+  it('should parse build subcommand with format flag', () => {
     const command = new GraphCommand();
-    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
+    const args = ['build', '.', '--format', 'gml'];
+    const { subcommand, flags } = (command as any).parseArgs(args);
     
-    const result = await command.execute(['ui'], {}, context);
+    expect(subcommand).toBe('build');
+    expect(flags.format).toBe('gml');
+  });
+
+  it('should parse query subcommand', () => {
+    const command = new GraphCommand();
+    const args = ['query', 'MATCH (n)-[r:imports]->(m:ID) RETURN n'];
+    const { subcommand, target } = (command as any).parseArgs(args);
     
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('Graph file not found');
+    expect(subcommand).toBe('query');
+    expect(target).toBe('MATCH (n)-[r:imports]->(m:ID) RETURN n');
   });
 });

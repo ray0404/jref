@@ -22,14 +22,16 @@ export function analyzeGraph(snapshot: GraphSnapshot): AnalysisResult {
   // Louvain Community Detection
   const communities = (louvain as any)(graph) as Record<string, number>;
   
-  // Assign community to nodes in the snapshot
-  const updatedNodes = snapshot.nodes.map(node => ({
-    ...node,
-    community: communities[node.id]
-  }));
-
   // Degree Centrality to find "God Nodes"
   const degrees = (centrality as any).degree(graph) as Record<string, number>;
+
+  // Assign community and centrality to nodes in the snapshot
+  const updatedNodes = snapshot.nodes.map(node => ({
+    ...node,
+    community: communities[node.id],
+    centrality: degrees[node.id] || 0
+  }));
+
   const godNodes = Object.entries(degrees)
     .map(([id, score]) => ({ id, centrality: score }))
     .sort((a, b) => b.centrality - a.centrality)
@@ -117,6 +119,114 @@ export function getCommunityNodes(snapshot: GraphSnapshot, communityId: number):
   return snapshot.nodes
     .filter(n => n.community === communityId)
     .map(n => n.id);
+}
+
+/**
+ * Exports the graph to GML format.
+ */
+export function exportToGML(graph: DirectedGraph): string {
+  let gml = 'graph [\n  directed 1\n';
+  
+  graph.forEachNode((node, attributes) => {
+    gml += `  node [\n    id "${node}"\n`;
+    for (const [key, value] of Object.entries(attributes)) {
+      if (typeof value === 'string') {
+        gml += `    ${key} "${value}"\n`;
+      } else if (typeof value === 'number') {
+        gml += `    ${key} ${value}\n`;
+      }
+    }
+    gml += '  ]\n';
+  });
+
+  graph.forEachEdge((edge, attributes, source, target) => {
+    gml += `  edge [\n    source "${source}"\n    target "${target}"\n`;
+    for (const [key, value] of Object.entries(attributes)) {
+      if (typeof value === 'string') {
+        gml += `    ${key} "${value}"\n`;
+      } else if (typeof value === 'number') {
+        gml += `    ${key} ${value}\n`;
+      }
+    }
+    gml += '  ]\n';
+  });
+
+  gml += ']';
+  return gml;
+}
+
+/**
+ * Exports the graph to GraphML format.
+ */
+export function exportToGraphML(graph: DirectedGraph): string {
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+  xml += '<graphml xmlns="http://graphml.graphdrawing.org/xmlns">\n';
+  
+  // Define keys based on node attributes
+  const nodeKeys = new Set<string>();
+  graph.forEachNode((_, attrs) => Object.keys(attrs).forEach(k => nodeKeys.add(k)));
+  nodeKeys.forEach(k => {
+    xml += `  <key id="${k}" for="node" attr.name="${k}" attr.type="string"/>\n`;
+  });
+
+  const edgeKeys = new Set<string>();
+  graph.forEachEdge((_, attrs) => Object.keys(attrs).forEach(k => edgeKeys.add(k)));
+  edgeKeys.forEach(k => {
+    xml += `  <key id="${k}" for="edge" attr.name="${k}" attr.type="string"/>\n`;
+  });
+
+  xml += '  <graph id="G" edgedefault="directed">\n';
+
+  graph.forEachNode((node, attributes) => {
+    xml += `    <node id="${node}">\n`;
+    for (const [key, value] of Object.entries(attributes)) {
+      xml += `      <data key="${key}">${value}</data>\n`;
+    }
+    xml += '    </node>\n';
+  });
+
+  graph.forEachEdge((edge, attributes, source, target) => {
+    xml += `    <edge id="${edge}" source="${source}" target="${target}">\n`;
+    for (const [key, value] of Object.entries(attributes)) {
+      xml += `      <data key="${key}">${value}</data>\n`;
+    }
+    xml += '    </edge>\n';
+  });
+
+  xml += '  </graph>\n';
+  xml += '</graphml>';
+  return xml;
+}
+
+/**
+ * Executes a simple graph traversal query.
+ * Syntax: MATCH (n)-[r:relation]->(m:ID) RETURN n
+ */
+export function queryGraph(graph: DirectedGraph, query: string): string[] {
+  const match = query.match(/MATCH\s+\((?<nodeVar>\w+)\)-\[r:(?<relation>.*)\]->\((?<targetVar>\w+):(?<targetId>.*)\)\s+RETURN\s+(?<returnVar>\w+)/);
+  
+  if (!match || !match.groups) {
+    throw new Error('Invalid query syntax. Supported: MATCH (n)-[r:relation]->(m:ID) RETURN n');
+  }
+
+  const { relation, targetId, returnVar, nodeVar } = match.groups;
+
+  if (returnVar !== nodeVar) {
+    throw new Error('Only returning the source node variable is currently supported.');
+  }
+
+  if (!graph.hasNode(targetId)) {
+    return [];
+  }
+
+  const results: string[] = [];
+  graph.forEachInboundEdge(targetId, (edge, attributes, source) => {
+    if (attributes.relation === relation || relation === '*') {
+      results.push(source);
+    }
+  });
+
+  return results;
 }
 
 /**
