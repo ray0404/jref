@@ -171,13 +171,29 @@ export class RunCommand extends Command {
       let command = 'node';
       let spawnArgs = [scriptPath, ...args];
 
+      // Termux detection
+      const isTermux = process.env.PREFIX && process.env.PREFIX.includes('com.termux');
+      const termuxBin = '/data/data/com.termux/files/usr/bin/';
+
+      const rewritePath = (path: string) => {
+        if (!isTermux) return path;
+        if (path.startsWith(termuxBin)) return path;
+        
+        // Rewrite /usr/bin/env, /bin/, /usr/bin/
+        if (path === '/usr/bin/env') return join(termuxBin, 'env');
+        if (path.startsWith('/bin/')) return join(termuxBin, path.slice(5));
+        if (path.startsWith('/usr/bin/')) return join(termuxBin, path.slice(9));
+        
+        return path;
+      };
+
       // Default extension-based inference
       if (scriptPath.endsWith('.py')) {
-        command = 'python3';
+        command = isTermux ? join(termuxBin, 'python3') : 'python3';
       } else if (scriptPath.endsWith('.sh')) {
-        command = 'bash';
+        command = isTermux ? join(termuxBin, 'bash') : 'bash';
       } else if (scriptPath.endsWith('.ts')) {
-        command = 'node';
+        command = isTermux ? join(termuxBin, 'node') : 'node';
         spawnArgs = ['--experimental-strip-types', scriptPath, ...args];
       } else {
         // No recognizable extension, try shebang detection
@@ -189,11 +205,11 @@ export class RunCommand extends Command {
           if (firstLine.startsWith('#!')) {
             const shebang = firstLine.slice(2).trim();
             const shebangParts = shebang.split(/\s+/);
-            const interpreter = shebangParts[0];
+            const interpreter = rewritePath(shebangParts[0]);
             
             // If it's /usr/bin/env, the real interpreter is the next part
             if (interpreter.endsWith('/env') && shebangParts.length > 1) {
-              command = shebangParts[1];
+              command = rewritePath(shebangParts[1]);
               spawnArgs = [...shebangParts.slice(2), scriptPath, ...args];
             } else {
               command = interpreter;
@@ -202,7 +218,13 @@ export class RunCommand extends Command {
           }
         } catch (err) {
           // Fallback to node if reading fails
+          command = isTermux ? join(termuxBin, 'node') : 'node';
         }
+      }
+
+      // Final path check for inferred commands
+      if (isTermux && !command.startsWith('/')) {
+        command = join(termuxBin, command);
       }
 
       const child = spawn(command, spawnArgs, {

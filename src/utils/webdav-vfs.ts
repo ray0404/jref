@@ -1,6 +1,11 @@
 import { v2 as webdav } from 'webdav-server';
 import { Readable, Writable } from 'stream';
 import type { ProjectSnapshot } from '../types/index.js';
+import fs from 'fs';
+import nodePath from 'path';
+import os from 'os';
+import crypto from 'crypto';
+import { EventEmitter } from 'events';
 
 export class JrefSerializer implements webdav.FileSystemSerializer {
   uid(): string {
@@ -23,10 +28,18 @@ export class JrefSerializer implements webdav.FileSystemSerializer {
  */
 export class JrefFileSystem extends webdav.FileSystem {
   private snapshot: ProjectSnapshot;
+  public events = new EventEmitter();
+  private tmpDir: string;
 
   constructor(snapshot: ProjectSnapshot) {
     super(new JrefSerializer());
     this.snapshot = snapshot;
+    
+    // Ensure temp directory exists
+    this.tmpDir = nodePath.join(os.homedir(), '.jref', 'tmp');
+    if (!fs.existsSync(this.tmpDir)) {
+      fs.mkdirSync(this.tmpDir, { recursive: true });
+    }
   }
 
   /**
@@ -55,14 +68,12 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _type(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<webdav.ResourceType>) {
-    console.error(`[JrefFileSystem] _type: ${path.toString()}`);
     const item = this.getItem(path);
     if (!item) return callback(webdav.Errors.ResourceNotFound);
     callback(null as any, item === 'file' ? webdav.ResourceType.File : webdav.ResourceType.Directory);
   }
 
   protected _readDir(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<string[] | webdav.Path[]>) {
-    console.error(`[JrefFileSystem] _readDir: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
     const dirPrefix = fullPath === '' ? '' : fullPath + '/';
     
@@ -79,7 +90,6 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _openReadStream(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<Readable>) {
-    console.error(`[JrefFileSystem] _openReadStream: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
     const content = this.snapshot.files[fullPath];
 
@@ -94,18 +104,39 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _openWriteStream(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<Writable>) {
-    console.error(`[JrefFileSystem] _openWriteStream: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
+    const tempFile = nodePath.join(this.tmpDir, crypto.randomUUID());
     
-    const chunks: Buffer[] = [];
+    const writeStream = fs.createWriteStream(tempFile);
+    
     const stream = new Writable({
       write(chunk, encoding, next) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding as any));
-        next();
+        if (!writeStream.write(chunk, encoding as any)) {
+          writeStream.once('drain', next);
+        } else {
+          next();
+        }
       },
       final: (done) => {
-        this.snapshot.files[fullPath] = Buffer.concat(chunks).toString('utf8');
-        done();
+        writeStream.end(() => {
+          try {
+            // Memory safety: read the file content into the snapshot
+            // and then unlink the temp file.
+            this.snapshot.files[fullPath] = fs.readFileSync(tempFile, 'utf8');
+            fs.unlinkSync(tempFile);
+            this.events.emit('change', fullPath);
+            done();
+          } catch (err) {
+            done(err as Error);
+          }
+        });
+      }
+    });
+
+    // Handle stream error to clean up temp file
+    stream.on('error', () => {
+      if (fs.existsSync(tempFile)) {
+        fs.unlinkSync(tempFile);
       }
     });
 
@@ -113,7 +144,6 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _size(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<number>) {
-    console.error(`[JrefFileSystem] _size: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
     const content = this.snapshot.files[fullPath];
     if (content !== undefined) {
@@ -124,10 +154,10 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _create(path: webdav.Path, ctx: any, callback: webdav.ReturnCallback<void>) {
-    console.error(`[JrefFileSystem] _create: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
     if (ctx.type && ctx.type.isFile) {
       this.snapshot.files[fullPath] = '';
+      this.events.emit('change', fullPath);
       callback();
     } else {
       callback();
@@ -135,32 +165,31 @@ export class JrefFileSystem extends webdav.FileSystem {
   }
 
   protected _delete(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<void>) {
-    console.error(`[JrefFileSystem] _delete: ${path.toString()}`);
     const fullPath = this.normalizePath(path);
     const item = this.getItem(path);
 
     if (item === 'file') {
       delete this.snapshot.files[fullPath];
+      this.events.emit('change', fullPath);
     } else if (item === 'directory') {
       const dirPrefix = fullPath === '' ? '' : fullPath + '/';
+      let changed = false;
       for (const file of Object.keys(this.snapshot.files)) {
         if (file.startsWith(dirPrefix)) {
           delete this.snapshot.files[file];
+          changed = true;
         }
       }
+      if (changed) this.events.emit('change', fullPath);
     }
     callback();
   }
 
-  protected _propertyManager(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<webdav.IPropertyManager>) {
-    console.error(`[JrefFileSystem] _propertyManager: ${path.toString()}`);
-    // Return a default property manager
+  protected _propertyManager(_path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<webdav.IPropertyManager>) {
     callback(null as any, new webdav.LocalPropertyManager());
   }
 
-  protected _lockManager(path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<webdav.ILockManager>) {
-    console.error(`[JrefFileSystem] _lockManager: ${path.toString()}`);
-    // Return a default lock manager
+  protected _lockManager(_path: webdav.Path, _ctx: any, callback: webdav.ReturnCallback<webdav.ILockManager>) {
     callback(null as any, new webdav.LocalLockManager());
   }
 }

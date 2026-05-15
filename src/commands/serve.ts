@@ -6,10 +6,15 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
   ErrorCode,
   McpError,
 } from '@modelcontextprotocol/sdk/types.js';
 import { setOutputHandler } from '../utils/output.js';
+import * as Y from 'yjs';
 
 export class ServeCommand extends Command {
   readonly definition = {
@@ -36,6 +41,8 @@ export class ServeCommand extends Command {
 
   private snapshot: ProjectSnapshot | null = null;
   private snapshotFile: string | null = null;
+  private yDoc: Y.Doc = new Y.Doc();
+  private yRoadmap: Y.Text = this.yDoc.getText('roadmap');
 
   async execute(
     args: string[],
@@ -48,18 +55,22 @@ export class ServeCommand extends Command {
       
       if (context.snapshot) {
         this.snapshot = context.snapshot;
+        this.initializeCRDT();
       } else if (this.snapshotFile) {
         this.snapshot = await loadSnapshotFromFile(this.snapshotFile, options);
+        this.initializeCRDT();
       }
 
       const server = new Server(
         {
           name: 'jref-mcp-server',
-          version: '1.3.0',
+          version: '1.4.0',
         },
         {
           capabilities: {
             tools: {},
+            resources: {},
+            prompts: {},
           },
         }
       );
@@ -91,6 +102,18 @@ export class ServeCommand extends Command {
           },
         });
 
+        tools.push({
+          name: 'update_roadmap_state',
+          description: 'Apply a delta update to the project roadmap state (CRDT-based)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              delta: { type: 'string', description: 'Text to append to the roadmap' },
+            },
+            required: ['delta'],
+          },
+        });
+
         // Override some tools for better schema if needed, but dynamic mapping handles most
         return { tools };
       });
@@ -100,7 +123,20 @@ export class ServeCommand extends Command {
 
         if (name === 'load_snapshot') {
           const { path } = toolArgs as { path: string };
-          return await this.handleLoadSnapshot(path, options);
+          const result = await this.handleLoadSnapshot(path, options);
+          this.initializeCRDT();
+          return result;
+        }
+
+        if (name === 'update_roadmap_state') {
+          const { delta } = toolArgs as { delta: string };
+          this.yRoadmap.insert(this.yRoadmap.length, delta);
+          if (this.snapshot) {
+            this.snapshot.roadmap = this.yRoadmap.toString();
+          }
+          return {
+            content: [{ type: 'text', text: 'Roadmap state updated successfully.' }]
+          };
         }
 
         const command = registry.get(name);
@@ -111,6 +147,104 @@ export class ServeCommand extends Command {
         throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       });
 
+      // 3. Resources Integration
+      server.setRequestHandler(ListResourcesRequestSchema, async () => {
+        if (!this.snapshot) return { resources: [] };
+
+        const resources = Object.keys(this.snapshot.files).map((path) => ({
+          uri: `jref://snapshot/files/${path}`,
+          name: path,
+          mimeType: 'text/plain', // Default to plain text
+          description: `Source file: ${path}`,
+        }));
+
+        return { resources };
+      });
+
+      server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+        const { uri } = request.params;
+        if (!this.snapshot) throw new McpError(ErrorCode.InvalidRequest, 'No snapshot loaded');
+
+        const prefix = 'jref://snapshot/files/';
+        if (!uri.startsWith(prefix)) {
+          throw new McpError(ErrorCode.InvalidRequest, `Unsupported URI scheme: ${uri}`);
+        }
+
+        const path = uri.slice(prefix.length);
+        const content = this.snapshot.files[path];
+
+        if (content === undefined) {
+          throw new McpError(ErrorCode.InvalidRequest, `File not found in snapshot: ${path}`);
+        }
+
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'text/plain',
+              text: content,
+            },
+          ],
+        };
+      });
+
+      // 4. Prompts Integration
+      server.setRequestHandler(ListPromptsRequestSchema, async () => {
+        if (!this.snapshot) return { prompts: [] };
+
+        return {
+          prompts: [
+            {
+              name: 'RunBlastRadiusValidation',
+              description: 'Template for validating the blast radius of a proposed change against project instructions.',
+            },
+            {
+              name: 'ArchitecturalReview',
+              description: 'Complete architectural review of the codebase using snapshot summaries.',
+            },
+          ],
+        };
+      });
+
+      server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+        const { name } = request.params;
+        if (!this.snapshot) throw new McpError(ErrorCode.InvalidRequest, 'No snapshot loaded');
+
+        if (name === 'RunBlastRadiusValidation') {
+          return {
+            description: 'Blast Radius Validation Prompt',
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: `Analyze the following proposed change for potential side effects and violations of project rules.\n\nProject Instructions:\n${this.snapshot.instruction}\n\nProposed Change:\n{{diff}}`,
+                },
+              },
+            ],
+          };
+        }
+
+        if (name === 'ArchitecturalReview') {
+          // In a real scenario, we might call 'summarize' here
+          // For now, we'll provide a generic template that asks the agent to use the available tools
+          return {
+            description: 'Architectural Review Prompt',
+            messages: [
+              {
+                role: 'user',
+                content: {
+                  type: 'text',
+                  text: 'Perform a comprehensive architectural review of this project. Use the "summarize" and "graph" tools to map out dependencies and key God Nodes.',
+                },
+              },
+            ],
+          };
+        }
+
+        throw new McpError(ErrorCode.InvalidRequest, `Unknown prompt: ${name}`);
+      });
+
       console.error('MCP: Connecting transport...');
       const transport = new StdioServerTransport();
       await server.connect(transport);
@@ -119,8 +253,16 @@ export class ServeCommand extends Command {
       
       await new Promise<void>((resolve) => {
         transport.onclose = () => resolve();
-        process.on('SIGINT', () => transport.close().then(resolve));
-        process.on('SIGTERM', () => transport.close().then(resolve));
+        const close = () => {
+          const p = transport.close();
+          if (p && typeof p.then === 'function') {
+            p.then(resolve).catch(() => resolve());
+          } else {
+            resolve();
+          }
+        };
+        process.on('SIGINT', close);
+        process.on('SIGTERM', close);
       });
 
       return this.success();
@@ -130,6 +272,13 @@ export class ServeCommand extends Command {
     }
   }
 
+
+  private initializeCRDT() {
+    if (this.snapshot && this.snapshot.roadmap) {
+      this.yRoadmap.delete(0, this.yRoadmap.length);
+      this.yRoadmap.insert(0, this.snapshot.roadmap);
+    }
+  }
 
   private async handleLoadSnapshot(path: string, options: CLIOptions) {
     try {
@@ -166,7 +315,7 @@ export class ServeCommand extends Command {
               metadata: calculateMetadata(this.snapshot),
               directoryStructure: this.snapshot.directoryStructure,
               instruction: this.snapshot.instruction,
-              roadmap: this.snapshot.roadmap,
+              roadmap: this.yRoadmap.toString(),
             }, null, 2),
           },
         ],

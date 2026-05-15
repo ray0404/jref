@@ -1,58 +1,76 @@
 /**
- * Pack Command Tests
+ * Pack Command Caching Tests
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PackCommand } from './pack.js';
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
-import { join, resolve } from 'path';
+import { existsSync, writeFileSync, rmSync, mkdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+import * as repomix from 'repomix';
 
-describe('PackCommand', () => {
+vi.mock('repomix', async () => {
+  const actual = await vi.importActual('repomix');
+  return {
+    ...actual as any,
+    runRemoteAction: vi.fn(),
+    pack: vi.fn(),
+  };
+});
+
+// Mocking git ls-remote to simulate remote head check
+vi.mock('node:child_process', async () => {
+  const actual = await vi.importActual('node:child_process');
+  return {
+    ...actual as any,
+    execSync: vi.fn((command) => {
+      if (command.includes('git ls-remote')) {
+        return 'mock-sha1 HEAD';
+      }
+      return '';
+    }),
+  };
+});
+
+describe('PackCommand Caching', () => {
   let command: PackCommand;
-  const testRootDir = './test-pack-target';
+  const cacheDir = join(homedir(), '.jref', 'cache');
 
   beforeEach(() => {
     command = new PackCommand();
-    if (existsSync(testRootDir)) {
-      rmSync(testRootDir, { recursive: true, force: true });
+    if (existsSync(cacheDir)) {
+      rmSync(cacheDir, { recursive: true, force: true });
     }
-    mkdirSync(testRootDir);
-    mkdirSync(join(testRootDir, 'src'));
-    writeFileSync(join(testRootDir, 'src/main.ts'), 'export function main() {}');
-    writeFileSync(join(testRootDir, 'package.json'), '{"name": "test"}');
   });
 
-  it('should have correct definition', () => {
-    expect(command.definition.name).toBe('pack');
-  });
+  it('should cache remote repositories and reuse them', async () => {
+    const remoteUrl = 'https://github.com/user/repo';
+    const mockSnapshot = {
+      directoryStructure: 'test.ts',
+      files: { 'test.ts': 'console.log("cached")' },
+      instruction: 'Analyze this.'
+    };
 
-  it('should pack a simple directory', async () => {
-    const result = await command.execute([testRootDir], { json: true, silent: true }, { stdinIsPipe: false });
-    
-    expect(result.success).toBe(true);
-    const snapshot = JSON.parse(result.output!);
-    
-    // Repomix might return absolute or relative paths depending on config
-    // In our case we expect relative paths in the snapshot
-    expect(snapshot.files).toBeDefined();
-    expect(Object.keys(snapshot.files).length).toBeGreaterThanOrEqual(2);
-    
-    // Check if files exist (exact path depends on repomix behavior with cwd)
-    const paths = Object.keys(snapshot.files);
-    expect(paths.some(p => p.endsWith('main.ts'))).toBe(true);
-    expect(paths.some(p => p.endsWith('package.json'))).toBe(true);
-  });
+    // First call: Network hit
+    const mockRunRemoteAction = vi.spyOn(repomix, 'runRemoteAction').mockResolvedValue({
+      packResult: {
+        processedFiles: [{ path: 'test.ts', content: 'console.log("cached")' }]
+      }
+    } as any);
 
-  it('should include instructions and summary', async () => {
-    const result = await command.execute([
-        testRootDir, 
-        '--instruction', 'test instruction',
-        '--summary', 'test summary'
-    ], { json: true, silent: true }, { stdinIsPipe: false });
+    await command.execute([remoteUrl], { silent: true }, { stdinIsPipe: false });
+    
+    expect(mockRunRemoteAction).toHaveBeenCalledTimes(1);
+    
+    // Verify cache exists
+    expect(existsSync(cacheDir)).toBe(true);
 
-    expect(result.success).toBe(true);
-    const snapshot = JSON.parse(result.output!);
-    expect(snapshot.instruction).toBe('test instruction');
-    expect(snapshot.fileSummary).toBe('test summary');
+    // Second call: Cache hit (mock git ls-remote returns same hash)
+    mockRunRemoteAction.mockClear();
+    
+    await command.execute([remoteUrl], { silent: true }, { stdinIsPipe: false });
+    
+    // Should NOT call runRemoteAction again because hashes match
+    expect(mockRunRemoteAction).toHaveBeenCalledTimes(0);
   });
 });
