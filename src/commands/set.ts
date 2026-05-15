@@ -7,14 +7,17 @@ export class SetCommand extends Command {
     name: 'set',
     description: 'Update or add a value in a snapshot using dot/bracket notation',
     usage: 'jref set <path> <value> [snapshot.json]',
-    options: [],
+    options: [
+      { flags: '--write, -w', description: 'Write the changes back to the source file in-place' }
+    ],
     examples: [
-      'jref set metadata.instruction "New instructions" snapshot.json',
-      'jref set "files[\'new-file.ts\']" "console.log(\'new\');" snapshot.json',
+      'jref set metadata.instruction "New instructions" snapshot.json --write',
+      'jref set "files[\'new-file.ts\']" "console.log(\'new\');" snapshot.json -w',
       'cat snapshot.json | jref set version 2.0.0 > updated.json'
     ],
     workflows: [
       'Surgical Mutation: Update specific parts of a snapshot without full extraction.',
+      'In-place Update: Use --write to update the original file safely.',
       'Automation: Programmatically update metadata or content in existing snapshots.'
     ]
   };
@@ -25,7 +28,7 @@ export class SetCommand extends Command {
     context: CommandContext
   ): Promise<CommandResult> {
     try {
-      const { path, rawValue, snapshotFile } = this.parseArgs(args);
+      const { path, rawValue, snapshotFile, writeInPlace } = this.parseArgs(args);
 
       if (!path) {
         return this.error('No path provided', options);
@@ -33,6 +36,11 @@ export class SetCommand extends Command {
 
       if (rawValue === undefined) {
         return this.error('No value provided', options);
+      }
+
+      // If we are writing in-place, we must have a file path
+      if (writeInPlace && (!snapshotFile || snapshotFile === '-')) {
+        return this.error('--write requires a valid file path', options);
       }
 
       const snapshot = await this.getJSON(context, options, snapshotFile);
@@ -74,6 +82,12 @@ export class SetCommand extends Command {
       // Output the modified snapshot
       const output = JSON.stringify(snapshot, null, 2);
       
+      if (writeInPlace && snapshotFile) {
+        const { writeFileSync } = await import('fs');
+        writeFileSync(snapshotFile, output, 'utf8');
+        return this.success(options.silent ? '' : `✅ Updated ${snapshotFile}`);
+      }
+      
       return this.success(output);
 
     } catch (err) {
@@ -85,13 +99,16 @@ export class SetCommand extends Command {
     path?: string;
     rawValue?: string;
     snapshotFile?: string;
+    writeInPlace?: boolean;
   } {
     const positional = args.filter(arg => !arg.startsWith('-'));
+    const writeInPlace = args.includes('--write') || args.includes('-w');
     
     return {
       path: positional[0],
       rawValue: positional[1],
-      snapshotFile: positional[2]
+      snapshotFile: positional[2],
+      writeInPlace
     };
   }
 }
