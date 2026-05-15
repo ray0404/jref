@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { v2 as webdav } from 'webdav-server';
 import { JrefFileSystem } from './webdav-vfs.js';
 import type { ProjectSnapshot } from '../types/index.js';
 import { Readable, Writable } from 'stream';
+import fs from 'fs';
 
 describe('JrefFileSystem', () => {
   let snapshot: ProjectSnapshot;
@@ -67,6 +68,9 @@ describe('JrefFileSystem', () => {
   });
 
   it('should write file content and update snapshot', async () => {
+    const changeSpy = vi.fn();
+    jfs.events.on('change', changeSpy);
+
     const stream = await new Promise<Writable>((resolve) => jfs.openWriteStream(mockCtx, new webdav.Path('/file1.txt'), (err, s) => resolve(s)));
     
     await new Promise<void>((resolve, reject) => {
@@ -77,15 +81,51 @@ describe('JrefFileSystem', () => {
     });
 
     expect(snapshot.files['file1.txt']).toBe('new content');
+    expect(changeSpy).toHaveBeenCalledWith('file1.txt');
   });
 
-  it('should create new files', async () => {
+  it('should remain memory stable during large file writes', async () => {
+    // We'll use a 10MB chunk to test memory stability
+    const size = 10 * 1024 * 1024;
+    const chunk = Buffer.alloc(size, 'x');
+    const startMemory = process.memoryUsage().heapUsed;
+
+    const stream = await new Promise<Writable>((resolve) => jfs.openWriteStream(mockCtx, new webdav.Path('/large.txt'), (err, s) => resolve(s)));
+    
+    await new Promise<void>((resolve, reject) => {
+      stream.on('finish', resolve);
+      stream.on('error', reject);
+      stream.write(chunk);
+      stream.end();
+    });
+
+    const endMemory = process.memoryUsage().heapUsed;
+    const diff = endMemory - startMemory;
+
+    // We allow some overhead for the snapshot string itself (10MB)
+    // but we expect that DURING the write, we didn't double the usage due to chunks array.
+    // The chunks array in the OLD implementation would have stored the Buffer again.
+    // Here, diff should be roughly the size of the final string added to memory.
+    expect(snapshot.files['large.txt'].length).toBe(size);
+    // Heap increase shouldn't be drastically more than the string itself
+    expect(diff).toBeLessThan(size * 2); 
+  });
+
+  it('should create new files and emit change', async () => {
+    const changeSpy = vi.fn();
+    jfs.events.on('change', changeSpy);
+
     await new Promise((resolve) => jfs.create(mockCtx, new webdav.Path('/new.txt'), webdav.ResourceType.File, (err) => resolve(err)));
     expect(snapshot.files['new.txt']).toBe('');
+    expect(changeSpy).toHaveBeenCalledWith('new.txt');
   });
 
-  it('should delete files', async () => {
+  it('should delete files and emit change', async () => {
+    const changeSpy = vi.fn();
+    jfs.events.on('change', changeSpy);
+
     await new Promise((resolve) => jfs.delete(mockCtx, new webdav.Path('/file1.txt'), (err) => resolve(err)));
     expect(snapshot.files['file1.txt']).toBeUndefined();
+    expect(changeSpy).toHaveBeenCalledWith('file1.txt');
   });
 });
