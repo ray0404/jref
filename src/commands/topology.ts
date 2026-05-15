@@ -4,7 +4,7 @@
  */
 
 import { Command } from '../utils/command.js';
-import type { CLIOptions, CommandResult, GraphSnapshot } from '../types/index.js';
+import type { CLIOptions, CommandResult, GraphSnapshot, CommandContext } from '../types/index.js';
 import { readFileSync, existsSync } from 'fs';
 import { analyzeGraph } from '../utils/graph-analysis.js';
 import { extractGraphFromSource } from '../utils/graph-ast.js';
@@ -31,7 +31,8 @@ export class TopologyCommand extends Command {
 
   async execute(
     args: string[],
-    options: CLIOptions
+    options: CLIOptions,
+    _context: CommandContext
   ): Promise<CommandResult> {
     try {
       if (args.length < 2) {

@@ -27,3 +27,5 @@ GEMINI.md.bak
 /.npmrc
 /conductor/
 graphify-out/
+.gemini/
+.jref/

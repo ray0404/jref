@@ -1,12 +1,10 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { ToolCommand } from './tool.js';
 import { registry, registerBuiltinCommands } from '../utils/command.js';
 import { parserRegistry } from '../parsers/index.js';
 import { existsSync, unlinkSync, readFileSync } from 'fs';
 
 describe('ToolCommand', () => {
-  // ...
-}, 30000);
   beforeAll(async () => {
     await registerBuiltinCommands();
     if (existsSync('.jref/debug.log')) {
@@ -63,6 +61,6 @@ describe('ToolCommand', () => {
     
     expect(result.success).toBe(true);
     const logContent = readFileSync('.jref/debug.log', 'utf8');
-    expect(logContent).toContain('Parser \\"non-existent\\" not found');
+    expect(logContent).toContain('Parser "non-existent" not found');
   });
-});
+}, 30000);

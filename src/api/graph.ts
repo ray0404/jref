@@ -1,4 +1,5 @@
 import { GraphCommand } from '../commands/graph.js';
+import { TopologyCommand } from '../commands/topology.js';
 import type { GraphSnapshot, ProjectSnapshot } from '../types/index.js';
 
 export interface GraphBuildOptions {
@@ -76,4 +77,21 @@ export async function queryGraph(queryStr: string, graphFile: string = 'graph-sn
   } catch (err) {
     throw err;
   }
+}
+
+/**
+ * Programmatically analyze architectural drift between two snapshots
+ */
+export async function topology(snapshotA: string, snapshotB: string): Promise<any> {
+  const cmd = new TopologyCommand();
+  const args: string[] = [snapshotA, snapshotB];
+
+  const result = await cmd.execute(
+    args, 
+    { silent: true, json: true }, 
+    { stdin: '', stdinIsPipe: false, outputHandler: () => {} }
+  );
+  
+  if (!result.success) throw new Error(result.error || 'Topology analysis failed');
+  return result.data;
 }
