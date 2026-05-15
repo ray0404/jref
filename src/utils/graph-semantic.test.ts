@@ -8,7 +8,11 @@ vi.mock('@xenova/transformers', () => ({
     data: new Float32Array([0.1, 0.2, 0.3])
   })),
   env: {
-    cacheDir: ''
+    cacheDir: '',
+    wasm: {
+      numThreads: 1,
+      proxy: false
+    }
   }
 }));
 
