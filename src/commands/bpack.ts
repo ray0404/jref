@@ -115,15 +115,15 @@ export class BPackCommand extends Command {
 
       if (flags.output) {
         await writeFile(flags.output, output);
-        return this.success(`Archive created: ${flags.output} (${filePaths.length} files)`);
+        return this.success(`Archive created: ${flags.output} (${filePaths.length} files)`, snapshot);
       }
 
       if (options.json || options.silent) {
-        return this.success(output);
+        return this.success(output, snapshot);
       }
 
       process.stdout.write(output + '\n');
-      return this.success();
+      return this.success(undefined, snapshot);
 
     } catch (err) {
       return this.error(`BPack failed: ${(err as Error).message}`, options);

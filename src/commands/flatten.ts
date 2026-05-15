@@ -55,7 +55,7 @@ export class FlattenCommand extends Command {
       // but for now, join and return as success result.
       const output = lines.join('\n');
       
-      return this.success(output);
+      return this.success(output, lines);
 
     } catch (err) {
       return this.error(`Flatten failed: ${(err as Error).message}`, options);

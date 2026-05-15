@@ -98,12 +98,12 @@ export class DiffCommand extends Command {
         targetDir
       };
 
-      if (options.json) {
-        const output = JSON.stringify(result, null, 2);
-        return this.success(output);
+      const output = JSON.stringify(result, null, 2);
+      if (options.json || options.silent) {
+        return this.success(output, result);
       } else {
         this.printHumanDiff(result, options);
-        return this.success();
+        return this.success(undefined, result);
       }
 
     } catch (err) {

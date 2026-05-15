@@ -40,13 +40,13 @@ export class GetCommand extends Command {
 
       // If raw is requested and it's a string, print it raw
       if (options.raw && typeof value === 'string') {
-        return this.success(value);
+        return this.success(value, value);
       }
 
       // Otherwise use standard formatting (JSON-stringified for objects/arrays)
       const output = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
       
-      return this.success(output);
+      return this.success(output, value);
 
     } catch (err) {
       return this.error(`Get failed: ${(err as Error).message}`, options);

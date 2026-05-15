@@ -144,11 +144,11 @@ export class BExtractCommand extends Command {
         console.error(`✅ Extracted ${successCount} files to ${outputDir}.`);
       }
 
-      if (options.json) {
-        return this.success(JSON.stringify(results, null, 2));
+      if (options.json || options.silent) {
+        return this.success(JSON.stringify(results, null, 2), results);
       }
 
-      return this.success();
+      return this.success(undefined, results);
     } catch (err) {
       return this.error(`BExtract failed: ${(err as Error).message}`, options);
     }

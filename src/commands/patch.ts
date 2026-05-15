@@ -87,7 +87,7 @@ export class PatchCommand extends Command {
       // 4. Output the result
       const output = JSON.stringify(snapshot, null, 2);
       
-      return this.success(output);
+      return this.success(output, snapshot);
 
     } catch (err) {
       return this.error(`Patch failed: ${(err as Error).message}`, options);

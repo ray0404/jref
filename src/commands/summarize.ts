@@ -69,7 +69,7 @@ export class SummarizeCommand extends Command {
 
       const output = JSON.stringify(summary, null, 2);
       
-      return this.success(output);
+      return this.success(output, summary);
 
     } catch (err) {
       return this.error(`Summarize failed: ${(err as Error).message}`, options);

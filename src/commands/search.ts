@@ -154,7 +154,7 @@ export class SearchCommand extends Command {
       // Format and output results
       this.outputResults(results, options, flags);
 
-      return this.success();
+      return this.success(undefined, { results });
     } catch (err) {
       return this.error(`Search failed: ${(err as Error).message}`, options);
     }

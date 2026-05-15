@@ -100,11 +100,11 @@ export class ValidateCommand extends Command {
       }
 
       if (options.json || options.silent) {
-        return this.success(output);
+        return this.success(output, snapshot);
       }
 
       process.stdout.write(output + '\n');
-      return this.success();
+      return this.success(undefined, snapshot);
 
     } catch (err) {
       return this.error(`Validation command failed: ${(err as Error).message}`, options);

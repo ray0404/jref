@@ -303,18 +303,18 @@ export class GitCommand extends Command {
         };
         
         if (options.json || options.silent) {
-          return this.success(JSON.stringify(updatedSnapshot, null, 2));
+          return this.success(JSON.stringify(updatedSnapshot, null, 2), updatedSnapshot);
         }
         
         // If not JSON output, we print the command result and then the updated snapshot
         this.print(resultData, options);
         process.stdout.write('\n--- UPDATED SNAPSHOT ---\n');
         process.stdout.write(JSON.stringify(updatedSnapshot, null, 2) + '\n');
-        return this.success();
+        return this.success(undefined, updatedSnapshot);
       }
 
       this.print(resultData, options);
-      return this.success();
+      return this.success(undefined, resultData);
 
     } catch (err) {
       return this.error(`Git command failed: ${(err as Error).message}`, options);

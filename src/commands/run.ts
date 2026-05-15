@@ -112,7 +112,7 @@ export class RunCommand extends Command {
 
       const exitCode = await this.spawnProcess(scriptPath, scriptArgs);
 
-      return { success: exitCode === 0, exitCode: exitCode as any };
+      return this.success(undefined, { exitCode });
     } catch (err) {
       return this.error(`Run failed: ${(err as Error).message}`, options);
     } finally {

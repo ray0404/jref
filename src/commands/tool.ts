@@ -95,19 +95,20 @@ export class ToolCommand extends Command {
         }
       }
 
-      return this.success();
+      return this.success(undefined, output);
     } catch (err) {
       const errorMsg = `Tool execution failed: ${(err as Error).message}`;
       this.logDebug(err as Error, { command, commandArgs });
       
       if (options.json) {
-        this.print({
+        const errorData = {
           error: 'Execution failed',
           message: (err as Error).message,
           command,
           args: commandArgs
-        }, options);
-        return this.success(); // Standardized error object to stdout
+        };
+        this.print(errorData, options);
+        return this.success(undefined, errorData); // Standardized error object to stdout
       }
       
       return this.error(errorMsg, options);

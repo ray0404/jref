@@ -86,10 +86,10 @@ export class SetCommand extends Command {
       if (shouldWriteInPlace && snapshotFile) {
         const { writeFileSync } = await import('fs');
         writeFileSync(snapshotFile, output, 'utf8');
-        return this.success(options.silent ? '' : `✅ Updated ${snapshotFile}`);
+        return this.success(options.silent ? '' : `✅ Updated ${snapshotFile}`, snapshot);
       }
       
-      return this.success(output);
+      return this.success(output, snapshot);
 
     } catch (err) {
       return this.error(`Set failed: ${(err as Error).message}`, options);

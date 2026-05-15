@@ -45,7 +45,7 @@ export class UnflattenCommand extends Command {
       // 3. Output
       const output = JSON.stringify(snapshot, null, 2);
       
-      return this.success(output);
+      return this.success(output, snapshot);
 
     } catch (err) {
       return this.error(`Unflatten failed: ${(err as Error).message}`, options);

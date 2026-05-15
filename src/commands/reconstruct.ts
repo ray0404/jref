@@ -86,7 +86,8 @@ export class ReconstructCommand extends Command {
       return {
         success: result.matches,
         exitCode: exitCode as 0 | 1,
-        output: options.json ? JSON.stringify(result) : undefined
+        output: options.json ? JSON.stringify(result) : undefined,
+        data: result
       };
     } catch (err) {
       return this.error(`Reconstruct failed: ${(err as Error).message}`, options);
