@@ -1,17 +1,62 @@
+/**
+ * @module API/Query
+ * Programmatic interface for querying project snapshots.
+ */
+
 import { QueryCommand } from '../commands/query.js';
 import type { ProjectSnapshot } from '../types/index.js';
 
+/**
+ * Configuration options for the `query` function.
+ */
 export interface QueryOptions {
+  /**
+   * Specific file path to retrieve from the snapshot.
+   */
   path?: string;
+  /**
+   * Semantic search query string.
+   * If provided, the engine will perform a vector-based search across code chunks.
+   */
   semantic?: string;
+  /**
+   * Number of results to return for semantic search (default: 5).
+   */
   topK?: number;
+  /**
+   * Starting line number for targeted file extraction (1-based).
+   */
   lineStart?: number;
+  /**
+   * Ending line number for targeted file extraction (inclusive).
+   */
   lineEnd?: number;
+  /**
+   * Whether to include binary files in search results.
+   */
   searchBinaries?: boolean;
 }
 
 /**
- * Programmatically query a snapshot
+ * Programmatically queries a ProjectSnapshot or a snapshot file.
+ * Supports targeted file retrieval, line-range extraction, and semantic search.
+ * 
+ * @param snapshot - The ProjectSnapshot object or a path to a snapshot JSON file.
+ * @param options - Configuration options for the query.
+ * @returns A promise resolving to the query result (file content, search results, or metadata).
+ * @throws Error if the query fails or the snapshot is invalid.
+ * 
+ * @example
+ * ```ts
+ * import { query } from 'jref';
+ * 
+ * // Extract specific lines from a file in the snapshot
+ * const content = await query(mySnapshot, {
+ *   path: 'src/index.ts',
+ *   lineStart: 1,
+ *   lineEnd: 10
+ * });
+ * ```
  */
 export async function query(snapshot: ProjectSnapshot | string, options: QueryOptions = {}): Promise<any> {
   try {

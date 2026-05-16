@@ -1,6 +1,6 @@
 /**
- * Command Base Class
- * Abstract base for all CLI commands following the Command pattern
+ * @module Command
+ * Foundational Command pattern implementation for the jref CLI.
  */
 
 import type {
@@ -18,32 +18,89 @@ import {
   printProgress 
 } from './output.js';
 
+/**
+ * Represents a single CLI option for a command.
+ */
 export interface CommandOption {
+  /**
+   * The flags used to invoke this option (e.g., "-f, --file <path>").
+   */
   flags: string;
+  /**
+   * A short description of what the option does.
+   */
   description: string;
+  /**
+   * The default value for the option if not provided.
+   */
   defaultValue?: any;
 }
 
+/**
+ * Metadata definition for a CLI command.
+ */
 export interface CommandDefinition {
+  /**
+   * The unique name of the command.
+   */
   name: string;
+  /**
+   * A brief description of the command's purpose.
+   */
   description: string;
+  /**
+   * Usage string showing how to call the command.
+   */
   usage: string;
+  /**
+   * List of supported options/flags.
+   */
   options: CommandOption[];
+  /**
+   * Examples demonstrating common usage patterns.
+   */
   examples: string[];
+  /**
+   * Optional list of high-level workflows this command supports.
+   */
   workflows?: string[];
 }
 
+/**
+ * Interface for jref plugins that extend the CLI.
+ */
 export interface JrefPlugin {
+  /**
+   * The display name of the plugin.
+   */
   name: string;
+  /**
+   * Semantic version of the plugin.
+   */
   version: string;
+  /**
+   * Registration callback to add commands to the registry.
+   * @param registry - The global command registry instance.
+   */
   register: (registry: CommandRegistry) => void;
 }
 
+/**
+ * Abstract base class for all CLI commands.
+ * Implements the Command pattern and provides utility methods for output and data retrieval.
+ */
 export abstract class Command {
+  /**
+   * The metadata definition for the command.
+   */
   abstract readonly definition: CommandDefinition;
 
   /**
-   * Execute the command with given arguments and context
+   * Core execution logic for the command.
+   * @param args - Positional arguments passed to the command.
+   * @param options - Parsed global and command-specific options.
+   * @param context - Execution context including environment state and active snapshot.
+   * @returns A promise resolving to the result of the command execution.
    */
   abstract execute(
     args: string[],
@@ -52,16 +109,21 @@ export abstract class Command {
   ): Promise<CommandResult>;
 
   /**
-   * Parse command-specific arguments
+   * Parses positional arguments into a structured record.
+   * @param args - Raw positional arguments.
+   * @param context - Optional execution context.
+   * @returns A map of parsed argument names to their values.
    */
   protected abstract parseArgs(args: string[], context?: CommandContext): Record<string, unknown>;
 
   /**
-   * Get the snapshot from context, loading if necessary
-   */
-
-  /**
-   * Get generic JSON from context or file without schema coercion
+   * Retrieves generic JSON data from the context, a file, or stdin.
+   * Supports JSON5 for lenient parsing.
+   * @param context - Execution context.
+   * @param _options - Optional CLI options.
+   * @param filePath - Optional path to a JSON file. Use '-' for stdin.
+   * @returns A promise resolving to the parsed JSON data.
+   * @throws Error if file reading or JSON parsing fails.
    */
   protected async getJSON(context: CommandContext, _options?: CLIOptions, filePath?: string): Promise<any> {
     if (context.snapshot) {
@@ -90,6 +152,14 @@ export abstract class Command {
     }
   }
 
+  /**
+   * Loads a ProjectSnapshot from context, file, or stdin.
+   * Uses streaming JSON processing for efficiency.
+   * @param context - Execution context.
+   * @param options - CLI options (e.g., for schema validation).
+   * @param filePath - Optional path to the snapshot file.
+   * @returns A promise resolving to the loaded ProjectSnapshot.
+   */
   protected async getSnapshot(context: CommandContext, options?: CLIOptions, filePath?: string): Promise<ProjectSnapshot> {
     if (context.snapshot) {
       return context.snapshot;
@@ -111,7 +181,11 @@ export abstract class Command {
   }
 
   /**
-   * Format and print command result
+   * Prints data to the configured output handler (stdout or custom).
+   * Handles JSON formatting if requested in options.
+   * @param data - The data to print.
+   * @param options - CLI options.
+   * @param context - Optional context for output handler resolution.
    */
   protected print(
     data: unknown,
@@ -122,7 +196,12 @@ export abstract class Command {
   }
 
   /**
-   * Print error and return error result
+   * Reports an error to the user and generates a failure CommandResult.
+   * @param message - The error message.
+   * @param options - CLI options.
+   * @param exitCode - Exit code for the failure (defaults to 1).
+   * @param context - Optional context for output handler resolution.
+   * @returns A failed CommandResult.
    */
   protected error(
     message: string,
@@ -139,35 +218,53 @@ export abstract class Command {
   }
 
   /**
-   * Print success message (human mode only)
+   * Prints a success message to the user.
+   * Only displays in human-readable mode (no --json/--raw).
+   * @param message - Success message.
+   * @param options - CLI options.
+   * @param context - Optional context.
    */
   protected printSuccess(message: string, options: CLIOptions = {}, context?: CommandContext): void {
     printSuccess(message, options, context?.outputHandler);
   }
 
   /**
-   * Print warning message (human mode only)
+   * Prints a warning message to the user.
+   * Only displays in human-readable mode.
+   * @param message - Warning message.
+   * @param options - CLI options.
+   * @param context - Optional context.
    */
   protected printWarning(message: string, options: CLIOptions = {}, context?: CommandContext): void {
     printWarning(message, options, context?.outputHandler);
   }
 
   /**
-   * Print info message (human mode only)
+   * Prints an informational message to the user.
+   * Only displays in human-readable mode.
+   * @param message - Information message.
+   * @param options - CLI options.
+   * @param context - Optional context.
    */
   protected printInfo(message: string, options: CLIOptions = {}, context?: CommandContext): void {
     printInfo(message, options, context?.outputHandler);
   }
 
   /**
-   * Print progress indicator
+   * Prints a progress indicator or message.
+   * @param message - Progress message.
+   * @param options - CLI options.
+   * @param context - Optional context.
    */
   protected printProgress(message: string, options: CLIOptions = {}, context?: CommandContext): void {
     printProgress(message, options, context?.outputHandler);
   }
 
   /**
-   * Create success result
+   * Helper to create a successful CommandResult.
+   * @param output - Optional human-readable output string.
+   * @param data - Optional structured data payload.
+   * @returns A successful CommandResult.
    */
   protected success<T = any>(output?: string, data?: T): CommandResult<T> {
     return {
@@ -179,7 +276,9 @@ export abstract class Command {
   }
 
   /**
-   * Print help for this command
+   * Displays the help information for this command.
+   * Handles both text and JSON output formats.
+   * @param options - CLI options.
    */
   printHelp(options: CLIOptions = {}): void {
     const { name, description, usage, options: cmdOptions, examples, workflows } = this.definition;
@@ -225,49 +324,57 @@ export abstract class Command {
 }
 
 /**
- * Command Registry
- * Manages registration and lookup of available commands
+ * Registry for managing and looking up available CLI commands.
  */
 export class CommandRegistry {
   private commands = new Map<string, Command>();
 
   /**
-   * Register a command
+   * Registers a command instance in the registry.
+   * @param command - The command to register.
    */
   register(command: Command): void {
     this.commands.set(command.definition.name, command);
   }
 
   /**
-   * Get a command by name
+   * Retrieves a command by its name.
+   * @param name - The name of the command.
+   * @returns The command instance if found, otherwise undefined.
    */
   get(name: string): Command | undefined {
     return this.commands.get(name);
   }
 
   /**
-   * Get all registered command names
+   * Returns a list of all registered command names.
+   * @returns Array of command names.
    */
   getCommandNames(): string[] {
     return Array.from(this.commands.keys());
   }
 
   /**
-   * Check if command exists
+   * Checks if a command with the given name is registered.
+   * @param name - The command name.
+   * @returns True if the command exists.
    */
   has(name: string): boolean {
     return this.commands.has(name);
   }
 
   /**
-   * Get all commands with their definitions
+   * Returns metadata for all registered commands.
+   * @returns Array of CommandDefinitions.
    */
   getAllCommands(): CommandDefinition[] {
     return Array.from(this.commands.values()).map((cmd) => cmd.definition);
   }
 }
 
-// Global registry instance
+/**
+ * Global instance of the command registry.
+ */
 export const registry = new CommandRegistry();
 
 import { readdirSync, existsSync } from 'fs';
@@ -275,7 +382,9 @@ import { resolve as pathResolve } from 'path';
 import { pathToFileURL } from 'url';
 
 /**
- * Load plugins from a directory
+ * Dynamically loads and registers plugins from a specified directory.
+ * @param pluginDir - The directory path containing plugin files.
+ * @returns A promise that resolves when loading is complete.
  */
 export async function loadPlugins(pluginDir: string): Promise<void> {
   if (!existsSync(pluginDir)) return;
@@ -301,7 +410,9 @@ export async function loadPlugins(pluginDir: string): Promise<void> {
 }
 
 /**
- * Register all built-in commands
+ * Registers all core built-in commands with the global registry.
+ * This function handles lazy loading of command implementations.
+ * @returns A promise that resolves when all commands are registered.
  */
 export async function registerBuiltinCommands(): Promise<void> {
   const { InspectCommand } = await import('../commands/inspect.js');

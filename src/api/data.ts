@@ -1,10 +1,26 @@
+/**
+ * @module API/Data
+ * Programmatic interface for deep data inspection and manipulation within snapshots.
+ * Allows retrieval and modification of nested properties using dot-notation paths.
+ */
+
 import { GetCommand } from '../commands/get.js';
 import { SetCommand } from '../commands/set.js';
 import { InspectCommand } from '../commands/inspect.js';
 import type { ProjectSnapshot } from '../types/index.js';
 
 /**
- * Programmatically get a deep property from a snapshot
+ * Programmatically retrieves a nested property from a snapshot using a dot-notation path.
+ * 
+ * @param snapshot - The ProjectSnapshot object or path to a snapshot file.
+ * @param path - Dot-notation path to the property (e.g., "files.src/index.ts").
+ * @returns A promise resolving to the property value.
+ * @throws Error if the retrieval fails or the path is invalid.
+ * 
+ * @example
+ * ```ts
+ * const instruction = await get(mySnapshot, "instruction");
+ * ```
  */
 export async function get(
   snapshot: ProjectSnapshot | string,
@@ -36,7 +52,14 @@ export async function get(
 }
 
 /**
- * Programmatically set a deep property in a snapshot
+ * Programmatically updates a nested property within a snapshot.
+ * Returns a new snapshot object with the change applied.
+ * 
+ * @param snapshot - The ProjectSnapshot object or path to a snapshot file.
+ * @param path - Dot-notation path to the property.
+ * @param value - The new value to set.
+ * @returns A promise resolving to the updated ProjectSnapshot.
+ * @throws Error if the update fails.
  */
 export async function set(
   snapshot: ProjectSnapshot | string,
@@ -68,15 +91,35 @@ export async function set(
   return result.data as ProjectSnapshot;
 }
 
+/**
+ * Configuration options for the `inspect` function.
+ */
 export interface InspectOptions {
+  /**
+   * Whether to include quantitative metadata (file count, size).
+   */
   metadata?: boolean;
+  /**
+   * Whether to include the directory structure tree.
+   */
   structure?: boolean;
+  /**
+   * Whether to list all files present in the snapshot.
+   */
   files?: boolean;
+  /**
+   * Whether to generate a high-level summary of snapshot content.
+   */
   summary?: boolean;
 }
 
 /**
- * Programmatically inspect a snapshot
+ * Programmatically inspects a snapshot to retrieve metadata and structural information.
+ * 
+ * @param snapshot - The ProjectSnapshot object or path to a snapshot file.
+ * @param options - Configuration options for the inspection.
+ * @returns A promise resolving to the inspection data.
+ * @throws Error if the inspection fails.
  */
 export async function inspect(
   snapshot: ProjectSnapshot | string,

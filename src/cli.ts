@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 /**
- * jref CLI - Main Entry Point
- * Optimized Development Prompt CLI tool for interacting with JSON project snapshots
- * Designed for both human developers and AI agents
+ * @module CLI
+ * Main entry point for the jref command-line interface.
+ * Orchestrates command registration, global option parsing, alias expansion,
+ * and command execution. Designed to provide a high-speed interface for both
+ * human developers and AI agents.
  */
 
 import { registerBuiltinCommands, registry, loadPlugins } from './utils/command.js';
@@ -13,10 +15,17 @@ import type { CLIOptions, CommandContext, JrefConfig } from './types/index.js';
 import { fileURLToPath } from 'url';
 import { join, basename } from 'path';
 
+/**
+ * Current version of the jref CLI.
+ */
 const VERSION = '1.1.0';
 
 /**
- * Parse global CLI options
+ * Parses global CLI options and separates them from command-specific arguments.
+ * 
+ * @param args - Raw command-line arguments.
+ * @param config - Current user configuration.
+ * @returns An object containing remaining arguments and parsed global options.
  */
 function parseGlobalOptions(args: string[], config: JrefConfig): {
   remainingArgs: string[];
@@ -59,7 +68,9 @@ function parseGlobalOptions(args: string[], config: JrefConfig): {
 }
 
 /**
- * Print global help
+ * Prints the global help message for the jref CLI.
+ * 
+ * @param options - CLI options (e.g., for JSON output).
  */
 function printGlobalHelp(options: CLIOptions = {}): void {
   if (options.json) {
@@ -120,7 +131,9 @@ function printGlobalHelp(options: CLIOptions = {}): void {
 }
 
 /**
- * Print version
+ * Prints the current CLI version.
+ * 
+ * @param options - CLI options.
  */
 function printVersion(options: CLIOptions = {}): void {
   if (options.json) {
@@ -132,7 +145,11 @@ function printVersion(options: CLIOptions = {}): void {
 
 
 /**
- * Expand command aliases using the dynamic alias module
+ * Expands command aliases using the dynamic alias module.
+ * 
+ * @param initialRemainingArgs - Positional arguments before expansion.
+ * @param options - CLI options.
+ * @returns Array of expanded arguments.
  */
 async function expandCommandAliases(initialRemainingArgs: string[], options: CLIOptions): Promise<string[]> {
   try {
@@ -152,7 +169,11 @@ async function expandCommandAliases(initialRemainingArgs: string[], options: CLI
 }
 
 /**
- * Resolve the command name, handling jbin alias
+ * Resolves the final command name and its arguments, accounting for special 
+ * aliases like `jbin`.
+ * 
+ * @param remainingArgs - Parsed positional arguments.
+ * @returns Resolved command name and arguments.
  */
 function resolveCommandName(remainingArgs: string[]): { commandName: string, commandArgs: string[] } {
   let commandName = remainingArgs[0];
@@ -173,7 +194,12 @@ function resolveCommandName(remainingArgs: string[]): { commandName: string, com
 
 
 /**
- * Execute command and handle resulting output/exit
+ * Executes a resolved command instance and handles the resulting output and process exit.
+ * 
+ * @param command - The command instance to execute.
+ * @param commandArgs - Arguments for the command.
+ * @param options - Global CLI options.
+ * @param commandName - The name of the command being executed.
  */
 async function executeCommand(command: any, commandArgs: string[], options: CLIOptions, commandName: string): Promise<void> {
   // Check for stdin input
@@ -206,7 +232,8 @@ async function executeCommand(command: any, commandArgs: string[], options: CLIO
 }
 
 /**
- * Main CLI handler
+ * Main application entry point handler.
+ * Coordinates system initialization, command routing, and error handling.
  */
 async function main(): Promise<void> {
   // Load configuration first

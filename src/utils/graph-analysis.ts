@@ -1,20 +1,42 @@
+/**
+ * @module GraphAnalysis
+ * Topological clustering and structural analysis of knowledge graphs.
+ * 
+ * This module provides the engine for analyzing symbol dependencies, detecting 
+ * logical communities (clusters), and identifying "God Nodes" (highly central symbols).
+ * It enables "Blast Radius" analysis to see how a change in one module might 
+ * ripple through the rest of the application.
+ */
+
 import { DirectedGraph } from 'graphology';
 import louvain from 'graphology-communities-louvain';
 import * as centrality from 'graphology-metrics/centrality/index.js';
 import { GraphSnapshot } from '../types/index.js';
 
 /**
- * Utility for topological clustering and analysis of the knowledge graph.
+ * Result of a structural graph analysis.
  */
-
 export interface AnalysisResult {
+  /**
+   * The updated graph snapshot with community and centrality data injected into nodes.
+   */
   graph: GraphSnapshot;
+  /**
+   * Top 10 most central nodes in the graph ("God Nodes").
+   */
   godNodes: { id: string, centrality: number }[];
+  /**
+   * Map of community IDs to arrays of node IDs belonging to those communities.
+   */
   communities: Record<number, string[]>;
 }
 
 /**
- * Analyzes the graph topology to detect communities and central nodes.
+ * Analyzes the graph topology using the Louvain method for community detection
+ * and Degree Centrality for identifying key hubs.
+ * 
+ * @param snapshot - The raw graph snapshot to analyze.
+ * @returns An AnalysisResult containing topological insights.
  */
 export function analyzeGraph(snapshot: GraphSnapshot): AnalysisResult {
   const graph = createGraph(snapshot);
@@ -57,7 +79,10 @@ export function analyzeGraph(snapshot: GraphSnapshot): AnalysisResult {
 }
 
 /**
- * Creates a graphology instance from a snapshot.
+ * Converts a static GraphSnapshot into a live `graphology` DirectedGraph instance.
+ * 
+ * @param snapshot - The snapshot data.
+ * @returns A live DirectedGraph instance for analysis.
  */
 export function createGraph(snapshot: GraphSnapshot): DirectedGraph {
   const graph = new DirectedGraph();
@@ -86,8 +111,13 @@ export function createGraph(snapshot: GraphSnapshot): DirectedGraph {
 }
 
 /**
- * Traverses inbound edges (dependents) to see what is affected by a node.
- * Following the prompt's request for "blast radius".
+ * Calculates the "Blast Radius" of a node by traversing inbound edges (dependents).
+ * Identifies all symbols that directly or indirectly depend on the target node.
+ * 
+ * @param graph - The graph to traverse.
+ * @param nodeId - The ID of the node starting the traversal.
+ * @param depth - How many levels of dependency to traverse (default: 1).
+ * @returns Array of node IDs within the blast radius.
  */
 export function getBlastRadius(graph: DirectedGraph, nodeId: string, depth: number = 1): string[] {
   if (!graph.hasNode(nodeId)) return [];
@@ -113,7 +143,11 @@ export function getBlastRadius(graph: DirectedGraph, nodeId: string, depth: numb
 }
 
 /**
- * Returns all nodes sharing a community ID.
+ * Returns all node IDs sharing a specific community ID within a snapshot.
+ * 
+ * @param snapshot - The snapshot containing community data.
+ * @param communityId - The target community ID.
+ * @returns Array of matching node IDs.
  */
 export function getCommunityNodes(snapshot: GraphSnapshot, communityId: number): string[] {
   return snapshot.nodes
@@ -122,7 +156,10 @@ export function getCommunityNodes(snapshot: GraphSnapshot, communityId: number):
 }
 
 /**
- * Exports the graph to GML format.
+ * Exports the graph to the GML (Graph Modeling Language) format.
+ * 
+ * @param graph - The graph to export.
+ * @returns A GML-formatted string.
  */
 export function exportToGML(graph: DirectedGraph): string {
   let gml = 'graph [\n  directed 1\n';
@@ -156,7 +193,10 @@ export function exportToGML(graph: DirectedGraph): string {
 }
 
 /**
- * Exports the graph to GraphML format.
+ * Exports the graph to the GraphML (XML-based) format.
+ * 
+ * @param graph - The graph to export.
+ * @returns A GraphML-formatted XML string.
  */
 export function exportToGraphML(graph: DirectedGraph): string {
   let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -199,8 +239,17 @@ export function exportToGraphML(graph: DirectedGraph): string {
 }
 
 /**
- * Executes a simple graph traversal query.
- * Syntax: MATCH (n)-[r:relation]->(m:ID) RETURN n
+ * Executes a simple graph traversal query using a pseudo-Cypher syntax.
+ * 
+ * @param graph - The graph to query.
+ * @param query - The query string.
+ * @returns Array of matching node IDs.
+ * @throws Error if the query syntax is invalid or unsupported.
+ * 
+ * @example
+ * ```ts
+ * const dependents = queryGraph(graph, "MATCH (n)-[r:depends_on]->(m:src/cli.ts) RETURN n");
+ * ```
  */
 export function queryGraph(graph: DirectedGraph, query: string): string[] {
   const match = query.match(/MATCH\s+\((?<nodeVar>\w+)\)-\[r:(?<relation>.*)\]->\((?<targetVar>\w+):(?<targetId>.*)\)\s+RETURN\s+(?<returnVar>\w+)/);
@@ -230,7 +279,10 @@ export function queryGraph(graph: DirectedGraph, query: string): string[] {
 }
 
 /**
- * Generates a report summary from the analysis.
+ * Generates a human-readable Markdown report summarizing the graph analysis results.
+ * 
+ * @param result - The analysis result.
+ * @returns A Markdown-formatted string.
  */
 export function generateGraphReport(result: AnalysisResult): string {
   let report = '# JREF Knowledge Graph Report\n\n';

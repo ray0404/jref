@@ -1,7 +1,9 @@
 /**
- * Streaming JSON Parser Utility
- * Implements stream-json strategy for handling massive JSON files
- * without heap overflow on lower-memory devices (Raspberry Pi, Termux)
+ * @module StreamingJSON
+ * Memory-efficient JSON processing utilities.
+ * Implements a streaming strategy using `stream-json` to handle massive snapshots
+ * (100MB to 1GB+) without heap overflow, making it compatible with lower-memory
+ * environments like Raspberry Pi, Termux, or resource-constrained CI agents.
  */
 
 import { readFileSync } from 'fs';
@@ -12,12 +14,27 @@ import parser from 'stream-json/parser.js';
 import { sniffFormat, translateSnapshot } from './format.js';
 import jq from 'jq-wasm';
 
+/**
+ * Maximum buffer size (8MB) allowed for synchronous JSON parsing.
+ * Files exceeding this threshold are automatically processed via the streaming parser.
+ */
 const MAX_BUFFER_SIZE = 8 * 1024 * 1024; // 8MB max buffer before streaming parse
 
 /**
- * Parse JSON from string input with size check
- * Uses native JSON.parse for smaller files, streaming for larger ones
- * Implements schema validation and coercion
+ * High-level entry point for parsing JSON input into a ProjectSnapshot.
+ * Automatically chooses between native `JSON.parse` (for speed on small files)
+ * and the streaming parser (for memory safety on large files).
+ * 
+ * @param input - The raw JSON string or data to parse.
+ * @param filePath - Optional file path for format sniffing and error reporting.
+ * @param options - CLI options, including JQ filters and validation settings.
+ * @returns A promise resolving to a validated ProjectSnapshot.
+ * @throws Error if the input is malformed or violates the required schema.
+ * 
+ * @example
+ * ```ts
+ * const snapshot = await parseJSON(rawContent, 'project.json');
+ * ```
  */
 export async function parseJSON(input: string, filePath?: string, options?: CLIOptions): Promise<ProjectSnapshot> {
   const format = sniffFormat(input, filePath);
@@ -63,8 +80,13 @@ export async function parseJSON(input: string, filePath?: string, options?: CLIO
 }
 
 /**
- * Apply jq filter to snapshot if options.jq is present
- * Handles schema drift by printing raw JSON and exiting if validation fails
+ * Applies a JQ filter to the snapshot and validates the resulting structure.
+ * If validation fails after a JQ filter is applied, it assumes the user is performing
+ * a custom extraction and prints the raw result to stdout before exiting.
+ * 
+ * @param snapshot - The raw snapshot object to transform.
+ * @param options - CLI options containing the `.jq` filter string.
+ * @returns The transformed and validated ProjectSnapshot.
  */
 async function applyJQ(snapshot: any, options?: CLIOptions): Promise<ProjectSnapshot> {
   if (options?.jq) {
@@ -102,8 +124,15 @@ async function applyJQ(snapshot: any, options?: CLIOptions): Promise<ProjectSnap
 }
 
 /**
- * Streaming process for snapshots of any size (up to 1GB+)
- * Dispatches metadata and files to callbacks to maintain low memory usage
+ * Core streaming processor that traverses a JSON snapshot token-by-token.
+ * Dispatches metadata and file contents to callbacks as they are parsed, 
+ * maintaining a near-constant memory footprint regardless of file size.
+ * 
+ * @param input - A JSON string or a Readable stream.
+ * @param callbacks - Callback functions for handling parsed components.
+ * @param callbacks.onMetadata - Called when non-file metadata (e.g., instruction, roadmap) is parsed.
+ * @param callbacks.onFile - Called when a file path and its content are fully parsed.
+ * @returns A promise that resolves when the stream has been fully processed.
  */
 export async function processSnapshot(
   input: string | NodeJS.ReadableStream,
@@ -257,7 +286,10 @@ export async function processSnapshot(
 }
 
 /**
- * Generate ASCII directory structure from list of file paths
+ * Generates a visual ASCII tree representation of a directory structure from a flat list of paths.
+ * 
+ * @param paths - Array of relative file paths.
+ * @returns An ASCII string representing the directory tree.
  */
 export function generateDirectoryStructure(paths: string[]): string {
   if (paths.length === 0) return '';
@@ -296,7 +328,11 @@ export function generateDirectoryStructure(paths: string[]): string {
 }
 
 /**
- * Load snapshot from file path
+ * Loads and parses a snapshot from a file path.
+ * 
+ * @param filePath - The path to the snapshot file.
+ * @param options - Optional CLI options.
+ * @returns A promise resolving to the ProjectSnapshot.
  */
 export async function loadSnapshotFromFile(filePath: string, options?: CLIOptions): Promise<ProjectSnapshot> {
   const content = readFileSync(filePath, 'utf8');
@@ -304,7 +340,12 @@ export async function loadSnapshotFromFile(filePath: string, options?: CLIOption
 }
 
 /**
- * Load snapshot from stdin or string input
+ * Loads a snapshot from stdin or an optional input string.
+ * 
+ * @param input - Optional raw string to use as input. If omitted, reads from stdin.
+ * @param options - Optional CLI options.
+ * @returns A promise resolving to the ProjectSnapshot.
+ * @throws Error if no input is detected or provided.
  */
 export async function loadSnapshot(input: string | undefined = undefined, options?: CLIOptions): Promise<ProjectSnapshot> {
   let data: string;
@@ -323,7 +364,10 @@ export async function loadSnapshot(input: string | undefined = undefined, option
 }
 
 /**
- * Calculate metadata from snapshot
+ * Calculates quantitative and qualitative metadata for a given snapshot.
+ * 
+ * @param snapshot - The snapshot to analyze.
+ * @returns A SnapshotMetadata object containing counts and booleans.
  */
 export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
   const files = snapshot.files || {};
@@ -354,14 +398,22 @@ export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
 }
 
 /**
- * Validate snapshot structure
+ * Validates whether an unknown object matches the ProjectSnapshot schema.
+ * 
+ * @param snapshot - The object to validate.
+ * @returns True if the object is a valid ProjectSnapshot.
  */
 export function validateSnapshot(snapshot: unknown): snapshot is ProjectSnapshot {
   return ProjectSnapshotSchema.safeParse(snapshot).success;
 }
 
 /**
- * Get file paths from snapshot
+ * Retrieves a list of relative file paths present in the snapshot.
+ * Optionally filters by a directory prefix.
+ * 
+ * @param snapshot - The snapshot to query.
+ * @param prefix - Optional directory prefix to filter paths (e.g., "src/").
+ * @returns Array of relative file paths.
  */
 export function getFilePaths(snapshot: ProjectSnapshot, prefix?: string): string[] {
   const paths = Object.keys(snapshot.files || {});
@@ -374,7 +426,11 @@ export function getFilePaths(snapshot: ProjectSnapshot, prefix?: string): string
 }
 
 /**
- * Extract specific files from snapshot
+ * Extracts a subset of files from a snapshot based on an array of paths.
+ * 
+ * @param snapshot - The source snapshot.
+ * @param paths - Array of relative paths to extract.
+ * @returns A record map containing only the requested files.
  */
 export function extractFiles(
   snapshot: ProjectSnapshot,

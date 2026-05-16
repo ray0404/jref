@@ -1,15 +1,45 @@
+/**
+ * @module API/Graph
+ * Programmatic interface for knowledge graph construction and analysis.
+ */
+
 import { GraphCommand } from '../commands/graph.js';
 import { TopologyCommand } from '../commands/topology.js';
 import type { GraphSnapshot, ProjectSnapshot } from '../types/index.js';
 
+/**
+ * Configuration options for the `buildGraph` function.
+ */
 export interface GraphBuildOptions {
+  /**
+   * Path to save the generated graph snapshot.
+   */
   output?: string;
+  /**
+   * Whether to skip LLM-based inference for edge detection (AST only).
+   */
   noLlm?: boolean;
+  /**
+   * Export format for the graph data.
+   */
   format?: 'json' | 'gml' | 'graphml';
 }
 
 /**
- * Programmatically build a knowledge graph
+ * Programmatically builds a knowledge graph from a local directory or a ProjectSnapshot.
+ * Maps symbols, dependencies, and logical communities.
+ * 
+ * @param target - The target directory path or an existing ProjectSnapshot object.
+ * @param options - Configuration options for the graph build.
+ * @returns A promise resolving to the generated GraphSnapshot.
+ * @throws Error if the graph construction fails.
+ * 
+ * @example
+ * ```ts
+ * import { buildGraph } from 'jref';
+ * 
+ * const graph = await buildGraph('./src', { format: 'json' });
+ * ```
  */
 export async function buildGraph(target: string | ProjectSnapshot, options: GraphBuildOptions = {}): Promise<GraphSnapshot> {
   try {
@@ -52,7 +82,12 @@ export async function buildGraph(target: string | ProjectSnapshot, options: Grap
 }
 
 /**
- * Programmatically query a knowledge graph
+ * Programmatically executes a traversal query against a knowledge graph.
+ * 
+ * @param queryStr - The graph traversal query (pseudo-Cypher syntax).
+ * @param graphFile - Path to the graph snapshot JSON file.
+ * @returns A promise resolving to the query results.
+ * @throws Error if the query fails or the graph file is missing.
  */
 export async function queryGraph(queryStr: string, graphFile: string = 'graph-snapshot.json'): Promise<any> {
   try {
@@ -80,7 +115,13 @@ export async function queryGraph(queryStr: string, graphFile: string = 'graph-sn
 }
 
 /**
- * Programmatically analyze architectural drift between two snapshots
+ * Programmatically analyzes architectural drift and topological changes between two snapshots.
+ * Useful for monitoring how a codebase structure evolves over time.
+ * 
+ * @param snapshotA - Path to the baseline snapshot file.
+ * @param snapshotB - Path to the target snapshot file.
+ * @returns A promise resolving to the topological analysis results.
+ * @throws Error if the analysis fails.
  */
 export async function topology(snapshotA: string, snapshotB: string): Promise<any> {
   const cmd = new TopologyCommand();

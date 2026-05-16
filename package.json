@@ -1,6 +1,6 @@
 {
   "name": "@ray0404/jref",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "CLI tool to interact with condensed JSON project snapshots for humans and AI agents",
   "type": "module",
   "main": "dist/index.js",
@@ -22,7 +22,9 @@
   ],
   "scripts": {
     "build": "tsc && npm run build:docs",
-    "build:docs": "mandoc -Tutf8 docs/jref.1 > docs/jref.man",
+    "build:docs": "npm run docs:html && npm run docs:markdown && mandoc -Tutf8 docs/jref.1 > docs/jref.man",
+    "docs:html": "npx typedoc --out docs/html",
+    "docs:markdown": "npx typedoc --plugin typedoc-plugin-markdown --out docs/markdown",
     "test": "vitest run",
     "test:watch": "vitest",
     "dev": "tsc --watch",
@@ -80,6 +82,8 @@
     "@types/stream-json": "^1.7.8",
     "@vitest/coverage-v8": "^2.1.9",
     "ink-testing-library": "^4.0.0",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.11.0",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0"
   },

@@ -1,7 +1,13 @@
 /**
- * Output Utility
- * Handles CLI output formatting with support for --json and --silent/--raw flags
- * Ensures AI agent compatibility with --raw flag preventing progress/art output
+ * @module Output
+ * Centralized CLI output and formatting hub.
+ * Handles the display of information, errors, and progress indicators across the jref CLI.
+ * 
+ * Features:
+ * - Support for ANSI color formatting (human-readable mode).
+ * - Automatic conversion to JSON format when `--json` is active.
+ * - Suppressed formatting and decorative elements when `--raw` or `--silent` are active.
+ * - Pluggable output handlers for redirection and testing.
  */
 
 import type { CLIOptions } from '../types/index.js';
@@ -14,10 +20,19 @@ const GREEN = '\x1b[32m';
 const YELLOW = '\x1b[33m';
 const RED = '\x1b[31m';
 
+/**
+ * Type definition for a custom output handler.
+ * Used to redirect CLI output to streams, files, or state managers.
+ */
 export type OutputHandler = (data: string, type: 'stdout' | 'stderr') => void;
 
 /**
- * Format output based on CLI options
+ * Formats data based on the provided CLI options.
+ * Prioritizes JSON output, then raw/silent strings, then human-readable blocks.
+ * 
+ * @param data - The data payload to format.
+ * @param options - CLI configuration options.
+ * @returns A formatted string ready for display.
  */
 export function formatOutput(
   data: unknown,
@@ -47,8 +62,11 @@ export function formatOutput(
 let globalOutputHandler: OutputHandler | null = null;
 
 /**
- * Set a custom output handler to redirect all prints
- * Returns the previous handler
+ * Configures a custom global output handler.
+ * This handler will be used by all print functions unless overridden locally.
+ * 
+ * @param handler - The handler function to set, or null to revert to default console.
+ * @returns The previously configured handler.
  */
 export function setOutputHandler(handler: OutputHandler | null): OutputHandler | null {
   const previous = globalOutputHandler;
@@ -57,14 +75,21 @@ export function setOutputHandler(handler: OutputHandler | null): OutputHandler |
 }
 
 /**
- * Resolve the appropriate output handler
+ * Resolves which output handler to use (local override or global default).
+ * 
+ * @param handler - Optional local override handler.
+ * @returns The resolved handler or null if defaults should be used.
  */
 function resolveHandler(handler?: OutputHandler | null): OutputHandler | null {
   return handler || globalOutputHandler;
 }
 
 /**
- * Print output to console with formatting
+ * Prints data to the appropriate output stream using formatting logic.
+ * 
+ * @param data - Data to print.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printOutput(
   data: unknown,
@@ -81,7 +106,13 @@ export function printOutput(
 }
 
 /**
- * Print error to stderr
+ * Prints an error message to stderr.
+ * In human mode, adds a red "Error:" prefix.
+ * In JSON mode, outputs a structured error object.
+ * 
+ * @param message - The error message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printError(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
@@ -102,7 +133,12 @@ export function printError(message: string, options: CLIOptions = {}, handler?: 
 }
 
 /**
- * Print success message
+ * Prints a success message.
+ * In human mode, adds a green checkmark prefix.
+ * 
+ * @param message - The success message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printSuccess(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
@@ -123,7 +159,12 @@ export function printSuccess(message: string, options: CLIOptions = {}, handler?
 }
 
 /**
- * Print result message (generic output)
+ * Prints raw result text without decorative symbols.
+ * Useful for piping data or emitting specific status messages.
+ * 
+ * @param message - The result message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printResult(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   if (options.silent || (options.json && !options.raw)) {
@@ -141,7 +182,12 @@ export function printResult(message: string, options: CLIOptions = {}, handler?:
 }
 
 /**
- * Print warning message
+ * Prints a warning message.
+ * In human mode, adds a yellow warning symbol prefix.
+ * 
+ * @param message - The warning message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printWarning(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
@@ -162,7 +208,12 @@ export function printWarning(message: string, options: CLIOptions = {}, handler?
 }
 
 /**
- * Print info message
+ * Prints an informational message.
+ * In human mode, adds a cyan info symbol prefix.
+ * 
+ * @param message - The information message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printInfo(message: string, options: CLIOptions = {}, handler?: OutputHandler | null): void {
   let formatted = '';
@@ -183,7 +234,13 @@ export function printInfo(message: string, options: CLIOptions = {}, handler?: O
 }
 
 /**
- * Print formatted table (human mode only)
+ * Displays data in a formatted table.
+ * Falls back to tab-separated values in raw/silent mode.
+ * 
+ * @param headers - Column headers.
+ * @param rows - 2D array of strings representing row data.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printTable(
   headers: string[],
@@ -237,7 +294,12 @@ export function printTable(
 }
 
 /**
- * Print progress indicator (hidden in silent/raw mode)
+ * Prints a progress message.
+ * Automatically suppressed in raw, silent, or JSON modes.
+ * 
+ * @param message - Progress update message.
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printProgress(
   message: string,
@@ -257,7 +319,11 @@ export function printProgress(
 }
 
 /**
- * Print ASCII art header (hidden in silent/raw mode)
+ * Prints the jref ASCII art header.
+ * Suppressed in non-human modes.
+ * 
+ * @param options - CLI options.
+ * @param handler - Optional local output handler override.
  */
 export function printHeader(options: CLIOptions = {}, handler?: OutputHandler | null): void {
   if (options.silent || options.raw) {
@@ -285,8 +351,10 @@ export function printHeader(options: CLIOptions = {}, handler?: OutputHandler | 
 }
 
 /**
- * Exit with code
- * Ensures stdout is flushed before exiting (essential for pipes)
+ * Gracefully terminates the process, ensuring all pending output streams are flushed.
+ * This is critical when piping CLI output to other tools.
+ * 
+ * @param code - The exit code (0 for success, non-zero for error).
  */
 export function exit(code: number): void {
   process.exitCode = code;
@@ -301,6 +369,9 @@ export function exit(code: number): void {
   });
 }
 
+/**
+ * Bundled output utilities for easier programmatic consumption.
+ */
 export const output = {
   print: printOutput,
   success: printSuccess,

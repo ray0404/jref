@@ -1,8 +1,21 @@
+/**
+ * @module Binary
+ * Utilities for binary data detection and encoding.
+ * 
+ * In the context of jref snapshots, binary detection is critical to ensure that
+ * non-text files (e.g., images, executables, compiled archives) are correctly 
+ * identified and encoded as Base64. This prevents JSON serialization errors 
+ * and data corruption during "Packing" and "Extraction" workflows.
+ */
+
 import { readFileSync } from 'fs';
 
 /**
- * Heuristic to check if a buffer contains binary data.
- * Checks for null bytes in the first 8KB of data.
+ * Applies a heuristic to determine if a buffer contains binary data.
+ * The heuristic scans the first 8KB of the buffer for null bytes (0x00).
+ * 
+ * @param buffer - The buffer to check.
+ * @returns True if the buffer is likely binary.
  */
 export function isBinaryBuffer(buffer: Buffer): boolean {
   const checkSize = Math.min(buffer.length, 8192);
@@ -13,7 +26,10 @@ export function isBinaryBuffer(buffer: Buffer): boolean {
 }
 
 /**
- * Checks if a file is binary based on its content.
+ * Checks if a file on disk is binary based on its content.
+ * 
+ * @param filePath - Path to the file to check.
+ * @returns True if the file is binary.
  */
 export function isBinaryFile(filePath: string): boolean {
   try {
@@ -25,28 +41,42 @@ export function isBinaryFile(filePath: string): boolean {
 }
 
 /**
- * Get file encoding for a given buffer.
+ * Determines the appropriate encoding ('utf8' or 'base64') for a given buffer.
+ * 
+ * @param buffer - The data buffer.
+ * @returns The encoding type to use for serialization.
  */
 export function getFileEncoding(buffer: Buffer): 'utf8' | 'base64' {
   return isBinaryBuffer(buffer) ? 'base64' : 'utf8';
 }
 
 /**
- * Decode Base64 string to Buffer.
+ * Decodes a Base64 string into a Buffer.
+ * 
+ * @param content - The Base64 encoded string.
+ * @returns A Buffer containing the raw decoded data.
  */
 export function decodeBase64(content: string): Buffer {
   return Buffer.from(content, 'base64');
 }
 
 /**
- * Encode Buffer to Base64 string.
+ * Encodes a Buffer into a Base64 string.
+ * 
+ * @param buffer - The buffer to encode.
+ * @returns A Base64 encoded string.
  */
 export function encodeBase64(buffer: Buffer): string {
   return buffer.toString('base64');
 }
 
 /**
- * Extract magic numbers (first 16 bytes) from a Base64 string without full decoding.
+ * Extracts magic numbers (the first 16 bytes) from a Base64 encoded string.
+ * This is performed without decoding the entire string, making it efficient 
+ * for large binary assets.
+ * 
+ * @param content - The Base64 encoded string.
+ * @returns A Buffer containing the first 16 bytes of the original data.
  */
 export function getMagicNumbers(content: string): Buffer {
   // We only need the first 16 bytes. 
@@ -57,7 +87,11 @@ export function getMagicNumbers(content: string): Buffer {
 }
 
 /**
- * Detect MIME type from magic numbers.
+ * Detects the likely MIME type of a file based on its magic numbers.
+ * Supports common executable, archive, image, and audio/video formats.
+ * 
+ * @param magic - A buffer containing at least the first 4-8 bytes of the file.
+ * @returns The detected MIME type string, or 'application/octet-stream' as a fallback.
  */
 export function detectMimeType(magic: Buffer): string {
   if (magic.length < 4) return 'application/octet-stream';
