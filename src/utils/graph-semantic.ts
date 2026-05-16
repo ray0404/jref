@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { GraphNode, GraphEdge, CodeChunk } from '../types/index.js';
 import { chunkCode } from './chunking.js';
+import { cosineSimilarity } from './embeddings.js';
 
 /**
  * Utility for semantic graph extraction using local embeddings.
@@ -102,20 +103,6 @@ export async function inferSemanticEdges(
   }
 }
 
-/**
- * Calculates cosine similarity between two vectors.
- */
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
 
 /**
  * Builds a prompt for the LLM to perform semantic extraction (Legacy/External).
