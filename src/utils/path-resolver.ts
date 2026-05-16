@@ -98,6 +98,9 @@ export function getValueByPath(obj: any, path: string): any {
   let current = obj;
 
   for (const token of tokens) {
+    if (token === '__proto__' || token === 'constructor' || token === 'prototype') {
+      throw new Error(`Prototype pollution attempt detected for token: ${token}`);
+    }
     if (current === null || typeof current !== 'object') {
       return undefined;
     }
@@ -118,6 +121,10 @@ export function setValueByPath(obj: any, path: string, value: any): void {
   for (let i = 0; i < tokens.length - 1; i++) {
     const token = tokens[i];
     
+    if (token === '__proto__' || token === 'constructor' || token === 'prototype') {
+      throw new Error(`Prototype pollution attempt detected for token: ${token}`);
+    }
+
     if (current[token] === null || typeof current[token] !== 'object') {
       current[token] = {};
     }
@@ -126,6 +133,9 @@ export function setValueByPath(obj: any, path: string, value: any): void {
 
   const lastToken = tokens[tokens.length - 1];
   if (lastToken !== undefined) {
+    if (lastToken === '__proto__' || lastToken === 'constructor' || lastToken === 'prototype') {
+      throw new Error(`Prototype pollution attempt detected for token: ${lastToken}`);
+    }
     current[lastToken] = value;
   }
 }

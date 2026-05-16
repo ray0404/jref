@@ -75,6 +75,11 @@ describe('Path Resolver', () => {
       expect(getValueByPath(obj, 'list[1]')).toEqual({ id: 2 });
     });
 
+    it('should prevent prototype pollution in getValueByPath', () => {
+      expect(() => getValueByPath(obj, '__proto__')).toThrow(/Prototype pollution attempt detected/);
+      expect(() => getValueByPath(obj, 'constructor.prototype')).toThrow(/Prototype pollution attempt detected/);
+    });
+
     it('should return undefined for non-existent paths', () => {
       expect(getValueByPath(obj, 'a.x.y')).toBeUndefined();
       expect(getValueByPath(obj, 'files.nonexistent')).toBeUndefined();
@@ -98,6 +103,13 @@ describe('Path Resolver', () => {
       const obj: any = { files: {} };
       setValueByPath(obj, 'files."src/app.ts"', 'content');
       expect(obj.files['src/app.ts']).toBe('content');
+    });
+
+    it('should prevent prototype pollution in setValueByPath', () => {
+      const obj: any = {};
+      expect(() => setValueByPath(obj, '__proto__.polluted', true)).toThrow(/Prototype pollution attempt detected/);
+      expect(obj.polluted).toBeUndefined();
+      expect(({} as any).polluted).toBeUndefined();
     });
 
     it('should set values in arrays', () => {
