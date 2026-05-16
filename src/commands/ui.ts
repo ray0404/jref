@@ -149,7 +149,7 @@ export class UICommand extends Command {
   }
 
   private async readFile(filePath: string): Promise<string> {
-    const { readFileSync } = await import('fs');
-    return readFileSync(filePath, 'utf8');
+    const { readFile } = await import('fs/promises');
+    return await readFile(filePath, 'utf8');
   }
 }
