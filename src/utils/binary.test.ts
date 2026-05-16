@@ -1,7 +1,45 @@
-import { describe, it, expect } from 'vitest';
-import { getMagicNumbers, detectMimeType, encodeBase64 } from './binary.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fs from 'fs';
+import { getMagicNumbers, detectMimeType, encodeBase64, isBinaryFile } from './binary.js';
+
+vi.mock('fs');
 
 describe('Binary Utils', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe('isBinaryFile', () => {
+    it('should return false when readFileSync throws an error', () => {
+      vi.mocked(fs.readFileSync).mockImplementation(() => {
+        throw new Error('File not found or permission denied');
+      });
+
+      expect(isBinaryFile('non-existent-file.txt')).toBe(false);
+      expect(fs.readFileSync).toHaveBeenCalledWith('non-existent-file.txt', { flag: 'r' });
+    });
+
+    it('should return true for binary content', () => {
+      const buffer = Buffer.alloc(1024);
+      buffer[0] = 0; // null byte indicates binary
+
+      vi.mocked(fs.readFileSync).mockReturnValue(buffer);
+
+      expect(isBinaryFile('image.png')).toBe(true);
+      expect(fs.readFileSync).toHaveBeenCalledWith('image.png', { flag: 'r' });
+    });
+
+    it('should return false for text content', () => {
+      const buffer = Buffer.from('console.log("Hello World");', 'utf8');
+
+      vi.mocked(fs.readFileSync).mockReturnValue(buffer);
+
+      expect(isBinaryFile('script.js')).toBe(false);
+      expect(fs.readFileSync).toHaveBeenCalledWith('script.js', { flag: 'r' });
+    });
+  });
+
+
   describe('getMagicNumbers', () => {
     it('should extract first 16 bytes from base64 string', () => {
       const buffer = Buffer.alloc(32);
