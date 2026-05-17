@@ -5,7 +5,8 @@
 
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync, writeFileSync, existsSync, unlinkSync, readdirSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
+import { readFile, unlink } from 'fs/promises';
 import { resolve, relative, join } from 'path';
 import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
@@ -277,10 +278,10 @@ export class PackCommand extends Command {
           // Repomix remote action copies output to current directory
           const outputFilePath = resolve(process.cwd(), outputFileName);
           
-          if (existsSync(outputFilePath)) {
-            const output = readFileSync(outputFilePath, 'utf8');
+          try {
+            const output = await readFile(outputFilePath, 'utf8');
             // Clean up
-            unlinkSync(outputFilePath);
+            await unlink(outputFilePath);
             
             // Restore logger before returning
             console.log = originalLog;
@@ -290,20 +291,20 @@ export class PackCommand extends Command {
             }
             process.stdout.write(output + '\n');
             return this.success();
-          }
+          } catch (e) { /* file doesn't exist, ignore */ }
           
           // Fallback: check result.outputFiles
           const outputFiles = result.outputFiles as string[] | undefined;
           if (outputFiles && outputFiles.length > 0) {
             const path = outputFiles[0];
-            if (existsSync(path)) {
-              const output = readFileSync(path, 'utf8');
-              if (existsSync(path)) unlinkSync(path);
+            try {
+              const output = await readFile(path, 'utf8');
+              try { await unlink(path); } catch {}
               console.log = originalLog;
               if (options.json || options.silent) return this.success(output);
               process.stdout.write(output + '\n');
               return this.success();
-            }
+            } catch (e) { /* file doesn't exist, ignore */ }
           }
 
           // If we requested a specific style but couldn't find the file, it's an error
@@ -367,10 +368,10 @@ export class PackCommand extends Command {
         // If not JSON, read the file and output
         if (outputStyle !== 'json') {
           const outputFilePath = resolve(rootDir, outputFileName);
-          if (existsSync(outputFilePath)) {
-            const output = readFileSync(outputFilePath, 'utf8');
+          try {
+            const output = await readFile(outputFilePath, 'utf8');
             // Clean up
-            unlinkSync(outputFilePath);
+            await unlink(outputFilePath);
 
             // Restore logger
             console.log = originalLog;
@@ -380,7 +381,7 @@ export class PackCommand extends Command {
             }
             process.stdout.write(output + '\n');
             return this.success();
-          }
+          } catch (e) { /* file doesn't exist, ignore */ }
         }
       }
 
