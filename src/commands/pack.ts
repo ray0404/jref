@@ -5,8 +5,9 @@
 
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
-import { readFile, unlink } from 'fs/promises';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync, unlinkSync } from 'fs';
+import { readFile, unlink, writeFile } from 'fs/promises';
+const fsPromises = { readFile, unlink, writeFile };
 import { resolve, relative, join } from 'path';
 import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
@@ -166,8 +167,9 @@ export class PackCommand extends Command {
             // If offline or fail, we'll rely on cache if it exists
         }
 
-        if (existsSync(cachePath)) {
-            const cachedData = JSON.parse(readFileSync(cachePath, 'utf8'));
+        try {
+            const cacheContent = await fsPromises.readFile(cachePath, 'utf8');
+            const cachedData = JSON.parse(cacheContent);
             const isFresh = remoteHead && cachedData._remoteHead === remoteHead;
             
             if (isFresh || !remoteHead) {
@@ -181,6 +183,8 @@ export class PackCommand extends Command {
                 process.stdout.write(output + '\n');
                 return this.success();
             }
+        } catch (err: any) {
+            // Ignore if cache file doesn't exist or is invalid JSON
         }
       }
 
