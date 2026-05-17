@@ -6,7 +6,7 @@
 
 # Abstract Class: Command
 
-Defined in: [utils/command.ts:92](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L92)
+Defined in: [utils/command.ts:92](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L92)
 
 Abstract base class for all CLI commands.
 Implements the Command pattern and provides utility methods for output and data retrieval.
@@ -27,7 +27,7 @@ Implements the Command pattern and provides utility methods for output and data 
 
 > `abstract` `readonly` **definition**: [`CommandDefinition`](../interfaces/CommandDefinition.md)
 
-Defined in: [utils/command.ts:96](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L96)
+Defined in: [utils/command.ts:96](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L96)
 
 The metadata definition for the command.
 
@@ -37,7 +37,7 @@ The metadata definition for the command.
 
 > `abstract` **execute**(`args`, `options`, `context`): `Promise`\<[`CommandResult`](../../../index/interfaces/CommandResult.md)\<`any`\>\>
 
-Defined in: [utils/command.ts:105](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L105)
+Defined in: [utils/command.ts:105](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L105)
 
 Core execution logic for the command.
 
@@ -73,7 +73,7 @@ A promise resolving to the result of the command execution.
 
 > `abstract` `protected` **parseArgs**(`args`, `context?`): `Record`\<`string`, `unknown`\>
 
-Defined in: [utils/command.ts:117](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L117)
+Defined in: [utils/command.ts:117](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L117)
 
 Parses positional arguments into a structured record.
 
@@ -103,7 +103,7 @@ A map of parsed argument names to their values.
 
 > `protected` **getJSON**(`context`, `_options?`, `filePath?`): `Promise`\<`any`\>
 
-Defined in: [utils/command.ts:128](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L128)
+Defined in: [utils/command.ts:128](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L128)
 
 Retrieves generic JSON data from the context, a file, or stdin.
 Supports JSON5 for lenient parsing.
@@ -144,7 +144,7 @@ Error if file reading or JSON parsing fails.
 
 > `protected` **getSnapshot**(`context`, `options?`, `filePath?`): `Promise`\<\{ `directoryStructure?`: `string`; `files`: `Record`\<`string`, `string`\>; `encodings?`: `Record`\<`string`, `"utf8"` \| `"base64"`\>; `instruction?`: `string`; `roadmap?`: `string`; `fileSummary?`: `string`; `userProvidedHeader?`: `string`; `chunks?`: [`CodeChunk`](../../../index/interfaces/CodeChunk.md)[]; \}\>
 
-Defined in: [utils/command.ts:163](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L163)
+Defined in: [utils/command.ts:163](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L163)
 
 Loads a ProjectSnapshot from context, file, or stdin.
 Uses streaming JSON processing for efficiency.
@@ -181,7 +181,7 @@ A promise resolving to the loaded ProjectSnapshot.
 
 > `protected` **print**(`data`, `options`, `context?`): `void`
 
-Defined in: [utils/command.ts:190](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L190)
+Defined in: [utils/command.ts:190](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L190)
 
 Prints data to the configured output handler (stdout or custom).
 Handles JSON formatting if requested in options.
@@ -216,7 +216,7 @@ Optional context for output handler resolution.
 
 > `protected` **error**(`message`, `options`, `exitCode?`, `context?`): [`CommandResult`](../../../index/interfaces/CommandResult.md)
 
-Defined in: [utils/command.ts:206](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L206)
+Defined in: [utils/command.ts:206](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L206)
 
 Reports an error to the user and generates a failure CommandResult.
 
@@ -258,7 +258,7 @@ A failed CommandResult.
 
 > `protected` **printSuccess**(`message`, `options?`, `context?`): `void`
 
-Defined in: [utils/command.ts:227](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L227)
+Defined in: [utils/command.ts:227](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L227)
 
 Prints a success message to the user.
 Only displays in human-readable mode (no --json/--raw).
@@ -293,7 +293,7 @@ Optional context.
 
 > `protected` **printWarning**(`message`, `options?`, `context?`): `void`
 
-Defined in: [utils/command.ts:238](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L238)
+Defined in: [utils/command.ts:238](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L238)
 
 Prints a warning message to the user.
 Only displays in human-readable mode.
@@ -328,7 +328,7 @@ Optional context.
 
 > `protected` **printInfo**(`message`, `options?`, `context?`): `void`
 
-Defined in: [utils/command.ts:249](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L249)
+Defined in: [utils/command.ts:249](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L249)
 
 Prints an informational message to the user.
 Only displays in human-readable mode.
@@ -363,7 +363,7 @@ Optional context.
 
 > `protected` **printProgress**(`message`, `options?`, `context?`): `void`
 
-Defined in: [utils/command.ts:259](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L259)
+Defined in: [utils/command.ts:259](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L259)
 
 Prints a progress indicator or message.
 
@@ -397,7 +397,7 @@ Optional context.
 
 > `protected` **success**\<`T`\>(`output?`, `data?`): [`CommandResult`](../../../index/interfaces/CommandResult.md)\<`T`\>
 
-Defined in: [utils/command.ts:269](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L269)
+Defined in: [utils/command.ts:269](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L269)
 
 Helper to create a successful CommandResult.
 
@@ -433,7 +433,7 @@ A successful CommandResult.
 
 > **printHelp**(`options?`): `void`
 
-Defined in: [utils/command.ts:283](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/command.ts#L283)
+Defined in: [utils/command.ts:283](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L283)
 
 Displays the help information for this command.
 Handles both text and JSON output formats.

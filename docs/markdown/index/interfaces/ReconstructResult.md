@@ -6,7 +6,7 @@
 
 # Interface: ReconstructResult
 
-Defined in: [types/index.ts:193](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L193)
+Defined in: [types/index.ts:193](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L193)
 
 Result of a reconstruction validation check.
 
@@ -16,7 +16,7 @@ Result of a reconstruction validation check.
 
 > **matches**: `boolean`
 
-Defined in: [types/index.ts:197](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L197)
+Defined in: [types/index.ts:197](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L197)
 
 Whether the snapshot perfectly matches the filesystem.
 
@@ -26,7 +26,7 @@ Whether the snapshot perfectly matches the filesystem.
 
 > **missingFiles**: `string`[]
 
-Defined in: [types/index.ts:201](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L201)
+Defined in: [types/index.ts:201](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L201)
 
 Files present in the snapshot but missing from the disk.
 
@@ -36,7 +36,7 @@ Files present in the snapshot but missing from the disk.
 
 > **extraFiles**: `string`[]
 
-Defined in: [types/index.ts:205](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L205)
+Defined in: [types/index.ts:205](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L205)
 
 Files present on disk but missing from the snapshot.
 
@@ -46,7 +46,7 @@ Files present on disk but missing from the snapshot.
 
 > **modifiedFiles**: `string`[]
 
-Defined in: [types/index.ts:209](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L209)
+Defined in: [types/index.ts:209](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L209)
 
 Files present in both but with differing content.
 
@@ -56,6 +56,6 @@ Files present in both but with differing content.
 
 > **totalChecked**: `number`
 
-Defined in: [types/index.ts:213](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L213)
+Defined in: [types/index.ts:213](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L213)
 
 Total number of files compared.

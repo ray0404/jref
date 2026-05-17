@@ -8,7 +8,7 @@
 
 > **isBinaryFile**(`filePath`): `boolean`
 
-Defined in: [utils/binary.ts:34](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/binary.ts#L34)
+Defined in: [utils/binary.ts:34](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/binary.ts#L34)
 
 Checks if a file on disk is binary based on its content.
 

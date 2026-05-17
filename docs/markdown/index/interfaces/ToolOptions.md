@@ -6,7 +6,7 @@
 
 # Interface: ToolOptions
 
-Defined in: [api/execution.ts:110](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/execution.ts#L110)
+Defined in: [api/execution.ts:110](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L110)
 
 Configuration options for the `tool` function.
 
@@ -16,7 +16,7 @@ Configuration options for the `tool` function.
 
 > `optional` **parser?**: `string`
 
-Defined in: [api/execution.ts:114](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/execution.ts#L114)
+Defined in: [api/execution.ts:114](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L114)
 
 Name of a registered parser to use for processing the command output.
 
@@ -26,6 +26,6 @@ Name of a registered parser to use for processing the command output.
 
 > `optional` **raw?**: `boolean`
 
-Defined in: [api/execution.ts:118](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/execution.ts#L118)
+Defined in: [api/execution.ts:118](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L118)
 
 Whether to return raw command output without parsing.

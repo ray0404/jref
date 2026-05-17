@@ -8,7 +8,7 @@
 
 > **bin**(`snapshotName`, `scriptPath`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/execution.ts:81](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/execution.ts#L81)
+Defined in: [api/execution.ts:81](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L81)
 
 Programmatically executes a script from a "binary snapshot" stored in the jref bin path.
 Binary snapshots are named snapshots containing reusable tools or setup scripts.

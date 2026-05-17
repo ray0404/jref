@@ -8,7 +8,7 @@
 
 > **isBinaryBuffer**(`buffer`): `boolean`
 
-Defined in: [utils/binary.ts:20](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/binary.ts#L20)
+Defined in: [utils/binary.ts:20](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/binary.ts#L20)
 
 Applies a heuristic to determine if a buffer contains binary data.
 The heuristic scans the first 8KB of the buffer for null bytes (0x00).

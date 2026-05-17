@@ -8,7 +8,7 @@
 
 > **generateDirectoryStructure**(`paths`): `string`
 
-Defined in: [utils/streaming-json.ts:294](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/streaming-json.ts#L294)
+Defined in: [utils/streaming-json.ts:294](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/streaming-json.ts#L294)
 
 Generates a visual ASCII tree representation of a directory structure from a flat list of paths.
 

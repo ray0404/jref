@@ -8,7 +8,7 @@
 
 > **patch**(`snapshot`, `patchData`): `Promise`\<\{ `directoryStructure?`: `string`; `files`: `Record`\<`string`, `string`\>; `encodings?`: `Record`\<`string`, `"utf8"` \| `"base64"`\>; `instruction?`: `string`; `roadmap?`: `string`; `fileSummary?`: `string`; `userProvidedHeader?`: `string`; `chunks?`: [`CodeChunk`](../interfaces/CodeChunk.md)[]; \}\>
 
-Defined in: [api/transform.ts:92](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/transform.ts#L92)
+Defined in: [api/transform.ts:92](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/transform.ts#L92)
 
 Programmatically applies a patch (diff or file map) to an existing snapshot.
 This enables incremental updates to codebase state without full re-packing.
