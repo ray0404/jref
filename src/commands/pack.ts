@@ -437,6 +437,7 @@ export class PackCommand extends Command {
         if (!options.silent) {
           console.error(`🔍 Post-processing: Scanning for binaries to append...`);
         }
+        const deltaPathsSet = deltaPaths ? new Set(deltaPaths) : undefined;
         const binaryScanWalk = (dir: string) => {
           const entries = readdirSync(dir, { withFileTypes: true });
           for (const entry of entries) {
@@ -453,7 +454,7 @@ export class PackCommand extends Command {
               if (allFiles[relPath]) continue;
               
               // If in delta mode, only include if it was in deltaPaths
-              if (deltaPaths && !deltaPaths.includes(relPath)) continue;
+              if (deltaPathsSet && !deltaPathsSet.has(relPath)) continue;
 
               const buffer = readFileSync(fullPath);
               if (isBinaryBuffer(buffer)) {
