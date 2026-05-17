@@ -5,9 +5,9 @@
  */
 
 let embeddingPipeline: any = null;
-let transformersLib: any = null;
+export let transformersLib: any = null;
 
-async function getTransformers() {
+export async function getTransformers() {
   if (!transformersLib) {
     try {
       // Dynamically import to allow setting environment variables before loading backends
