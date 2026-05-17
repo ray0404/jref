@@ -6,7 +6,7 @@
 
 # Interface: BPackOptions
 
-Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/fs.ts#L116)
+Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/fs.ts#L116)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/ef46d6003be0734
 
 > `optional` **exclude?**: `string`[]
 
-Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/fs.ts#L117)
+Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/fs.ts#L117)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/ef46d6003be0734
 
 > `optional` **maxBinarySize?**: `number`
 
-Defined in: [api/fs.ts:118](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/fs.ts#L118)
+Defined in: [api/fs.ts:118](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/fs.ts#L118)

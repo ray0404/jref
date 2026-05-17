@@ -6,7 +6,7 @@
 
 # Interface: AnalysisResult
 
-Defined in: [utils/graph-analysis.ts:19](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/graph-analysis.ts#L19)
+Defined in: [utils/graph-analysis.ts:19](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L19)
 
 Result of a structural graph analysis.
 
@@ -16,7 +16,7 @@ Result of a structural graph analysis.
 
 > **graph**: `object`
 
-Defined in: [utils/graph-analysis.ts:23](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/graph-analysis.ts#L23)
+Defined in: [utils/graph-analysis.ts:23](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L23)
 
 The updated graph snapshot with community and centrality data injected into nodes.
 
@@ -34,7 +34,7 @@ The updated graph snapshot with community and centrality data injected into node
 
 > **godNodes**: `object`[]
 
-Defined in: [utils/graph-analysis.ts:27](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/graph-analysis.ts#L27)
+Defined in: [utils/graph-analysis.ts:27](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L27)
 
 Top 10 most central nodes in the graph ("God Nodes").
 
@@ -52,6 +52,6 @@ Top 10 most central nodes in the graph ("God Nodes").
 
 > **communities**: `Record`\<`number`, `string`[]\>
 
-Defined in: [utils/graph-analysis.ts:31](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/graph-analysis.ts#L31)
+Defined in: [utils/graph-analysis.ts:31](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L31)
 
 Map of community IDs to arrays of node IDs belonging to those communities.

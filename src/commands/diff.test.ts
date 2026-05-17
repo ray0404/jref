@@ -3,8 +3,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DiffCommand } from './diff.js';
 import type { ProjectSnapshot } from '../types/index.js';
 import * as fs from 'fs';
+import * as fsp from 'fs/promises';
 
 vi.mock('fs');
+vi.mock('fs/promises');
 
 describe('DiffCommand', () => {
   let command: DiffCommand;
@@ -22,9 +24,9 @@ describe('DiffCommand', () => {
   });
 
   it('should identify a modified file', async () => {
-    (fs.existsSync as any).mockReturnValue(true);
-    (fs.readFileSync as any).mockReturnValue('modified content');
-    (fs.lstatSync as any).mockReturnValue({ isDirectory: () => false });
+    (fsp.stat as any).mockResolvedValue({ isDirectory: () => false });
+    (fsp.readFile as any).mockResolvedValue('modified content');
+
 
     const context = { snapshot: mockSnapshot, stdinIsPipe: false };
     const result = await command.execute([], { json: true }, context);
@@ -34,7 +36,7 @@ describe('DiffCommand', () => {
   });
 
   it('should identify a missing local file (Added to snapshot)', async () => {
-    (fs.existsSync as any).mockReturnValue(false);
+    (fsp.stat as any).mockRejectedValue(new Error('ENOENT'));
 
     const context = { snapshot: mockSnapshot, stdinIsPipe: false };
     const result = await command.execute([], { json: true }, context);

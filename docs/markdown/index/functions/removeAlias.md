@@ -8,7 +8,7 @@
 
 > **removeAlias**(`name`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/config.ts:29](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/config.ts#L29)
+Defined in: [api/config.ts:29](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/config.ts#L29)
 
 Programmatically remove a command alias
 

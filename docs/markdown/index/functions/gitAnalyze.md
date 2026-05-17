@@ -8,7 +8,7 @@
 
 > **gitAnalyze**(`options?`): `Promise`\<`any`\>
 
-Defined in: [api/logic.ts:47](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/logic.ts#L47)
+Defined in: [api/logic.ts:47](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L47)
 
 Programmatically perform git-aware analysis on a project
 

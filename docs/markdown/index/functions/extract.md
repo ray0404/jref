@@ -8,7 +8,7 @@
 
 > **extract**(`snapshot`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/fs.ts:18](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/fs.ts#L18)
+Defined in: [api/fs.ts:18](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/fs.ts#L18)
 
 Programmatically extract files from a snapshot
 
