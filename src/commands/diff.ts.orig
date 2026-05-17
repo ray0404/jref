@@ -1,12 +1,10 @@
 
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-
-import { readFile, stat } from 'fs/promises';
+import { existsSync, readFileSync, readdirSync, lstatSync } from 'fs';
 import { join, relative } from 'path';
 import { printTable } from '../utils/output.js';
 import { createHash } from 'crypto';
-import pLimit from 'p-limit';
 
 export class DiffCommand extends Command {
   // ... (definition remains same)
@@ -62,42 +60,35 @@ export class DiffCommand extends Command {
       const encodings = snapshot.encodings || {};
 
       // 1. Check files from snapshot
-      const limit = pLimit(1000);
-      const promises = Object.entries(snapshot.files).map(([filePath, content]) => limit(async () => {
-        try {
-          const localPath = join(targetDir, filePath);
-          const isBinary = encodings[filePath] === 'base64';
+      for (const [filePath, content] of Object.entries(snapshot.files)) {
+        const localPath = join(targetDir, filePath);
+        const isBinary = encodings[filePath] === 'base64';
 
-          const stats = await stat(localPath).catch(() => null);
-          if (!stats) {
-            missingFiles.push(filePath);
-          } else if (stats.isDirectory()) {
-            // Path in snapshot is a file, but on disk is a directory (unlikely but possible)
-            missingFiles.push(filePath);
+        if (!existsSync(localPath)) {
+          missingFiles.push(filePath);
+        } else if (lstatSync(localPath).isDirectory()) {
+          // Path in snapshot is a file, but on disk is a directory (unlikely but possible)
+          missingFiles.push(filePath);
+        } else {
+          if (isBinary) {
+            const localBuffer = readFileSync(localPath);
+            const snapshotBuffer = Buffer.from(content, 'base64');
+
+            if (localBuffer.length !== snapshotBuffer.length || this.computeHash(localBuffer) !== this.computeHash(snapshotBuffer)) {
+              modifiedFiles.push({ path: filePath, isBinary: true, oldSize: snapshotBuffer.length, newSize: localBuffer.length });
+            }
           } else {
-            if (isBinary) {
-              const localBuffer = await readFile(localPath);
-              const snapshotBuffer = Buffer.from(content, 'base64');
-
-              if (localBuffer.length !== snapshotBuffer.length || this.computeHash(localBuffer) !== this.computeHash(snapshotBuffer)) {
-                modifiedFiles.push({ path: filePath, isBinary: true, oldSize: snapshotBuffer.length, newSize: localBuffer.length });
-              }
-            } else {
-              const localContent = await readFile(localPath, 'utf8');
-              if (localContent !== content) {
-                modifiedFiles.push({ path: filePath, isBinary: false });
-              }
+            const localContent = readFileSync(localPath, 'utf8');
+            if (localContent !== content) {
+              modifiedFiles.push({ path: filePath, isBinary: false });
             }
           }
-        } catch (e) {
-          missingFiles.push(filePath);
         }
-      }));
-      await Promise.all(promises);
+      }
 
       // 2. Check for extra local files
       if (flags.all) {
-          await this.findExtraFiles(targetDir, snapshot.files, extraFiles);
+          this.findExtraFiles(targetDir, snapshot.files, extraFiles);
       }
 
       const result = {
@@ -124,21 +115,19 @@ export class DiffCommand extends Command {
     return createHash('sha256').update(buffer).digest('hex');
   }
 
-  private async findExtraFiles(dir: string, snapshotFiles: Record<string, string>, extraFiles: string[], baseDir?: string): Promise<void> {
+  private findExtraFiles(dir: string, snapshotFiles: Record<string, string>, extraFiles: string[], baseDir?: string): void {
     const root = baseDir || dir;
-    const { readdir, lstat } = await import('fs/promises');
-    const entries = await readdir(dir);
-    
+    const entries = readdirSync(dir);
+
     for (const entry of entries) {
       const fullPath = join(dir, entry);
       const relativePath = relative(root, fullPath);
-      
+
       // Basic ignore list (should use .gitignore later)
       if (entry === '.git' || entry === 'node_modules' || entry === 'dist') continue;
 
-      const stat = await lstat(fullPath);
-      if (stat.isDirectory()) {
-        await this.findExtraFiles(fullPath, snapshotFiles, extraFiles, root);
+      if (lstatSync(fullPath).isDirectory()) {
+        this.findExtraFiles(fullPath, snapshotFiles, extraFiles, root);
       } else if (snapshotFiles[relativePath] === undefined) {
         extraFiles.push(relativePath);
       }

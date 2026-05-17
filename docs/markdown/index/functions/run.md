@@ -8,7 +8,7 @@
 
 > **run**(`snapshot`, `scriptPath`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/execution.ts:37](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/execution.ts#L37)
+Defined in: [api/execution.ts:37](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L37)
 
 Programmatically executes a script contained within a ProjectSnapshot.
 The script is executed in a virtualized environment or temporary workspace.

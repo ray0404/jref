@@ -8,7 +8,7 @@
 
 > **encodeBase64**(`buffer`): `string`
 
-Defined in: [utils/binary.ts:69](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/binary.ts#L69)
+Defined in: [utils/binary.ts:69](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/binary.ts#L69)
 
 Encodes a Buffer into a Base64 string.
 

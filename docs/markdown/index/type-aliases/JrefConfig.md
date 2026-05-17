@@ -8,6 +8,6 @@
 
 > **JrefConfig** = `z.infer`\<*typeof* [`JrefConfigSchema`](../variables/JrefConfigSchema.md)\>
 
-Defined in: [types/index.ts:283](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L283)
+Defined in: [types/index.ts:283](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L283)
 
 Persistent configuration settings for the jref CLI.

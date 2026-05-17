@@ -6,7 +6,7 @@
 
 # Interface: InspectOptions
 
-Defined in: [api/data.ts:97](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L97)
+Defined in: [api/data.ts:97](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L97)
 
 Configuration options for the `inspect` function.
 
@@ -16,7 +16,7 @@ Configuration options for the `inspect` function.
 
 > `optional` **metadata?**: `boolean`
 
-Defined in: [api/data.ts:101](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L101)
+Defined in: [api/data.ts:101](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L101)
 
 Whether to include quantitative metadata (file count, size).
 
@@ -26,7 +26,7 @@ Whether to include quantitative metadata (file count, size).
 
 > `optional` **structure?**: `boolean`
 
-Defined in: [api/data.ts:105](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L105)
+Defined in: [api/data.ts:105](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L105)
 
 Whether to include the directory structure tree.
 
@@ -36,7 +36,7 @@ Whether to include the directory structure tree.
 
 > `optional` **files?**: `boolean`
 
-Defined in: [api/data.ts:109](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L109)
+Defined in: [api/data.ts:109](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L109)
 
 Whether to list all files present in the snapshot.
 
@@ -46,6 +46,6 @@ Whether to list all files present in the snapshot.
 
 > `optional` **summary?**: `boolean`
 
-Defined in: [api/data.ts:113](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L113)
+Defined in: [api/data.ts:113](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L113)
 
 Whether to generate a high-level summary of snapshot content.

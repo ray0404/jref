@@ -6,7 +6,7 @@
 
 # Interface: CommandResult\<T\>
 
-Defined in: [types/index.ts:319](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L319)
+Defined in: [types/index.ts:319](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L319)
 
 Unified result structure for all CLI command executions.
 
@@ -22,7 +22,7 @@ Unified result structure for all CLI command executions.
 
 > **success**: `boolean`
 
-Defined in: [types/index.ts:323](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L323)
+Defined in: [types/index.ts:323](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L323)
 
 Whether the command completed successfully.
 
@@ -32,7 +32,7 @@ Whether the command completed successfully.
 
 > **exitCode**: [`CommandExitCode`](../type-aliases/CommandExitCode.md)
 
-Defined in: [types/index.ts:327](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L327)
+Defined in: [types/index.ts:327](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L327)
 
 The process exit code.
 
@@ -42,7 +42,7 @@ The process exit code.
 
 > `optional` **output?**: `string`
 
-Defined in: [types/index.ts:331](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L331)
+Defined in: [types/index.ts:331](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L331)
 
 Human-readable output string.
 
@@ -52,7 +52,7 @@ Human-readable output string.
 
 > `optional` **data?**: `T`
 
-Defined in: [types/index.ts:335](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L335)
+Defined in: [types/index.ts:335](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L335)
 
 Structured data payload.
 
@@ -62,6 +62,6 @@ Structured data payload.
 
 > `optional` **error?**: `string`
 
-Defined in: [types/index.ts:339](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L339)
+Defined in: [types/index.ts:339](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L339)
 
 Error message if success is false.

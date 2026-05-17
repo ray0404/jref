@@ -8,6 +8,6 @@
 
 > `const` **BlueprintSpecSchema**: `ZodObject`\<\{ `userStory`: `ZodOptional`\<`ZodString`\>; `acceptanceCriteria`: `ZodOptional`\<`ZodArray`\<`ZodString`\>\>; `constraints`: `ZodOptional`\<`ZodArray`\<`ZodString`\>\>; `outOfScope`: `ZodOptional`\<`ZodArray`\<`ZodString`\>\>; \}, `$strip`\>
 
-Defined in: [types/index.ts:372](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/types/index.ts#L372)
+Defined in: [types/index.ts:372](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L372)
 
 Formal specification for a blueprint task.

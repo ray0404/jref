@@ -6,7 +6,7 @@
 
 # Interface: GitOptions
 
-Defined in: [api/logic.ts:38](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/logic.ts#L38)
+Defined in: [api/logic.ts:38](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L38)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/logic.ts:38](https://github.com/ray0404/jref/blob/ef46d6003be07
 
 > `optional` **branch?**: `string`
 
-Defined in: [api/logic.ts:39](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/logic.ts#L39)
+Defined in: [api/logic.ts:39](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L39)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [api/logic.ts:39](https://github.com/ray0404/jref/blob/ef46d6003be07
 
 > `optional` **depth?**: `number`
 
-Defined in: [api/logic.ts:40](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/logic.ts#L40)
+Defined in: [api/logic.ts:40](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L40)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [api/logic.ts:40](https://github.com/ray0404/jref/blob/ef46d6003be07
 
 > `optional` **blastRadius?**: `string`
 
-Defined in: [api/logic.ts:41](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/logic.ts#L41)
+Defined in: [api/logic.ts:41](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L41)

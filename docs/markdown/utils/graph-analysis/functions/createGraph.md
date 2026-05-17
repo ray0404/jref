@@ -8,7 +8,7 @@
 
 > **createGraph**(`snapshot`): `DirectedGraph`
 
-Defined in: [utils/graph-analysis.ts:87](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/utils/graph-analysis.ts#L87)
+Defined in: [utils/graph-analysis.ts:87](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L87)
 
 Converts a static GraphSnapshot into a live `graphology` DirectedGraph instance.
 

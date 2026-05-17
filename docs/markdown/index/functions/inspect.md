@@ -8,7 +8,7 @@
 
 > **inspect**(`snapshot`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/data.ts:124](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/data.ts#L124)
+Defined in: [api/data.ts:124](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/data.ts#L124)
 
 Programmatically inspects a snapshot to retrieve metadata and structural information.
 

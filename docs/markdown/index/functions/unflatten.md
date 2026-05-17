@@ -8,7 +8,7 @@
 
 > **unflatten**(`content`): `Promise`\<\{ `directoryStructure?`: `string`; `files`: `Record`\<`string`, `string`\>; `encodings?`: `Record`\<`string`, `"utf8"` \| `"base64"`\>; `instruction?`: `string`; `roadmap?`: `string`; `fileSummary?`: `string`; `userProvidedHeader?`: `string`; `chunks?`: [`CodeChunk`](../interfaces/CodeChunk.md)[]; \}\>
 
-Defined in: [api/transform.ts:59](https://github.com/ray0404/jref/blob/ef46d6003be0734559b00ea15bb1e8a08ee22ee3/src/api/transform.ts#L59)
+Defined in: [api/transform.ts:59](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/transform.ts#L59)
 
 Programmatically reconstructs a ProjectSnapshot from a flattened content string.
 Reverses the logic applied by the `flatten` function.
