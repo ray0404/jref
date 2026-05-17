@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { GraphNode, GraphEdge, CodeChunk } from '../types/index.js';
 import { chunkCode } from './chunking.js';
+import { getTransformers, cosineSimilarity } from './embeddings.js';
 
 /**
  * Utility for semantic graph extraction using local embeddings.
@@ -12,32 +13,7 @@ export interface SemanticExtractionOptions {
   threshold?: number;
 }
 
-let transformersLib: any = null;
 
-async function getTransformers() {
-  if (!transformersLib) {
-    try {
-      // Dynamically import to allow setting environment variables before loading backends
-      const { env, pipeline } = await import('@xenova/transformers');
-      
-      // Explicitly set backend to wasm to avoid onnxruntime-node dependency on Android/Termux
-      (env as any).backend = 'wasm';
-      env.allowRemoteModels = true;
-      
-      // Additional Termux/Node.js shimming for onnxruntime-web
-      if (typeof process !== 'undefined' && process.release?.name === 'node') {
-        (env as any).wasm.numThreads = 1;
-        (env as any).wasm.proxy = false;
-      }
-      
-      transformersLib = { env, pipeline };
-    } catch (err) {
-      console.warn('⚠️ @xenova/transformers not found. Semantic search/embeddings disabled.');
-      throw err;
-    }
-  }
-  return transformersLib;
-}
 
 /**
  * Infers semantic relationships between nodes using local embedding models.
@@ -102,20 +78,7 @@ export async function inferSemanticEdges(
   }
 }
 
-/**
- * Calculates cosine similarity between two vectors.
- */
-function cosineSimilarity(vecA: number[], vecB: number[]): number {
-  let dotProduct = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < vecA.length; i++) {
-    dotProduct += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-  return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-}
+
 
 /**
  * Builds a prompt for the LLM to perform semantic extraction (Legacy/External).
