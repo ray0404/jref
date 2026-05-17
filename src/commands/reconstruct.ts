@@ -7,7 +7,7 @@
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ReconstructResult } from '../types/index.js';
 import { loadSnapshot } from '../utils/streaming-json.js';
-import { readdirSync, readFileSync, statSync } from 'fs';
+import { readdirSync, statSync } from 'fs';
 import { join, relative } from 'path';
 
 interface ReconstructFlags {
@@ -126,8 +126,8 @@ export class ReconstructCommand extends Command {
   }
 
   private async readFile(filePath: string): Promise<string> {
-    const { readFileSync } = await import('fs');
-    return readFileSync(filePath, 'utf8');
+    const { readFile } = await import('fs/promises');
+    return readFile(filePath, 'utf8');
   }
 
   private directoryExists(path: string): boolean {
@@ -171,7 +171,8 @@ export class ReconstructCommand extends Command {
       if (localFiles.has(file)) {
         const localPath = join(directory, file);
         try {
-          const localContent = readFileSync(localPath, 'utf8');
+          const { readFile } = await import('fs/promises');
+          const localContent = await readFile(localPath, 'utf8');
           if (localContent !== snapshot.files[file]) {
             modifiedFiles.push(file);
           }
