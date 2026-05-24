@@ -61,6 +61,6 @@ describe('ToolCommand', () => {
     
     expect(result.success).toBe(true);
     const logContent = readFileSync('.jref/debug.log', 'utf8');
-    expect(logContent).toContain('Parser "non-existent" not found');
+    expect(logContent).toContain('Parser \\"non-existent\\" not found');
   });
 }, 30000);
