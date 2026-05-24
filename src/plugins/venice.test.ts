@@ -50,6 +50,7 @@ describe('VeniceCommand', () => {
     const result = await command.execute(['models'], mockOptions, mockContext);
     
     expect(global.fetch).toHaveBeenCalledWith('https://api.venice.ai/api/v1/models', {
+      method: 'GET',
       headers: { Authorization: 'Bearer test-key' }
     });
     
