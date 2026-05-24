@@ -447,6 +447,8 @@ export async function registerBuiltinCommands(): Promise<void> {
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
+  await import('../plugins/venice.js');
+  await import('../plugins/api.js');
 
   registry.register(new InspectCommand());
   registry.register(new SearchCommand());

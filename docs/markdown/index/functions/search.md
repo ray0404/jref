@@ -8,7 +8,7 @@
 
 > **search**(`snapshot`, `pattern`, `options?`): `Promise`\<[`SearchResult`](../interfaces/SearchResult.md)[]\>
 
-Defined in: [api/search.ts:14](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L14)
+Defined in: [api/search.ts:14](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L14)
 
 Programmatically search a snapshot
 

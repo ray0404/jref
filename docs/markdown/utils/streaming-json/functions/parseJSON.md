@@ -8,7 +8,7 @@
 
 > **parseJSON**(`input`, `filePath?`, `options?`): `Promise`\<\{ `directoryStructure?`: `string`; `files`: `Record`\<`string`, `string`\>; `encodings?`: `Record`\<`string`, `"utf8"` \| `"base64"`\>; `instruction?`: `string`; `roadmap?`: `string`; `fileSummary?`: `string`; `userProvidedHeader?`: `string`; `chunks?`: [`CodeChunk`](../../../index/interfaces/CodeChunk.md)[]; \}\>
 
-Defined in: [utils/streaming-json.ts:39](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/streaming-json.ts#L39)
+Defined in: [utils/streaming-json.ts:39](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/streaming-json.ts#L39)
 
 High-level entry point for parsing JSON input into a ProjectSnapshot.
 Automatically chooses between native `JSON.parse` (for speed on small files)

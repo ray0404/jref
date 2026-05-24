@@ -8,7 +8,7 @@
 
 > **detectMimeType**(`magic`): `string`
 
-Defined in: [utils/binary.ts:96](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/binary.ts#L96)
+Defined in: [utils/binary.ts:96](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/binary.ts#L96)
 
 Detects the likely MIME type of a file based on its magic numbers.
 Supports common executable, archive, image, and audio/video formats.

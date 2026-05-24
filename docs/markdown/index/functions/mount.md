@@ -8,7 +8,7 @@
 
 > **mount**(`snapshot`, `port?`): `Promise`\<`void`\>
 
-Defined in: [api/interactive.ts:64](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/interactive.ts#L64)
+Defined in: [api/interactive.ts:64](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/interactive.ts#L64)
 
 Programmatically mount a snapshot as a virtual filesystem (WebDAV)
 

@@ -5,7 +5,7 @@
 
 import { Command } from '../utils/command.js';
 import type { CLIOptions, CommandResult, CommandContext, ProjectSnapshot } from '../types/index.js';
-import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'fs';
 import { readFile, unlink, writeFile } from 'fs/promises';
 const fsPromises = { readFile, unlink, writeFile };
 import { resolve, relative, join } from 'path';

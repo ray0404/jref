@@ -6,7 +6,7 @@
 
 # Interface: SearchOptions
 
-Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L4)
+Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L4)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/66a4d38b3b6df
 
 > `optional` **maxResults?**: `number`
 
-Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L5)
+Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L5)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6df
 
 > `optional` **context?**: `number`
 
-Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L6)
+Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L6)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/66a4d38b3b6df
 
 > `optional` **caseSensitive?**: `boolean`
 
-Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L7)
+Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L7)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/66a4d38b3b6df
 
 > `optional` **isRegex?**: `boolean`
 
-Defined in: [api/search.ts:8](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/search.ts#L8)
+Defined in: [api/search.ts:8](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L8)

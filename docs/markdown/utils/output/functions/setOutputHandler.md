@@ -8,7 +8,7 @@
 
 > **setOutputHandler**(`handler`): [`OutputHandler`](../type-aliases/OutputHandler.md) \| `null`
 
-Defined in: [utils/output.ts:71](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/output.ts#L71)
+Defined in: [utils/output.ts:71](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/output.ts#L71)
 
 Configures a custom global output handler.
 This handler will be used by all print functions unless overridden locally.

@@ -6,7 +6,7 @@
 
 # Interface: RunOptions
 
-Defined in: [api/execution.ts:16](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L16)
+Defined in: [api/execution.ts:16](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/execution.ts#L16)
 
 Configuration options for the `run` and `bin` functions.
 
@@ -16,7 +16,7 @@ Configuration options for the `run` and `bin` functions.
 
 > `optional` **args?**: `string`[]
 
-Defined in: [api/execution.ts:20](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L20)
+Defined in: [api/execution.ts:20](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/execution.ts#L20)
 
 Command-line arguments to pass to the script.
 
@@ -26,6 +26,6 @@ Command-line arguments to pass to the script.
 
 > `optional` **env?**: `Record`\<`string`, `string`\>
 
-Defined in: [api/execution.ts:24](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L24)
+Defined in: [api/execution.ts:24](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/execution.ts#L24)
 
 Environment variable overrides for the execution context.

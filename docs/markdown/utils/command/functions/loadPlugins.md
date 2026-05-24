@@ -8,7 +8,7 @@
 
 > **loadPlugins**(`pluginDir`): `Promise`\<`void`\>
 
-Defined in: [utils/command.ts:389](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L389)
+Defined in: [utils/command.ts:389](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L389)
 
 Dynamically loads and registers plugins from a specified directory.
 

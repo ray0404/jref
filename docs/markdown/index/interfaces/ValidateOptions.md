@@ -6,7 +6,7 @@
 
 # Interface: ValidateOptions
 
-Defined in: [api/logic.ts:4](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L4)
+Defined in: [api/logic.ts:4](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/logic.ts#L4)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/logic.ts:4](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa
 
 > `optional` **includeDiffs?**: `boolean`
 
-Defined in: [api/logic.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L5)
+Defined in: [api/logic.ts:5](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/logic.ts#L5)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [api/logic.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa
 
 > `optional` **includeLogs?**: `boolean`
 
-Defined in: [api/logic.ts:6](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L6)
+Defined in: [api/logic.ts:6](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/logic.ts#L6)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [api/logic.ts:6](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa
 
 > `optional` **logsCount?**: `number`
 
-Defined in: [api/logic.ts:7](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/logic.ts#L7)
+Defined in: [api/logic.ts:7](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/logic.ts#L7)

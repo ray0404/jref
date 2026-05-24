@@ -8,7 +8,7 @@
 
 > **getMagicNumbers**(`content`): `Buffer`
 
-Defined in: [utils/binary.ts:81](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/binary.ts#L81)
+Defined in: [utils/binary.ts:81](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/binary.ts#L81)
 
 Extracts magic numbers (the first 16 bytes) from a Base64 encoded string.
 This is performed without decoding the entire string, making it efficient 

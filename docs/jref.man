@@ -155,13 +155,13 @@ CCOOMMMMAANNDDSS
 
        SSEETTTTIINNGGSS
 
-           • ddeeffaauullttOOuuttppuutt: json, pretty, raw
+           +o ddeeffaauullttOOuuttppuutt: json, pretty, raw
 
-           • tthheemmee: dark, light, system
+           +o tthheemmee: dark, light, system
 
-           • ssiilleenntt: true, false
+           +o ssiilleenntt: true, false
 
-           • aalliiaassTTooggggllee: true, false
+           +o aalliiaassTTooggggllee: true, false
 
    DDIIFFFF
        Compare snapshot contents against the local filesystem.
@@ -231,10 +231,10 @@ CCOOMMMMAANNDDSS
 
        FFeeaattuurreess::
 
-           • UUnniivveerrssaall MMooddee: Operates on any valid JSON structure, not just
+           +o UUnniivveerrssaall MMooddee: Operates on any valid JSON structure, not just
              snapshots.
 
-           • RRaaww OOuuttppuutt: Use ----rraaww to emit pure string content.
+           +o RRaaww OOuuttppuutt: Use ----rraaww to emit pure string content.
 
        EEXXAAMMPPLLEESS
 
@@ -521,10 +521,10 @@ CCOOMMMMAANNDDSS
 
        FFeeaattuurreess::
 
-           • UUnniivveerrssaall MMuuttaattiioonn: Programmatically update metadata or content
+           +o UUnniivveerrssaall MMuuttaattiioonn: Programmatically update metadata or content
              in any JSON file.
 
-           • SSnnaappsshhoott AAwwaarreenneessss: Automatically recalculates ddiirreeccttoorryySSttrruuccttuurree
+           +o SSnnaappsshhoott AAwwaarreenneessss: Automatically recalculates ddiirreeccttoorryySSttrruuccttuurree
              when modifying files in a snapshot.
 
        EEXXAAMMPPLLEESS
@@ -554,11 +554,11 @@ CCOOMMMMAANNDDSS
 
        PPAARRSSEERRSS AAVVAAIILLAABBLLEE
 
-           • llss: Standard directory listing to JSON.
+           +o llss: Standard directory listing to JSON.
 
-           • ggiitt--lloogg: Git history to structured JSON.
+           +o ggiitt--lloogg: Git history to structured JSON.
 
-           • ppss: Process list to structured JSON.
+           +o ppss: Process list to structured JSON.
 
        EEXXAAMMPPLLEESS
 
@@ -632,7 +632,7 @@ BBUUGGSS
        Report bugs at the project issue tracker.
 
 CCOOPPYYRRIIGGHHTT
-       Copyright © 2025 the jref contributors.
+       Copyright (C) 2025 the jref contributors.
        License: MIT
 
 1.1.0                             2026-05-15                           JREF(1)

@@ -6,7 +6,7 @@
 
 # Interface: AliasOptions
 
-Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/config.ts#L5)
+Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/config.ts#L5)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/66a4d38b3b6df
 
 > `optional` **global?**: `boolean`
 
-Defined in: [api/config.ts:6](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/config.ts#L6)
+Defined in: [api/config.ts:6](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/config.ts#L6)

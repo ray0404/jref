@@ -8,7 +8,7 @@
 
 > **registerBuiltinCommands**(): `Promise`\<`void`\>
 
-Defined in: [utils/command.ts:417](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L417)
+Defined in: [utils/command.ts:417](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L417)
 
 Registers all core built-in commands with the global registry.
 This function handles lazy loading of command implementations.

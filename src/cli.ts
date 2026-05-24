@@ -307,7 +307,8 @@ export { main, registerBuiltinCommands, registry };
 const isMain = process.argv[1] && (
   process.argv[1] === fileURLToPath(import.meta.url) || 
   process.argv[1].endsWith('/jref') ||
-  process.argv[1].endsWith('/index.js')
+  process.argv[1].endsWith('/cli.js') ||
+  process.argv[1].endsWith('/jbin')
 );
 
 if (isMain) {

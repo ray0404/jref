@@ -8,7 +8,7 @@
 
 > **tool**(`command`, `commandArgs?`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/execution.ts:131](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/api/execution.ts#L131)
+Defined in: [api/execution.ts:131](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/execution.ts#L131)
 
 Programmatically invokes a system command and optionally parses its output into JSON.
 Integrates external CLI tools (like `ls`, `git`, or `docker`) into the jref workflow.

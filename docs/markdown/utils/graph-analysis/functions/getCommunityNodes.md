@@ -8,7 +8,7 @@
 
 > **getCommunityNodes**(`snapshot`, `communityId`): `string`[]
 
-Defined in: [utils/graph-analysis.ts:152](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/graph-analysis.ts#L152)
+Defined in: [utils/graph-analysis.ts:152](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/graph-analysis.ts#L152)
 
 Returns all node IDs sharing a specific community ID within a snapshot.
 

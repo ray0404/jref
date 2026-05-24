@@ -6,7 +6,7 @@
 
 # Interface: JrefPlugin
 
-Defined in: [utils/command.ts:72](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L72)
+Defined in: [utils/command.ts:72](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L72)
 
 Interface for jref plugins that extend the CLI.
 
@@ -16,7 +16,7 @@ Interface for jref plugins that extend the CLI.
 
 > **name**: `string`
 
-Defined in: [utils/command.ts:76](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L76)
+Defined in: [utils/command.ts:76](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L76)
 
 The display name of the plugin.
 
@@ -26,7 +26,7 @@ The display name of the plugin.
 
 > **version**: `string`
 
-Defined in: [utils/command.ts:80](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L80)
+Defined in: [utils/command.ts:80](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L80)
 
 Semantic version of the plugin.
 
@@ -36,7 +36,7 @@ Semantic version of the plugin.
 
 > **register**: (`registry`) => `void`
 
-Defined in: [utils/command.ts:85](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L85)
+Defined in: [utils/command.ts:85](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L85)
 
 Registration callback to add commands to the registry.
 

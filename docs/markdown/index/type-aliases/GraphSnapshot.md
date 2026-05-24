@@ -8,6 +8,6 @@
 
 > **GraphSnapshot** = `z.infer`\<*typeof* [`GraphSnapshotSchema`](../variables/GraphSnapshotSchema.md)\>
 
-Defined in: [types/index.ts:108](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/types/index.ts#L108)
+Defined in: [types/index.ts:108](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L108)
 
 A complete representation of a codebase's symbol relationships and topology.

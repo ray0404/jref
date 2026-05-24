@@ -8,7 +8,7 @@
 
 > **printInfo**(`message`, `options?`, `handler?`): `void`
 
-Defined in: [utils/output.ts:218](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/output.ts#L218)
+Defined in: [utils/output.ts:218](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/output.ts#L218)
 
 Prints an informational message.
 In human mode, adds a cyan info symbol prefix.

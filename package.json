@@ -54,6 +54,7 @@
     "graphology-shortest-path": "^2.1.0",
     "ignore": "^7.0.5",
     "ink": "^5.0.0",
+    "ink-text-input": "^6.0.0",
     "isomorphic-git": "^1.37.6",
     "jq-wasm": "^1.1.0-jq-1.8.1",
     "json5": "^2.2.3",

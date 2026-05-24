@@ -6,7 +6,7 @@
 
 # Class: CommandRegistry
 
-Defined in: [utils/command.ts:329](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L329)
+Defined in: [utils/command.ts:329](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L329)
 
 Registry for managing and looking up available CLI commands.
 
@@ -26,7 +26,7 @@ Registry for managing and looking up available CLI commands.
 
 > **register**(`command`): `void`
 
-Defined in: [utils/command.ts:336](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L336)
+Defined in: [utils/command.ts:336](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L336)
 
 Registers a command instance in the registry.
 
@@ -48,7 +48,7 @@ The command to register.
 
 > **get**(`name`): [`Command`](Command.md) \| `undefined`
 
-Defined in: [utils/command.ts:345](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L345)
+Defined in: [utils/command.ts:345](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L345)
 
 Retrieves a command by its name.
 
@@ -72,7 +72,7 @@ The command instance if found, otherwise undefined.
 
 > **getCommandNames**(): `string`[]
 
-Defined in: [utils/command.ts:353](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L353)
+Defined in: [utils/command.ts:353](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L353)
 
 Returns a list of all registered command names.
 
@@ -88,7 +88,7 @@ Array of command names.
 
 > **has**(`name`): `boolean`
 
-Defined in: [utils/command.ts:362](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L362)
+Defined in: [utils/command.ts:362](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L362)
 
 Checks if a command with the given name is registered.
 
@@ -112,7 +112,7 @@ True if the command exists.
 
 > **getAllCommands**(): [`CommandDefinition`](../interfaces/CommandDefinition.md)[]
 
-Defined in: [utils/command.ts:370](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/command.ts#L370)
+Defined in: [utils/command.ts:370](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/command.ts#L370)
 
 Returns metadata for all registered commands.
 

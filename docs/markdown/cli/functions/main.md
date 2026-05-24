@@ -8,7 +8,7 @@
 
 > **main**(): `Promise`\<`void`\>
 
-Defined in: [cli.ts:238](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/cli.ts#L238)
+Defined in: [cli.ts:238](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/cli.ts#L238)
 
 Main application entry point handler.
 Coordinates system initialization, command routing, and error handling.

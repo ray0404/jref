@@ -30,7 +30,7 @@ export class BinSetupCommand extends Command {
   ): Promise<CommandResult> {
     try {
       const binDir = this.getSystemBinPath();
-      const jrefPath = process.argv[1]; // Path to dist/index.js
+      const jrefPath = process.argv[1]; // Path to dist/cli.js
       const jbinPath = join(binDir, 'jbin');
 
       if (!jrefPath) {

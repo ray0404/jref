@@ -8,7 +8,7 @@
 
 > **getFilePaths**(`snapshot`, `prefix?`): `string`[]
 
-Defined in: [utils/streaming-json.ts:418](https://github.com/ray0404/jref/blob/66a4d38b3b6dfa41694653cf3f7b2c3042974f0a/src/utils/streaming-json.ts#L418)
+Defined in: [utils/streaming-json.ts:418](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/streaming-json.ts#L418)
 
 Retrieves a list of relative file paths present in the snapshot.
 Optionally filters by a directory prefix.
