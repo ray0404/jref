@@ -8,7 +8,7 @@
 
 > **buildGraph**(`target`, `options?`): `Promise`\<\{ `nodes`: `object`[]; `edges`: `object`[]; \}\>
 
-Defined in: [api/graph.ts:44](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/graph.ts#L44)
+Defined in: [api/graph.ts:44](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L44)
 
 Programmatically builds a knowledge graph from a local directory or a ProjectSnapshot.
 Maps symbols, dependencies, and logical communities.

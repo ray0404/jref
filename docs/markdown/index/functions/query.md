@@ -8,7 +8,7 @@
 
 > **query**(`snapshot`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/query.ts:61](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/query.ts#L61)
+Defined in: [api/query.ts:61](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L61)
 
 Programmatically queries a ProjectSnapshot or a snapshot file.
 Supports targeted file retrieval, line-range extraction, and semantic search.

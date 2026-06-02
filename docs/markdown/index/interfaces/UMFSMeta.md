@@ -6,7 +6,7 @@
 
 # Interface: UMFSMeta
 
-Defined in: [utils/umfs.ts:8](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L8)
+Defined in: [utils/umfs.ts:8](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L8)
 
 Unified Metadata Filename Specification (UMFS) Parser and Validator
 Version: 1.0.0
@@ -19,7 +19,7 @@ for compliant filenames.
 
 > **project**: `string`
 
-Defined in: [utils/umfs.ts:9](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L9)
+Defined in: [utils/umfs.ts:9](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L9)
 
 ***
 
@@ -27,7 +27,7 @@ Defined in: [utils/umfs.ts:9](https://github.com/ray0404/jref/blob/6078995c5b078
 
 > **version**: `string` \| `null`
 
-Defined in: [utils/umfs.ts:10](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L10)
+Defined in: [utils/umfs.ts:10](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L10)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [utils/umfs.ts:10](https://github.com/ray0404/jref/blob/6078995c5b07
 
 > **tag**: `string` \| `null`
 
-Defined in: [utils/umfs.ts:11](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L11)
+Defined in: [utils/umfs.ts:11](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L11)
 
 ***
 
@@ -43,7 +43,7 @@ Defined in: [utils/umfs.ts:11](https://github.com/ray0404/jref/blob/6078995c5b07
 
 > **date**: `string` \| `null`
 
-Defined in: [utils/umfs.ts:12](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L12)
+Defined in: [utils/umfs.ts:12](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L12)
 
 ***
 
@@ -51,7 +51,7 @@ Defined in: [utils/umfs.ts:12](https://github.com/ray0404/jref/blob/6078995c5b07
 
 > **time**: `string` \| `null`
 
-Defined in: [utils/umfs.ts:13](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L13)
+Defined in: [utils/umfs.ts:13](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L13)
 
 ***
 
@@ -59,4 +59,4 @@ Defined in: [utils/umfs.ts:13](https://github.com/ray0404/jref/blob/6078995c5b07
 
 > **ext**: `string`
 
-Defined in: [utils/umfs.ts:14](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/umfs.ts#L14)
+Defined in: [utils/umfs.ts:14](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L14)

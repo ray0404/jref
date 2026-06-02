@@ -8,7 +8,7 @@
 
 > **printOutput**(`data`, `options?`, `handler?`): `void`
 
-Defined in: [utils/output.ts:94](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/output.ts#L94)
+Defined in: [utils/output.ts:94](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/output.ts#L94)
 
 Prints data to the appropriate output stream using formatting logic.
 

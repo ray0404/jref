@@ -6,7 +6,7 @@
 
 # Interface: CommandContext
 
-Defined in: [types/index.ts:288](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L288)
+Defined in: [types/index.ts:288](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L288)
 
 Execution context for CLI commands.
 
@@ -16,7 +16,7 @@ Execution context for CLI commands.
 
 > `optional` **stdin?**: `string`
 
-Defined in: [types/index.ts:292](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L292)
+Defined in: [types/index.ts:292](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L292)
 
 Content received from stdin.
 
@@ -26,7 +26,7 @@ Content received from stdin.
 
 > **stdinIsPipe**: `boolean`
 
-Defined in: [types/index.ts:296](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L296)
+Defined in: [types/index.ts:296](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L296)
 
 Whether stdin is being piped from another process.
 
@@ -36,7 +36,7 @@ Whether stdin is being piped from another process.
 
 > `optional` **snapshot?**: `object`
 
-Defined in: [types/index.ts:300](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L300)
+Defined in: [types/index.ts:300](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L300)
 
 Pre-loaded ProjectSnapshot for optimized command execution.
 
@@ -78,7 +78,7 @@ Pre-loaded ProjectSnapshot for optimized command execution.
 
 > `optional` **metadata?**: `object`
 
-Defined in: [types/index.ts:304](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L304)
+Defined in: [types/index.ts:304](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L304)
 
 Pre-calculated metadata for the active snapshot.
 
@@ -116,7 +116,7 @@ Pre-calculated metadata for the active snapshot.
 
 > `optional` **outputHandler?**: (`data`, `type`) => `void`
 
-Defined in: [types/index.ts:308](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L308)
+Defined in: [types/index.ts:308](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L308)
 
 Custom output handler for redirecting prints.
 

@@ -8,7 +8,7 @@
 
 > **queryGraph**(`queryStr`, `graphFile?`): `Promise`\<`any`\>
 
-Defined in: [api/graph.ts:92](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/graph.ts#L92)
+Defined in: [api/graph.ts:92](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L92)
 
 Programmatically executes a traversal query against a knowledge graph.
 

@@ -6,7 +6,7 @@
 
 # Interface: SearchResult
 
-Defined in: [types/index.ts:131](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L131)
+Defined in: [types/index.ts:131](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L131)
 
 Result of a file search operation.
 
@@ -16,7 +16,7 @@ Result of a file search operation.
 
 > **filePath**: `string`
 
-Defined in: [types/index.ts:135](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L135)
+Defined in: [types/index.ts:135](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L135)
 
 Path to the file where matches were found.
 
@@ -26,7 +26,7 @@ Path to the file where matches were found.
 
 > **matches**: [`SearchMatch`](SearchMatch.md)[]
 
-Defined in: [types/index.ts:139](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L139)
+Defined in: [types/index.ts:139](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L139)
 
 List of specific matches within the file.
 
@@ -36,6 +36,6 @@ List of specific matches within the file.
 
 > **score**: `number`
 
-Defined in: [types/index.ts:143](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L143)
+Defined in: [types/index.ts:143](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/types/index.ts#L143)
 
 Relevance score for the search result.

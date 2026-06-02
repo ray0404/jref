@@ -8,7 +8,7 @@
 
 > **diff**(`snapshot`, `targetDir?`): `Promise`\<`any`\>
 
-Defined in: [api/fs.ts:55](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L55)
+Defined in: [api/fs.ts:55](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L55)
 
 Programmatically diff a snapshot against local files
 

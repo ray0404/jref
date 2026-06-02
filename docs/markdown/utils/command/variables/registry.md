@@ -8,6 +8,6 @@
 
 > `const` **registry**: [`CommandRegistry`](../classes/CommandRegistry.md)
 
-Defined in: [utils/command.ts:378](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L378)
+Defined in: [utils/command.ts:378](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L378)
 
 Global instance of the command registry.

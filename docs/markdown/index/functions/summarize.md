@@ -8,7 +8,7 @@
 
 > **summarize**(`snapshot`): `Promise`\<`any`\>
 
-Defined in: [api/transform.ts:132](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/transform.ts#L132)
+Defined in: [api/transform.ts:132](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/transform.ts#L132)
 
 Programmatically generates a high-level summary map of a snapshot.
 The summary includes file signatures and interface outlines, optimized for 

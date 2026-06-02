@@ -6,7 +6,7 @@
 
 # Interface: CommandDefinition
 
-Defined in: [utils/command.ts:42](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L42)
+Defined in: [utils/command.ts:42](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L42)
 
 Metadata definition for a CLI command.
 
@@ -16,7 +16,7 @@ Metadata definition for a CLI command.
 
 > **name**: `string`
 
-Defined in: [utils/command.ts:46](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L46)
+Defined in: [utils/command.ts:46](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L46)
 
 The unique name of the command.
 
@@ -26,7 +26,7 @@ The unique name of the command.
 
 > **description**: `string`
 
-Defined in: [utils/command.ts:50](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L50)
+Defined in: [utils/command.ts:50](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L50)
 
 A brief description of the command's purpose.
 
@@ -36,7 +36,7 @@ A brief description of the command's purpose.
 
 > **usage**: `string`
 
-Defined in: [utils/command.ts:54](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L54)
+Defined in: [utils/command.ts:54](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L54)
 
 Usage string showing how to call the command.
 
@@ -46,7 +46,7 @@ Usage string showing how to call the command.
 
 > **options**: [`CommandOption`](CommandOption.md)[]
 
-Defined in: [utils/command.ts:58](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L58)
+Defined in: [utils/command.ts:58](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L58)
 
 List of supported options/flags.
 
@@ -56,7 +56,7 @@ List of supported options/flags.
 
 > **examples**: `string`[]
 
-Defined in: [utils/command.ts:62](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L62)
+Defined in: [utils/command.ts:62](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L62)
 
 Examples demonstrating common usage patterns.
 
@@ -66,6 +66,6 @@ Examples demonstrating common usage patterns.
 
 > `optional` **workflows?**: `string`[]
 
-Defined in: [utils/command.ts:66](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/command.ts#L66)
+Defined in: [utils/command.ts:66](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L66)
 
 Optional list of high-level workflows this command supports.

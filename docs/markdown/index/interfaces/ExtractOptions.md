@@ -6,7 +6,7 @@
 
 # Interface: ExtractOptions
 
-Defined in: [api/fs.ts:8](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L8)
+Defined in: [api/fs.ts:8](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L8)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/fs.ts:8](https://github.com/ray0404/jref/blob/6078995c5b0782733
 
 > `optional` **paths?**: `string`[]
 
-Defined in: [api/fs.ts:9](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L9)
+Defined in: [api/fs.ts:9](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L9)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [api/fs.ts:9](https://github.com/ray0404/jref/blob/6078995c5b0782733
 
 > `optional` **outputDir?**: `string`
 
-Defined in: [api/fs.ts:10](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L10)
+Defined in: [api/fs.ts:10](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L10)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [api/fs.ts:10](https://github.com/ray0404/jref/blob/6078995c5b078273
 
 > `optional` **flat?**: `boolean`
 
-Defined in: [api/fs.ts:11](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L11)
+Defined in: [api/fs.ts:11](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L11)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [api/fs.ts:11](https://github.com/ray0404/jref/blob/6078995c5b078273
 
 > `optional` **dryRun?**: `boolean`
 
-Defined in: [api/fs.ts:12](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L12)
+Defined in: [api/fs.ts:12](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L12)

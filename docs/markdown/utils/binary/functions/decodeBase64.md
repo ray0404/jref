@@ -8,7 +8,7 @@
 
 > **decodeBase64**(`content`): `Buffer`
 
-Defined in: [utils/binary.ts:59](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/binary.ts#L59)
+Defined in: [utils/binary.ts:59](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/binary.ts#L59)
 
 Decodes a Base64 string into a Buffer.
 

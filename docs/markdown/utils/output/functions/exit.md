@@ -8,7 +8,7 @@
 
 > **exit**(`code`): `void`
 
-Defined in: [utils/output.ts:359](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/output.ts#L359)
+Defined in: [utils/output.ts:359](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/output.ts#L359)
 
 Gracefully terminates the process, ensuring all pending output streams are flushed.
 This is critical when piping CLI output to other tools.
