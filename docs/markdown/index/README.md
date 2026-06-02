@@ -1,10 +1,14 @@
-[**jref - JSON Reference Tool v1.1.2**](../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../README.md)
 
 ***
 
 [jref - JSON Reference Tool](../modules.md) / index
 
 # index
+
+## Classes
+
+- [UMFS](classes/UMFS.md)
 
 ## Interfaces
 
@@ -27,6 +31,7 @@
 - [CLIOptions](interfaces/CLIOptions.md)
 - [CommandContext](interfaces/CommandContext.md)
 - [CommandResult](interfaces/CommandResult.md)
+- [UMFSMeta](interfaces/UMFSMeta.md)
 
 ## Type Aliases
 

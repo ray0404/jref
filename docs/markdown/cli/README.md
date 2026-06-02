@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../README.md)
 
 ***
 

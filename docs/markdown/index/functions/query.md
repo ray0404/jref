@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **query**(`snapshot`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/query.ts:61](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/query.ts#L61)
+Defined in: [api/query.ts:61](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/query.ts#L61)
 
 Programmatically queries a ProjectSnapshot or a snapshot file.
 Supports targeted file retrieval, line-range extraction, and semantic search.

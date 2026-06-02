@@ -662,6 +662,19 @@ Interactive Terminal User Interface for browsing snapshots.
 .PP
 .B "jref ui [\fIfile\fR]"
 .
+.SS UMFS
+Unified Metadata Filename Specification (UMFS) utilities. Allows for validation, parsing, stringification, and directory checking of UMFS-compliant filenames.
+.PP
+.B "jref umfs \fIaction\fR [\fIoptions\fR] [\fIargs\fR]"
+.RS 4
+.TP
+.B Actions:
+.B validate \fIfilename\fR   Check if a filename strictly conforms to UMFS
+.B parse \fIfilename\fR      Parse a UMFS filename into a JSON metadata object
+.B stringify [\fIoptions\fR]   Generate a UMFS filename from metadata flags
+.B check-dir [\fIdir\fR]       Audit a directory for UMFS compliance
+.RE
+.
 .SS UNFLATTEN
 Restore a flattened snapshot back to its original nested structure.
 .PP

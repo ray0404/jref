@@ -33,6 +33,7 @@ A lightweight CLI tool to interact with "condensed" JSON project snapshots. Desi
 - **Mount** - Expose snapshots as virtual filesystems via WebDAV (supports --proot for Termux)
 - **Git** - Virtualized or local Git operations with a high-fidelity interactive TUI (diffing, staging, commits)
 - **Topology** - Analyze project structure and complexity metrics (SLOC, cyclomatic complexity)
+- **UMFS** - Native integration with the Unified Metadata Filename Specification for filename validation and parsing
 
 ## High Performance
 
@@ -668,6 +669,36 @@ jref topology [directory|snapshot]
 **Features:**
 - **Complexity Analysis**: Calculates cyclomatic complexity and SLOC for supported languages.
 - **Structural Mapping**: Identifies deep nesting and architectural bottlenecks.
+
+### umfs
+
+Unified Metadata Filename Specification (UMFS) utilities. Allows for validation, parsing, stringification, and directory checking of UMFS-compliant filenames.
+
+```bash
+jref umfs <action> [options] [args]
+
+Actions:
+  validate <filename>   Check if a filename strictly conforms to UMFS
+  parse <filename>      Parse a UMFS filename into a JSON metadata object
+  stringify [options]   Generate a UMFS filename from metadata flags
+  check-dir [dir]       Audit a directory for UMFS compliance
+```
+
+**Features:**
+- **Strict Compliance:** Enforces UMFS regex and structuring constraints.
+- **Inspect Integration:** Running `jref inspect <snapshot>` automatically detects and extracts UMFS metadata from the filename if it is compliant.
+
+**Examples:**
+```bash
+# Validate a filename
+jref umfs validate my-app_v01-00-00_20260601.log
+
+# Audit the current directory
+jref umfs check-dir .
+
+# Programmatically parse to JSON
+jref umfs parse my-app_v01-00-00_20260601.json --json
+```
 
 ### git
 

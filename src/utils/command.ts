@@ -444,6 +444,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { UnflattenCommand } = await import('../commands/unflatten.js');
   const { ShellCommand } = await import('../commands/shell.js');
   const { MountCommand } = await import('../commands/mount.js');
+  const { UMFSCommand } = await import('../commands/umfs.js');
 
   // Load plugins/built-ins that register themselves
   await import('../plugins/openapi.js');
@@ -479,4 +480,5 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new UnflattenCommand());
   registry.register(new ShellCommand());
   registry.register(new MountCommand());
+  registry.register(new UMFSCommand());
 }

@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: CodeChunk
 
-Defined in: [types/index.ts:13](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L13)
+Defined in: [types/index.ts:13](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L13)
 
 Represents a logical block of code identified during semantic analysis.
 
@@ -16,7 +16,7 @@ Represents a logical block of code identified during semantic analysis.
 
 > **filePath**: `string`
 
-Defined in: [types/index.ts:17](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L17)
+Defined in: [types/index.ts:17](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L17)
 
 Relative path to the file containing the chunk.
 
@@ -26,7 +26,7 @@ Relative path to the file containing the chunk.
 
 > **startLine**: `number`
 
-Defined in: [types/index.ts:21](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L21)
+Defined in: [types/index.ts:21](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L21)
 
 Starting line number of the chunk (1-based).
 
@@ -36,7 +36,7 @@ Starting line number of the chunk (1-based).
 
 > **endLine**: `number`
 
-Defined in: [types/index.ts:25](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L25)
+Defined in: [types/index.ts:25](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L25)
 
 Ending line number of the chunk (inclusive).
 
@@ -46,7 +46,7 @@ Ending line number of the chunk (inclusive).
 
 > **type**: `"function"` \| `"class"` \| `"method"` \| `"block"`
 
-Defined in: [types/index.ts:29](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L29)
+Defined in: [types/index.ts:29](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L29)
 
 The logical category of the code block.
 
@@ -56,7 +56,7 @@ The logical category of the code block.
 
 > `optional` **name?**: `string`
 
-Defined in: [types/index.ts:33](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L33)
+Defined in: [types/index.ts:33](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L33)
 
 The identifier name of the chunk (e.g., function name), if applicable.
 
@@ -66,7 +66,7 @@ The identifier name of the chunk (e.g., function name), if applicable.
 
 > **content**: `string`
 
-Defined in: [types/index.ts:37](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L37)
+Defined in: [types/index.ts:37](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L37)
 
 The raw source code content of the chunk.
 
@@ -76,6 +76,6 @@ The raw source code content of the chunk.
 
 > `optional` **embedding?**: `number`[]
 
-Defined in: [types/index.ts:41](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/types/index.ts#L41)
+Defined in: [types/index.ts:41](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/types/index.ts#L41)
 
 Vector embedding for RAG/semantic search retrieval.

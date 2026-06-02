@@ -23,3 +23,4 @@ export { setAlias, removeAlias, listAliases, config, setupBin, type AliasOptions
 export { loadSnapshot, loadSnapshotFromFile, processSnapshot } from './utils/streaming-json.js';
 export { setOutputHandler } from './utils/output.js';
 export { Command, CommandRegistry, registry } from './utils/command.js';
+export { UMFS, type UMFSMeta } from './utils/umfs.js';

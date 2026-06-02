@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SearchOptions
 
-Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L4)
+Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/search.ts#L4)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/search.ts:4](https://github.com/ray0404/jref/blob/d8e69a7ea10f0
 
 > `optional` **maxResults?**: `number`
 
-Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L5)
+Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/search.ts#L5)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [api/search.ts:5](https://github.com/ray0404/jref/blob/d8e69a7ea10f0
 
 > `optional` **context?**: `number`
 
-Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L6)
+Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/search.ts#L6)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [api/search.ts:6](https://github.com/ray0404/jref/blob/d8e69a7ea10f0
 
 > `optional` **caseSensitive?**: `boolean`
 
-Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L7)
+Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/search.ts#L7)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [api/search.ts:7](https://github.com/ray0404/jref/blob/d8e69a7ea10f0
 
 > `optional` **isRegex?**: `boolean`
 
-Defined in: [api/search.ts:8](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/search.ts#L8)
+Defined in: [api/search.ts:8](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/search.ts#L8)

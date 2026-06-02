@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **getFilePaths**(`snapshot`, `prefix?`): `string`[]
 
-Defined in: [utils/streaming-json.ts:418](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/streaming-json.ts#L418)
+Defined in: [utils/streaming-json.ts:418](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/streaming-json.ts#L418)
 
 Retrieves a list of relative file paths present in the snapshot.
 Optionally filters by a directory prefix.

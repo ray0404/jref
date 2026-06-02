@@ -569,6 +569,20 @@ CCOOMMMMAANNDDSS
 
        jjrreeff uuii [[_f_i_l_e]
 
+   UUMMFFSS
+       Unified Metadata Filename Specification (UMFS) utilities. Allows for
+       validation, parsing, stringification, and directory checking of UMFS-
+       compliant filenames.
+
+       jjrreeff uummffss _a_c_t_i_o_n [_o_p_t_i_o_n_s] [_a_r_g_s]
+
+           AAccttiioonnss::
+                  vvaalliiddaattee _f_i_l_e_n_a_m_e Check if a filename strictly conforms to
+                  UMFS ppaarrssee _f_i_l_e_n_a_m_e Parse a UMFS filename into a JSON
+                  metadata object ssttrriinnggiiffyy [[_o_p_t_i_o_n_s] Generate a UMFS filename
+                  from metadata flags cchheecckk--ddiirr [[_d_i_r] Audit a directory for
+                  UMFS compliance
+
    UUNNFFLLAATTTTEENN
        Restore a flattened snapshot back to its original nested structure.
 

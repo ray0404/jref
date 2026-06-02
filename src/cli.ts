@@ -18,7 +18,7 @@ import { join, basename } from 'path';
 /**
  * Current version of the jref CLI.
  */
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 
 /**
  * Parses global CLI options and separates them from command-specific arguments.

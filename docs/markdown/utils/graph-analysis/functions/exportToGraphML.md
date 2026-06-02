@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **exportToGraphML**(`graph`): `string`
 
-Defined in: [utils/graph-analysis.ts:201](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/graph-analysis.ts#L201)
+Defined in: [utils/graph-analysis.ts:201](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/graph-analysis.ts#L201)
 
 Exports the graph to the GraphML (XML-based) format.
 

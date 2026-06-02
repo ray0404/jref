@@ -175,7 +175,7 @@ export class InspectCommand extends Command {
       // If no specific flags, show everything
       const showAll = !showMeta && !showStructure && !showFiles && !showSummary;
 
-      const inspectData = {
+      const inspectData: any = {
         metadata,
         directoryStructure: snapshot.directoryStructure,
         filePaths: Object.keys(fileSizes),
@@ -186,11 +186,21 @@ export class InspectCommand extends Command {
         userProvidedHeader: snapshot.userProvidedHeader
       };
 
+      if (filePath && filePath !== '-') {
+        const { UMFS } = await import('../utils/umfs.js');
+        const { basename } = await import('path');
+        const filename = basename(filePath);
+        if (UMFS.isValid(filename)) {
+          inspectData.umfs = UMFS.parse(filename);
+        }
+      }
+
       if (options.json) {
         const result: Record<string, unknown> = {};
 
         if (showAll || showMeta) {
           result.metadata = metadata;
+          if (inspectData.umfs) result.umfs = inspectData.umfs;
         }
         if (showAll || showStructure) {
           result.directoryStructure = snapshot.directoryStructure;
@@ -210,7 +220,7 @@ export class InspectCommand extends Command {
       } else {
         // Human-readable output
         if (showAll || showMeta) {
-          this.printMetadata(metadata, options);
+          this.printMetadata(metadata, options, inspectData.umfs);
         }
         if (showAll || showStructure) {
           this.printStructure(snapshot.directoryStructure, options);
@@ -261,7 +271,7 @@ export class InspectCommand extends Command {
     return { flags, filePath };
   }
 
-  private printMetadata(metadata: any, options: CLIOptions): void {
+  private printMetadata(metadata: any, options: CLIOptions, umfs?: any): void {
     if (options.json) {
       this.print(metadata, options);
       return;
@@ -269,7 +279,7 @@ export class InspectCommand extends Command {
 
     console.log('\n📊 SNAPSHOT METADATA');
     console.log('─'.repeat(40));
-    
+
     const rows = [
       ['Total Files', metadata.fileCount.toString()],
       ['Source Files', metadata.textCount.toString()],
@@ -283,6 +293,21 @@ export class InspectCommand extends Command {
     ];
 
     printTable(['Property', 'Value'], rows, options);
+
+    if (umfs) {
+      console.log('\n🏷️  UMFS METADATA');
+      console.log('─'.repeat(40));
+      const umfsRows = [
+        ['Project', umfs.project || ''],
+        ['Version', umfs.version || ''],
+        ['Tag', umfs.tag || ''],
+        ['Date', umfs.date || ''],
+        ['Time', umfs.time || ''],
+        ['Extension', umfs.ext || '']
+      ].filter(r => r[1]); // Only show present fields
+      printTable(['Field', 'Value'], umfsRows, options);
+    }
+
     console.log();
   }
 

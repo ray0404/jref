@@ -76,6 +76,7 @@ Understanding these files is critical for understanding how the entire system co
 - `summarize`: Interface-only architectural maps.
 - `list_directory`: Scoped file navigation.
 - `graph`: Symbol dependency tracing.
+- `umfs`: Filename validation and metadata parsing based on UMFS.
 - `Resources`: Direct access to snapshot files via `jref://` scheme.
 - `Prompts`: Pre-defined templates for architectural review and validation.
 - `Roadmap`: CRDT-backed real-time roadmap state management.

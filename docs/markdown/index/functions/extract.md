@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **extract**(`snapshot`, `options?`): `Promise`\<`any`\>
 
-Defined in: [api/fs.ts:18](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/api/fs.ts#L18)
+Defined in: [api/fs.ts:18](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/api/fs.ts#L18)
 
 Programmatically extract files from a snapshot
 

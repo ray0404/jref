@@ -12,6 +12,7 @@ jref is optimized for LLM agents working in mobile or Linux environments.
 - **Verification**: Use `jref diff` to verify if your suggested changes in a snapshot match the local filesystem.
 - **Interactive Git**: Agents can use `jref git` to manage virtual versioning, though the TUI is optimized for human eyes.
 - **Universal JSON Tools**: Agents can now use `get` and `set` as generic JSON-manipulation tools (e.g., for updating `package.json` or config files).
+- **UMFS Standards**: Use `jref umfs` to generate, parse, or validate filenames conforming to the Unified Metadata Filename Specification. `jref inspect` also supports this natively.
 
 ## Command Reference
 
@@ -24,10 +25,11 @@ jref is optimized for LLM agents working in mobile or Linux environments.
 | `graph` | `jref graph query [q]` | Perform graph traversal queries |
 | `topology` | `jref topology [file]` | Complexity and SLOC analysis |
 | `diff` | `jref diff [file]` | Compare snapshot vs local disk |
-| `inspect` | `jref inspect [file]` | Get metadata and ASCII tree |
+| `inspect` | `jref inspect [file]` | Get metadata, UMFS tags, and ASCII tree |
 | `search` | `jref search [pattern]` | Regex search across all files |
 | `query` | `jref query --path [p]` | Read specific file content |
 | `git` | `jref git [sub]` | Virtual/Local git ops |
+| `umfs` | `jref umfs [action]` | Parse/Validate UMFS filenames |
 | `get` | `jref get [path]` | Generic JSON/Snapshot read |
 | `set` | `jref set [p] [v]` | Generic JSON/Snapshot write |
 

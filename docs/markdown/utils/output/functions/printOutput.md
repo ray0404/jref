@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **printOutput**(`data`, `options?`, `handler?`): `void`
 
-Defined in: [utils/output.ts:94](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/output.ts#L94)
+Defined in: [utils/output.ts:94](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/output.ts#L94)
 
 Prints data to the appropriate output stream using formatting logic.
 

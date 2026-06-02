@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.1.2**](../../../README.md)
+[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **setOutputHandler**(`handler`): [`OutputHandler`](../type-aliases/OutputHandler.md) \| `null`
 
-Defined in: [utils/output.ts:71](https://github.com/ray0404/jref/blob/d8e69a7ea10f03a0f3952cdcdcdfcbf5e9330188/src/utils/output.ts#L71)
+Defined in: [utils/output.ts:71](https://github.com/ray0404/jref/blob/6078995c5b0782733111f669e8cefa1a02b72f01/src/utils/output.ts#L71)
 
 Configures a custom global output handler.
 This handler will be used by all print functions unless overridden locally.
