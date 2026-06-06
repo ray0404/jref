@@ -1,4 +1,4 @@
-**jref - JSON Reference Tool v1.2.0**
+**jref - JSON Reference Tool v1.4.0**
 
 ***
 

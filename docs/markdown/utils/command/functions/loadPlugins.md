@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **loadPlugins**(`pluginDir`): `Promise`\<`void`\>
 
-Defined in: [utils/command.ts:389](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L389)
+Defined in: [utils/command.ts:389](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/command.ts#L389)
 
 Dynamically loads and registers plugins from a specified directory.
 

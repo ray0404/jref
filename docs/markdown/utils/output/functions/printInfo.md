@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **printInfo**(`message`, `options?`, `handler?`): `void`
 
-Defined in: [utils/output.ts:218](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/output.ts#L218)
+Defined in: [utils/output.ts:218](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/output.ts#L218)
 
 Prints an informational message.
 In human mode, adds a cyan info symbol prefix.

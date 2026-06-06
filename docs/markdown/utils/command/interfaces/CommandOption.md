@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: CommandOption
 
-Defined in: [utils/command.ts:24](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L24)
+Defined in: [utils/command.ts:24](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/command.ts#L24)
 
 Represents a single CLI option for a command.
 
@@ -16,7 +16,7 @@ Represents a single CLI option for a command.
 
 > **flags**: `string`
 
-Defined in: [utils/command.ts:28](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L28)
+Defined in: [utils/command.ts:28](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/command.ts#L28)
 
 The flags used to invoke this option (e.g., "-f, --file <path>").
 
@@ -26,7 +26,7 @@ The flags used to invoke this option (e.g., "-f, --file <path>").
 
 > **description**: `string`
 
-Defined in: [utils/command.ts:32](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L32)
+Defined in: [utils/command.ts:32](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/command.ts#L32)
 
 A short description of what the option does.
 
@@ -36,6 +36,6 @@ A short description of what the option does.
 
 > `optional` **defaultValue?**: `any`
 
-Defined in: [utils/command.ts:36](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/command.ts#L36)
+Defined in: [utils/command.ts:36](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/command.ts#L36)
 
 The default value for the option if not provided.

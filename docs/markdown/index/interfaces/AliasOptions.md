@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: AliasOptions
 
-Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/config.ts#L5)
+Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/config.ts#L5)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [api/config.ts:5](https://github.com/ray0404/jref/blob/cb137e50ba276
 
 > `optional` **global?**: `boolean`
 
-Defined in: [api/config.ts:6](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/config.ts#L6)
+Defined in: [api/config.ts:6](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/config.ts#L6)

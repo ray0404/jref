@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **parseJSON**(`input`, `filePath?`, `options?`): `Promise`\<\{ `directoryStructure?`: `string`; `files`: `Record`\<`string`, `string`\>; `encodings?`: `Record`\<`string`, `"utf8"` \| `"base64"`\>; `instruction?`: `string`; `roadmap?`: `string`; `fileSummary?`: `string`; `userProvidedHeader?`: `string`; `chunks?`: [`CodeChunk`](../../../index/interfaces/CodeChunk.md)[]; \}\>
 
-Defined in: [utils/streaming-json.ts:39](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/streaming-json.ts#L39)
+Defined in: [utils/streaming-json.ts:39](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/streaming-json.ts#L39)
 
 High-level entry point for parsing JSON input into a ProjectSnapshot.
 Automatically chooses between native `JSON.parse` (for speed on small files)

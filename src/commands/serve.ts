@@ -15,12 +15,14 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { setOutputHandler } from '../utils/output.js';
 import * as Y from 'yjs';
+import { PackCommand } from './pack.js';
+import { isExplicitRemoteUrl, isValidShorthand } from 'repomix';
 
 export class ServeCommand extends Command {
   readonly definition = {
     name: 'serve',
     description: 'Start an MCP server to expose jref capabilities to AI agents',
-    usage: 'jref serve [snapshot.json]',
+    usage: 'jref serve [snapshot.json|remote_url]',
     options: [
       {
         flags: '--port <number>',
@@ -29,13 +31,15 @@ export class ServeCommand extends Command {
     ],
     examples: [
       'jref serve snapshot.json',
-      'jref serve'
+      'jref serve',
+      'jref serve https://github.com/user/repo'
     ],
     workflows: [
       'Agent Context: Provide AI agents with structured access to the codebase via MCP.',
       'Live Tooling: Agents can dynamically call pack, search, and graph tools.',
       'Context Loading: Start a session and let the agent load snapshots as needed.',
-      'Enriched Inspect: Get high-level instructions and roadmaps directly in the session.'
+      'Enriched Inspect: Get high-level instructions and roadmaps directly in the session.',
+      'Remote Context: Serve a remote GitHub/GitLab repository directly to the agent.'
     ]
   };
 
@@ -52,13 +56,12 @@ export class ServeCommand extends Command {
     try {
       const { snapshotFile: fileArg } = this.parseArgs(args);
       this.snapshotFile = fileArg || null;
-      
+
       if (context.snapshot) {
         this.snapshot = context.snapshot;
         this.initializeCRDT();
       } else if (this.snapshotFile) {
-        this.snapshot = await loadSnapshotFromFile(this.snapshotFile, options);
-        this.initializeCRDT();
+        await this.loadOrPackSnapshot(this.snapshotFile, options, context);
       }
 
       const server = new Server(
@@ -84,7 +87,7 @@ export class ServeCommand extends Command {
         for (const cmdName of allCommands) {
           // Skip 'serve' itself to avoid confusion
           if (cmdName === 'serve') continue;
-          
+
           const cmd = registry.get(cmdName)!;
           tools.push(this.commandToTool(cmd));
         }
@@ -92,11 +95,11 @@ export class ServeCommand extends Command {
         // 2. Add specific MCP-only tools
         tools.push({
           name: 'load_snapshot',
-          description: 'Load a project snapshot from a file path',
+          description: 'Load a project snapshot from a file path or pack a remote repository URL',
           inputSchema: {
             type: 'object',
             properties: {
-              path: { type: 'string', description: 'Path to the .json snapshot file' },
+              path: { type: 'string', description: 'Path to the .json snapshot file or a remote repository URL' },
             },
             required: ['path'],
           },
@@ -123,8 +126,7 @@ export class ServeCommand extends Command {
 
         if (name === 'load_snapshot') {
           const { path } = toolArgs as { path: string };
-          const result = await this.handleLoadSnapshot(path, options);
-          this.initializeCRDT();
+          const result = await this.handleLoadSnapshot(path, options, context);
           return result;
         }
 
@@ -248,9 +250,9 @@ export class ServeCommand extends Command {
       console.error('MCP: Connecting transport...');
       const transport = new StdioServerTransport();
       await server.connect(transport);
-      
+
       console.error('jref MCP server running on stdio');
-      
+
       await new Promise<void>((resolve) => {
         transport.onclose = () => resolve();
         const close = () => {
@@ -272,7 +274,6 @@ export class ServeCommand extends Command {
     }
   }
 
-
   private initializeCRDT() {
     if (this.snapshot && this.snapshot.roadmap) {
       this.yRoadmap.delete(0, this.yRoadmap.length);
@@ -280,15 +281,37 @@ export class ServeCommand extends Command {
     }
   }
 
-  private async handleLoadSnapshot(path: string, options: CLIOptions) {
+  private async loadOrPackSnapshot(target: string, options: CLIOptions, context: CommandContext): Promise<void> {
+    const isRemote = isExplicitRemoteUrl(target) || isValidShorthand(target);
+
+    if (isRemote) {
+      if (!options.silent) {
+        console.error(`🔄 Detected remote URL. Packing ${target} in memory...`);
+      }
+      const packCmd = new PackCommand();
+      const packResult = await packCmd.execute([target], { ...options, json: true, silent: true }, context);
+
+      if (packResult.success && packResult.data) {
+        this.snapshot = packResult.data as ProjectSnapshot;
+        this.initializeCRDT();
+      } else {
+        throw new Error(`Failed to pack remote repository: ${packResult.error || 'Unknown error'}`);
+      }
+    } else {
+      this.snapshot = await loadSnapshotFromFile(target, options);
+      this.initializeCRDT();
+    }
+  }
+
+  private async handleLoadSnapshot(path: string, options: CLIOptions, context: CommandContext) {
     try {
-      this.snapshot = await loadSnapshotFromFile(path, options);
+      await this.loadOrPackSnapshot(path, options, context);
       this.snapshotFile = path;
       return {
-        content: [{ type: 'text', text: `Successfully loaded snapshot from ${path}` }]
+        content: [{ type: 'text', text: `Successfully loaded snapshot context from ${path}` }]
       };
     } catch (err) {
-      throw new McpError(ErrorCode.InternalError, `Failed to load snapshot: ${(err as Error).message}`);
+      throw new McpError(ErrorCode.InternalError, `Failed to load snapshot context: ${(err as Error).message}`);
     }
   }
 
@@ -371,25 +394,29 @@ export class ServeCommand extends Command {
   }
 
   private commandToTool(cmd: Command) {
-    const { name, description, options } = cmd.definition;
-    
+    const { name, description, usage, options, examples } = cmd.definition;
+
+    let enhancedDescription = description;
+    if (usage) enhancedDescription += `\n\nUsage: ${usage}`;
+    if (examples && examples.length > 0) enhancedDescription += `\n\nExamples:\n- ${examples.join('\n- ')}`;
+
     const properties: any = {
       args: {
         type: 'array',
         items: { type: 'string' },
-        description: 'Positional arguments for the command'
+        description: 'Positional arguments for the command. Subcommands (e.g., set, list) MUST be the first items in this array.'
       }
     };
-    
+
     // Map options to named properties
     for (const opt of options) {
       const match = opt.flags.match(/--([a-zA-Z0-9-]+)/);
       if (match) {
         const flagName = match[1];
         const paramName = flagName.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-        
+
         const isString = opt.flags.includes('<') || opt.flags.includes('[');
-        
+
         properties[paramName] = {
           type: isString ? 'string' : 'boolean',
           description: opt.description
@@ -399,7 +426,7 @@ export class ServeCommand extends Command {
 
     return {
       name,
-      description,
+      description: enhancedDescription,
       inputSchema: {
         type: 'object',
         properties,

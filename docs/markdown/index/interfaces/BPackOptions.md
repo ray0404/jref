@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: BPackOptions
 
-Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L116)
+Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/fs.ts#L116)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [api/fs.ts:116](https://github.com/ray0404/jref/blob/cb137e50ba276cb
 
 > `optional` **exclude?**: `string`[]
 
-Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L117)
+Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/fs.ts#L117)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [api/fs.ts:117](https://github.com/ray0404/jref/blob/cb137e50ba276cb
 
 > `optional` **maxBinarySize?**: `number`
 
-Defined in: [api/fs.ts:118](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/fs.ts#L118)
+Defined in: [api/fs.ts:118](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/fs.ts#L118)

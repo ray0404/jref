@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: QueryOptions
 
-Defined in: [api/query.ts:12](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L12)
+Defined in: [api/query.ts:12](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L12)
 
 Configuration options for the `query` function.
 
@@ -16,7 +16,7 @@ Configuration options for the `query` function.
 
 > `optional` **path?**: `string`
 
-Defined in: [api/query.ts:16](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L16)
+Defined in: [api/query.ts:16](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L16)
 
 Specific file path to retrieve from the snapshot.
 
@@ -26,7 +26,7 @@ Specific file path to retrieve from the snapshot.
 
 > `optional` **semantic?**: `string`
 
-Defined in: [api/query.ts:21](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L21)
+Defined in: [api/query.ts:21](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L21)
 
 Semantic search query string.
 If provided, the engine will perform a vector-based search across code chunks.
@@ -37,7 +37,7 @@ If provided, the engine will perform a vector-based search across code chunks.
 
 > `optional` **topK?**: `number`
 
-Defined in: [api/query.ts:25](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L25)
+Defined in: [api/query.ts:25](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L25)
 
 Number of results to return for semantic search (default: 5).
 
@@ -47,7 +47,7 @@ Number of results to return for semantic search (default: 5).
 
 > `optional` **lineStart?**: `number`
 
-Defined in: [api/query.ts:29](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L29)
+Defined in: [api/query.ts:29](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L29)
 
 Starting line number for targeted file extraction (1-based).
 
@@ -57,7 +57,7 @@ Starting line number for targeted file extraction (1-based).
 
 > `optional` **lineEnd?**: `number`
 
-Defined in: [api/query.ts:33](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L33)
+Defined in: [api/query.ts:33](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L33)
 
 Ending line number for targeted file extraction (inclusive).
 
@@ -67,6 +67,6 @@ Ending line number for targeted file extraction (inclusive).
 
 > `optional` **searchBinaries?**: `boolean`
 
-Defined in: [api/query.ts:37](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/query.ts#L37)
+Defined in: [api/query.ts:37](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/query.ts#L37)
 
 Whether to include binary files in search results.

@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: UMFS
 
-Defined in: [utils/umfs.ts:17](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L17)
+Defined in: [utils/umfs.ts:17](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/umfs.ts#L17)
 
 ## Constructors
 
@@ -24,7 +24,7 @@ Defined in: [utils/umfs.ts:17](https://github.com/ray0404/jref/blob/cb137e50ba27
 
 > `static` **isValid**(`filename`): `boolean`
 
-Defined in: [utils/umfs.ts:25](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L25)
+Defined in: [utils/umfs.ts:25](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/umfs.ts#L25)
 
 Validates if a filename conforms to the UMFS specification.
 
@@ -46,7 +46,7 @@ The raw filename string to test.
 
 > `static` **parse**(`filename`): [`UMFSMeta`](../interfaces/UMFSMeta.md) \| `null`
 
-Defined in: [utils/umfs.ts:34](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L34)
+Defined in: [utils/umfs.ts:34](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/umfs.ts#L34)
 
 Programmatically parses a filename into structural metadata components.
 
@@ -70,7 +70,7 @@ UMFSMeta object if valid, otherwise null.
 
 > `static` **stringify**(`meta`): `string`
 
-Defined in: [utils/umfs.ts:56](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/utils/umfs.ts#L56)
+Defined in: [utils/umfs.ts:56](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/utils/umfs.ts#L56)
 
 Programmatically builds a compliant UMFS filename from structured metadata.
 Enforces rules such as blocking underscores in project names and validating structures.

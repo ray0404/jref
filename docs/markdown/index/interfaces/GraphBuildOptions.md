@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: GraphBuildOptions
 
-Defined in: [api/graph.ts:13](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L13)
+Defined in: [api/graph.ts:13](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/graph.ts#L13)
 
 Configuration options for the `buildGraph` function.
 
@@ -16,7 +16,7 @@ Configuration options for the `buildGraph` function.
 
 > `optional` **output?**: `string`
 
-Defined in: [api/graph.ts:17](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L17)
+Defined in: [api/graph.ts:17](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/graph.ts#L17)
 
 Path to save the generated graph snapshot.
 
@@ -26,7 +26,7 @@ Path to save the generated graph snapshot.
 
 > `optional` **noLlm?**: `boolean`
 
-Defined in: [api/graph.ts:21](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L21)
+Defined in: [api/graph.ts:21](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/graph.ts#L21)
 
 Whether to skip LLM-based inference for edge detection (AST only).
 
@@ -36,6 +36,6 @@ Whether to skip LLM-based inference for edge detection (AST only).
 
 > `optional` **format?**: `"json"` \| `"gml"` \| `"graphml"`
 
-Defined in: [api/graph.ts:25](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/graph.ts#L25)
+Defined in: [api/graph.ts:25](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/graph.ts#L25)
 
 Export format for the graph data.

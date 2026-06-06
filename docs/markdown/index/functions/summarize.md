@@ -1,4 +1,4 @@
-[**jref - JSON Reference Tool v1.2.0**](../../README.md)
+[**jref - JSON Reference Tool v1.4.0**](../../README.md)
 
 ***
 
@@ -8,7 +8,7 @@
 
 > **summarize**(`snapshot`): `Promise`\<`any`\>
 
-Defined in: [api/transform.ts:132](https://github.com/ray0404/jref/blob/cb137e50ba276cb5618f2ab7b5c2747a57c4fbae/src/api/transform.ts#L132)
+Defined in: [api/transform.ts:132](https://github.com/ray0404/jref/blob/6c03670428b40f584d834a3e0522dd2e7582a5ca/src/api/transform.ts#L132)
 
 Programmatically generates a high-level summary map of a snapshot.
 The summary includes file signatures and interface outlines, optimized for 
