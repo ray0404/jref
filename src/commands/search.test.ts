@@ -11,7 +11,7 @@ const mockSnapshot = {
   files: {
     'src/main.ts': `export function main() {
   console.log('Hello');
-  // TODO: add more
+  console.log('World');
 }`,
     'src/utils.ts': `export function helper() {
   return 'help';
@@ -57,7 +57,7 @@ describe('SearchCommand', () => {
 
   it('should perform case-insensitive search', async () => {
     const result = await command.execute(
-      ['TODO'],
+      ['README'],
       { json: true },
       mockContext
     );
