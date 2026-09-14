@@ -304,6 +304,51 @@ jref openapi api.json > snapshot.json
 jref openapi api.json | jref ui
 ```
 
+### api
+
+Universal interactive wrapper for any OpenAPI/Swagger API. Instantly generate a full interactive TUI for any new API by just providing its schema.
+
+```bash
+jref api <schema.json|yaml> [options]
+
+Options:
+  --env, -e            Environment variable name for the API Key (default: API_KEY)
+  --base-url, -b       Override the base URL for the API
+```
+
+**Examples:**
+```bash
+# Provide a local schema and specify the token environment variable
+jref api schemas/api/venice/venice-api.json --env VENICE_API_KEY
+
+# Provide a remote OpenAPI schema
+jref api https://api.example.com/openapi.json --env MY_TOKEN
+```
+
+### venice
+
+Interactive wrapper specifically tailored for the VeniceAI API, providing an interactive dashboard and automation commands.
+
+```bash
+jref venice [action] [options]
+
+Options:
+  --ui, -u             Open interactive Venice AI dashboard
+  --prompt, -p         Prompt for chat completions
+```
+
+**Examples:**
+```bash
+# Open the interactive UI
+jref venice --ui
+
+# Headless command to list models
+jref venice models
+
+# Headless command to run a chat completion
+jref venice chat --prompt "Hello"
+```
+
 ### serve
 
 Start a Model Context Protocol (MCP) server to expose the snapshot to AI agents.
@@ -430,6 +475,32 @@ jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool
 
 # Continuous sync (RPC mode)
 jref extract --listen --output ./mirror
+```
+
+### reconstruct
+
+Verify if a local directory matches the snapshot (dry-run mode). Useful for state validation before extraction or deployment audits.
+
+```bash
+jref reconstruct [options] [file]
+
+Options:
+  --directory, -d <dir>    Target directory to verify (default: current directory)
+  --verbose, -v            Show detailed comparison results
+  --ignore-missing         Do not fail if files from the snapshot are missing locally
+  --ignore-extra           Do not fail if extra local files are found
+```
+
+**Examples:**
+```bash
+# Basic validation
+jref reconstruct snapshot.json
+
+# Check specific directory
+jref reconstruct --directory ./my-project snapshot.json
+
+# Piped validation
+cat snapshot.json | jref reconstruct --directory ./src
 ```
 
 ### run

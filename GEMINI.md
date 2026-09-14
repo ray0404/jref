@@ -27,11 +27,12 @@ The project follows a modular, command-based architecture:
 
 ### 🏛️ Architectural Hubs (God Nodes)
 According to the latest graph analysis, these are the most central symbols/files that act as hubs for the system:
+- `utils/webdav-vfs.ts`: The central core for WebDAV virtual filesystem mounting and serialization.
 - `utils/command.ts`: The foundational Command pattern definition.
-- `utils/streaming-json.ts`: Core streaming logic for memory-efficient snapshot processing.
+- `commands/extract.ts`: Core logic for unpacking snapshot content to the filesystem.
 - `utils/output.ts`: Centralized output and formatting hub.
-- `utils/binary.ts`: Binary detection and encoding management.
-- `utils/graph-analysis.ts`: Central logic for graph-based dependency mapping.
+- `utils/streaming-json.ts`: Core streaming logic for memory-efficient snapshot processing.
+- `commands/reconstruct.ts`: Core logic for snapshot reconstruction and dry-run directory verification.
 
 Understanding these files is critical for understanding how the entire system communicates and handles data.
 
