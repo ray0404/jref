@@ -1,6 +1,6 @@
 {
   "name": "@ray0404/jref",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "CLI tool to interact with condensed JSON project snapshots for humans and AI agents",
   "type": "module",
   "main": "dist/index.js",
@@ -18,18 +18,21 @@
   "files": [
     "dist",
     "docs",
-    "schemas"
+    "schemas",
+    "scripts"
   ],
   "scripts": {
-    "build": "tsc && npm run build:docs",
-    "build:docs": "npm run docs:html && npm run docs:markdown && mandoc -Tutf8 docs/jref.1 > docs/jref.man",
-    "docs:html": "npx typedoc --out docs/html",
-    "docs:markdown": "npx typedoc --plugin typedoc-plugin-markdown --out docs/markdown",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "dev": "tsc --watch",
-    "prepublishOnly": "npm run build",
-    "prepare": "npm run build"
+    "build": "node ./node_modules/typescript/bin/tsc && node scripts/postinstall.js",
+    "build:docs": "npm run docs:html && npm run docs:markdown && (test -f docs/jref.1 && command -v mandoc >/dev/null 2>&1 && mandoc -Tutf8 docs/jref.1 > docs/jref.man || true)",
+    "docs:html": "node ./node_modules/typedoc/bin/typedoc --out docs/html",
+    "docs:markdown": "node ./node_modules/typedoc/bin/typedoc --plugin typedoc-plugin-markdown --out docs/markdown",
+    "test": "node ./node_modules/vitest/vitest.mjs run",
+    "test:watch": "node ./node_modules/vitest/vitest.mjs",
+    "dev": "node ./node_modules/typescript/bin/tsc --watch",
+    "prepack": "node ./node_modules/typescript/bin/tsc",
+    "prepublishOnly": "node ./node_modules/typescript/bin/tsc",
+    "prepare": "node -e \"if (require('fs').existsSync('tsconfig.json') && require('fs').existsSync('./node_modules/typescript/bin/tsc')) { require('child_process').execSync('npm run build', { stdio: 'inherit' }); }\"",
+    "postinstall": "node scripts/postinstall.js"
   },
   "man": [
     "./docs/jref.1"

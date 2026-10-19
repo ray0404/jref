@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { readFile, unlink, writeFile } from 'fs/promises';
 const fsPromises = { readFile, unlink, writeFile };
 import { resolve, relative, join } from 'path';
-import { pack, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
+import { pack, mergeConfigs, runRemoteAction, isExplicitRemoteUrl, isValidShorthand, setLogLevel } from 'repomix';
 import { generateDirectoryStructure } from '../utils/streaming-json.js';
 import { generateInstruction } from '../utils/instruction.js';
 import { isBinaryBuffer, encodeBase64 } from '../utils/binary.js';
@@ -17,7 +17,7 @@ import { chunkCode } from '../utils/chunking.js';
 import { generateEmbedding } from '../utils/embeddings.js';
 import { generateFileHashMap, getDeltaPaths, type FileHashMap } from '../utils/hashing.js';
 import { readFromInput } from '../utils/input.js';
-import { homedir } from 'os';
+import { homedir, tmpdir } from 'os';
 import { createHash } from 'crypto';
 import { execSync } from 'child_process';
 
@@ -178,10 +178,10 @@ export class PackCommand extends Command {
                 }
                 const output = JSON.stringify(cachedData, null, 2);
                 if (options.json || options.silent) {
-                    return this.success(output);
+                    return this.success(output, cachedData);
                 }
                 process.stdout.write(output + '\n');
-                return this.success();
+                return this.success(undefined, cachedData);
             }
         } catch (err: any) {
             // Ignore if cache file doesn't exist or is invalid JSON
@@ -236,7 +236,8 @@ export class PackCommand extends Command {
       }
 
       const outputStyle = flags.outputStyle || 'json';
-      const outputFileName = `repomix-output.${outputStyle === 'json' ? 'json' : outputStyle === 'markdown' ? 'md' : outputStyle === 'xml' ? 'xml' : 'txt'}`;
+      const outputExt = outputStyle === 'json' ? 'json' : outputStyle === 'markdown' ? 'md' : outputStyle === 'xml' ? 'xml' : 'txt';
+      const outputFileName = `repomix-output.${outputExt}`;
 
       // Always redirect console.log to console.error during repomix calls
       // to ensure stats and progress don't pollute stdout (critical for piping)
@@ -270,18 +271,23 @@ export class PackCommand extends Command {
           topFilesLength: flags.topFilesLength || 100
         };
 
-        // Handle branch/commit for remote repositories
-        if (flags.branch) cliOptions.branch = flags.branch;
-        if (flags.commit) cliOptions.commit = flags.commit;
+        // Handle branch/commit for remote repositories (support both legacy and repomix 1.18+ remoteBranch)
+        if (flags.branch) {
+          cliOptions.branch = flags.branch;
+          cliOptions.remoteBranch = flags.branch;
+        }
+        if (flags.commit) {
+          cliOptions.commit = flags.commit;
+          cliOptions.remoteBranch = flags.commit;
+        }
 
         const actionResult = await runRemoteAction(targetDir, cliOptions);
         result = actionResult.packResult;
 
+        const outputFilePath = resolve(process.cwd(), outputFileName);
+
         // If not JSON, we need to read the generated file
         if (outputStyle !== 'json') {
-          // Repomix remote action copies output to current directory
-          const outputFilePath = resolve(process.cwd(), outputFileName);
-          
           try {
             const output = await readFile(outputFilePath, 'utf8');
             // Clean up
@@ -314,18 +320,31 @@ export class PackCommand extends Command {
           // If we requested a specific style but couldn't find the file, it's an error
           console.log = originalLog;
           return this.error(`Failed to find generated ${outputStyle} file for remote repository.`, options);
+        } else {
+          // Clean up intermediate JSON file produced by repomix remote action
+          try { await unlink(outputFilePath); } catch {}
         }
 
       } else {
+        let tempDir = rootDir;
+        try {
+          const sysTmp = tmpdir();
+          if (sysTmp && existsSync(sysTmp)) {
+            tempDir = sysTmp;
+          }
+        } catch {}
+        const tempOutputFilePath = resolve(tempDir, `jref-repomix-${process.pid}-${Date.now()}.${outputExt}`);
+
         // Prepare repomix configuration for local packing
-        const config: any = {
+        const rawConfig: any = {
           cwd: rootDir,
           input: {
             maxFileSize: 10 * 1024 * 1024,
           },
           output: {
-            filePath: outputFileName,
+            filePath: tempOutputFilePath,
             style: outputStyle,
+            filePathStyle: 'target-relative',
             parsableStyle: true,
             fileSummary: !!flags.summary,
             directoryStructure: true,
@@ -334,16 +353,17 @@ export class PackCommand extends Command {
             removeEmptyLines: !!flags.removeEmptyLines,
             showLineNumbers: false,
             copyToClipboard: false,
+            includeEmptyDirectories: false,
             includeFullDirectoryStructure: true,
             compress: !!flags.compress,
             topFilesLength: flags.topFilesLength || 100,
             truncateBase64: true,
             git: {
-                sortByChanges: false,
-                sortByChangesMaxCommits: 10,
-                includeDiffs: false,
-                includeLogs: false,
-                includeLogsCount: 10
+              sortByChanges: false,
+              sortByChangesMaxCommits: 10,
+              includeDiffs: false,
+              includeLogs: false,
+              includeLogsCount: 10
             },
             tokenCountTree: !!flags.tokenLimit
           },
@@ -362,6 +382,24 @@ export class PackCommand extends Command {
           }
         };
 
+        let config: any = rawConfig;
+        if (typeof mergeConfigs === 'function') {
+          try {
+            const merged = mergeConfigs(rootDir, {}, rawConfig) as any;
+            config = {
+              ...rawConfig,
+              ...merged,
+              output: {
+                ...rawConfig.output,
+                ...merged?.output,
+                filePathStyle: merged?.output?.filePathStyle || 'target-relative'
+              }
+            };
+          } catch {
+            config = rawConfig;
+          }
+        }
+
         if (!options.silent) {
           console.error(`📦 Packing ${rootDir} using Repomix...`);
         }
@@ -369,23 +407,34 @@ export class PackCommand extends Command {
         // Use absolute path for packing
         result = await pack([rootDir], config);
 
+        const resolvedOutputPath = config?.output?.filePath
+          ? resolve(rootDir, config.output.filePath)
+          : tempOutputFilePath;
+
         // If not JSON, read the file and output
         if (outputStyle !== 'json') {
-          const outputFilePath = resolve(rootDir, outputFileName);
-          try {
-            const output = await readFile(outputFilePath, 'utf8');
-            // Clean up
-            await unlink(outputFilePath);
+          const candidatePaths = [resolvedOutputPath, tempOutputFilePath, resolve(rootDir, outputFileName)];
+          for (const candidatePath of candidatePaths) {
+            try {
+              const output = await readFile(candidatePath, 'utf8');
+              try { await unlink(candidatePath); } catch {}
 
-            // Restore logger
-            console.log = originalLog;
+              // Restore logger
+              console.log = originalLog;
 
-            if (options.json || options.silent) {
-              return this.success(output);
-            }
-            process.stdout.write(output + '\n');
-            return this.success();
-          } catch (e) { /* file doesn't exist, ignore */ }
+              if (options.json || options.silent) {
+                return this.success(output);
+              }
+              process.stdout.write(output + '\n');
+              return this.success();
+            } catch (e) { /* file doesn't exist, try next */ }
+          }
+        } else {
+          // Clean up temporary repomix output file when packing JSON
+          try { await unlink(resolvedOutputPath); } catch {}
+          if (resolvedOutputPath !== tempOutputFilePath) {
+            try { await unlink(tempOutputFilePath); } catch {}
+          }
         }
       }
 

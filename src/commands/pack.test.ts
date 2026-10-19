@@ -73,4 +73,19 @@ describe('PackCommand Caching', () => {
     // Should NOT call runRemoteAction again because hashes match
     expect(mockRunRemoteAction).toHaveBeenCalledTimes(0);
   });
+
+  it('should pack a local directory with valid repomix filePathStyle configuration', async () => {
+    const mockPack = vi.spyOn(repomix, 'pack').mockResolvedValue({
+      processedFiles: [{ path: 'src/index.ts', content: 'export const x = 1;' }]
+    } as any);
+
+    const res = await command.execute(['.'], { silent: true, json: true }, { stdinIsPipe: false });
+
+    expect(res.success).toBe(true);
+    expect(mockPack).toHaveBeenCalledTimes(1);
+    const passedConfig = mockPack.mock.calls[0][1] as any;
+    expect(passedConfig.output.filePathStyle).toBe('target-relative');
+    expect(passedConfig.output.style).toBe('json');
+    expect(res.data?.files['src/index.ts']).toBe('export const x = 1;');
+  });
 });

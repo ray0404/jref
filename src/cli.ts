@@ -18,7 +18,7 @@ import { join, basename } from 'path';
 /**
  * Current version of the jref CLI.
  */
-const VERSION = '1.4.0';
+const VERSION = '1.4.1';
 
 /**
  * Parses global CLI options and separates them from command-specific arguments.
@@ -304,11 +304,16 @@ async function main(): Promise<void> {
 export { main, registerBuiltinCommands, registry };
 
 // Run if executed directly
-const isMain = process.argv[1] && (
-  process.argv[1] === fileURLToPath(import.meta.url) || 
-  process.argv[1].endsWith('/jref') ||
-  process.argv[1].endsWith('/cli.js') ||
-  process.argv[1].endsWith('/jbin')
+const executedBase = process.argv[1]
+  ? basename(process.argv[1]).replace(/\.(js|cjs|mjs|ts|cmd|ps1|exe)$/i, '')
+  : '';
+const isMain = Boolean(
+  process.argv[1] && (
+    process.argv[1] === fileURLToPath(import.meta.url) ||
+    executedBase === 'jref' ||
+    executedBase === 'cli' ||
+    executedBase === 'jbin'
+  )
 );
 
 if (isMain) {

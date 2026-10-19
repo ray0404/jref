@@ -30,5 +30,6 @@ GEMINI.md.bak
 .jref/
 .user/
 /.ctx
-docs/
 docs/*
+!docs/jref.1
+!docs/jref.man
