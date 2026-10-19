@@ -1,4 +1,5 @@
-#!/usr/bin/env node
+#!/bin/sh
+// 2>/dev/null; if [ -x /usr/bin/env ]; then exec /usr/bin/env node "$0" "$@"; else exec node "$0" "$@"; fi
 /**
  * @module CLI
  * Main entry point for the jref command-line interface.
@@ -18,7 +19,7 @@ import { join, basename } from 'path';
 /**
  * Current version of the jref CLI.
  */
-const VERSION = '1.4.1';
+const VERSION = '1.4.2';
 
 /**
  * Parses global CLI options and separates them from command-specific arguments.

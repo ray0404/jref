@@ -1,6 +1,6 @@
 {
   "name": "@ray0404/jref",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "CLI tool to interact with condensed JSON project snapshots for humans and AI agents",
   "type": "module",
   "main": "dist/index.js",
