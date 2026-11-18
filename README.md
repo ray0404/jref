@@ -140,7 +140,8 @@ jref works with JSON snapshots following this schema:
   "roadmap": "Optional project technical roadmap",
   "roadmap_status": "Optional status of the roadmap",
   "fileSummary": "Optional summary of files",
-  "userProvidedHeader": "Optional custom header"
+  "userProvidedHeader": "Optional custom header",
+  "sources": "Optional scraped web pages (url, metadata, markdown, html — see jref scrape)"
 }
 ```
 
@@ -194,6 +195,67 @@ jref pack https://github.com/user/repo --branch main > remote.json
 jref pack . --output-style xml > snapshot.xml
 jref pack . --max-size 1048576 # 1MB chunks (JSON only)
 ```
+
+### scrape
+
+Scrape web pages into a snapshot (`files: {}` + `sources: [...]`) using the
+[`@ray0404/pyscraper-md-ts`](https://www.npmjs.com/package/@ray0404/pyscraper-md-ts)
+library (static scraping plus optional Playwright dynamic rendering).
+
+```bash
+jref scrape <url...> [options]
+
+Options:
+  --format <markdown|html>  Default representation for query --source-url (default: markdown)
+  --crawl                   Follow same-domain links from the seed URLs (BFS)
+  --depth <number>          Maximum crawl depth, 0 = seeds only (default: 2)
+  --max-pages <number>      Maximum pages to fetch in a crawl (default: 10)
+  --only-subpaths           Only follow links under the seed URL subpaths
+  --dynamic                 Render pages with a headless browser (Playwright + Chromium)
+  --delay <seconds>         Delay before each fetch, for politeness (default: 0)
+  --retries <number>        Retries on network/5xx failures (default: 3)
+  --include-raw-html        Also store the full raw HTML per page
+  --output, -o <file>       Write the snapshot JSON to a file instead of stdout
+```
+
+```bash
+jref scrape https://example.com > web.json
+jref scrape https://example.com --crawl --depth 2 --max-pages 10
+jref scrape https://a.example https://b.example --format html
+```
+
+To bundle code and its documentation in one snapshot, use `pack --scrape`
+instead (same options, prefixed with `--scrape-`; `--scrape-delay`
+defaults to 1s there):
+
+```bash
+jref pack . --scrape https://example.com/docs > snapshot.json
+jref pack . --scrape https://example.com --scrape-crawl --scrape-depth 2 > snapshot.json
+jref pack . --scrape-file urls.txt > snapshot.json   # one URL per line, # comments allowed
+```
+
+**What is stored:** each entry in `sources` keeps the page URL, scrape
+timestamp, engine name/version, crawl depth/parent URL, page metadata
+(title, description, author, date, tags), the cleaned Markdown and HTML,
+nav/internal links, and a SHA-256 hash of the Markdown. The standalone HTML
+document is *not* stored — it is regenerable from the HTML + metadata + URL.
+Raw HTML is opt-in (`--include-raw-html`) because it roughly doubles the
+snapshot size. In a crawl, one failed page is recorded with empty content
+and an `error` field instead of aborting the whole crawl.
+
+**Reading scraped sources:** `jref inspect` lists them (see Web Sources in
+`--metadata`), `jref search --sources` searches their Markdown
+(`--include-html` also searches the stored HTML),
+`jref query --source-url <url> [--format markdown|html]` returns one page,
+`jref extract --sources` writes them to `web/<host>/<slug>.md`
+(+ `.html` with `--format html`), and `jref serve` exposes them as MCP
+resources (`jref://snapshot/sources/<url>`) and `scrape` as an MCP tool.
+
+**Limits:** requires Node.js >= 20. Dynamic mode needs the `playwright`
+package and a Chromium install (or `CHROMIUM_PATH`). jref does not check
+`robots.txt` or a site's terms of use — scrape only pages you are allowed
+to fetch. Snapshots with `sources` need jref >= 1.5.0 to read them: older
+versions silently drop the `sources` key when loading.
 
 ### bpack
 

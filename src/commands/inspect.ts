@@ -146,6 +146,34 @@ export class InspectCommand extends Command {
           }
       }
 
+      // Scraped web sources (arrive via onMetadata in both the
+      // streaming and the full-load paths).
+      const sourceList: Array<{
+        url: string;
+        title?: string | null;
+        markdown?: string;
+        html?: string;
+        rawHtml?: string;
+      }> = (snapshot.sources || []) as Array<{
+        url: string;
+        title?: string | null;
+        markdown?: string;
+        html?: string;
+        rawHtml?: string;
+      }>;
+      let totalSourceSize = 0;
+      for (const source of sourceList) {
+        totalSourceSize += Buffer.byteLength(source.markdown || '', 'utf8');
+        totalSourceSize += Buffer.byteLength(source.html || '', 'utf8');
+        if (source.rawHtml) totalSourceSize += Buffer.byteLength(source.rawHtml, 'utf8');
+      }
+      const sourceSummaries = sourceList.map((source) => ({
+        url: source.url,
+        title: (source as any).metadata?.title ?? null,
+        markdownChars: (source.markdown || '').length,
+        htmlChars: (source.html || '').length,
+      }));
+
       const metadata = {
         fileCount,
         totalSize: totalDecodedSize,
@@ -158,7 +186,10 @@ export class InspectCommand extends Command {
         hasUserProvidedHeader: Boolean(snapshot.userProvidedHeader),
         directoryStructureLines: snapshot.directoryStructure
           ? snapshot.directoryStructure.split('\n').length
-          : 0
+          : 0,
+        sourceCount: sourceList.length,
+        hasSources: sourceList.length > 0,
+        totalSourceSize
       };
 
       // Show header in human mode
@@ -183,7 +214,8 @@ export class InspectCommand extends Command {
         mimeTypes,
         instruction: snapshot.instruction,
         fileSummary: snapshot.fileSummary,
-        userProvidedHeader: snapshot.userProvidedHeader
+        userProvidedHeader: snapshot.userProvidedHeader,
+        sources: sourceSummaries
       };
 
       if (filePath && filePath !== '-') {
@@ -200,6 +232,7 @@ export class InspectCommand extends Command {
 
         if (showAll || showMeta) {
           result.metadata = metadata;
+          result.sources = sourceSummaries;
           if (inspectData.umfs) result.umfs = inspectData.umfs;
         }
         if (showAll || showStructure) {
@@ -221,6 +254,9 @@ export class InspectCommand extends Command {
         // Human-readable output
         if (showAll || showMeta) {
           this.printMetadata(metadata, options, inspectData.umfs);
+        }
+        if (showAll) {
+          this.printSources(sourceSummaries, options);
         }
         if (showAll || showStructure) {
           this.printStructure(snapshot.directoryStructure, options);
@@ -289,7 +325,10 @@ export class InspectCommand extends Command {
       ['Binary Payload', this.formatBytes(metadata.binarySize)],
       ['Tree Lines', metadata.directoryStructureLines.toString()],
       ['Has Instructions', metadata.hasInstruction ? 'Yes' : 'No'],
-      ['Has File Summary', metadata.hasFileSummary ? 'Yes' : 'No']
+      ['Has File Summary', metadata.hasFileSummary ? 'Yes' : 'No'],
+      ['Web Sources', metadata.sourceCount.toString()],
+      ['Sources Size', this.formatBytes(metadata.totalSourceSize)],
+      ['Has Web Sources', metadata.hasSources ? 'Yes' : 'No']
     ];
 
     printTable(['Property', 'Value'], rows, options);
@@ -308,6 +347,24 @@ export class InspectCommand extends Command {
       printTable(['Field', 'Value'], umfsRows, options);
     }
 
+    console.log();
+  }
+
+  private printSources(
+    sources: Array<{ url: string; title: string | null; markdownChars: number; htmlChars: number }>,
+    _options: CLIOptions
+  ): void {
+    if (sources.length === 0) return;
+
+    console.log('\n🌐 WEB SOURCES');
+    console.log('─'.repeat(40));
+
+    const rows = sources.map((s) => [
+      s.url,
+      s.title || '',
+      `${s.markdownChars} chars md / ${s.htmlChars} chars html`
+    ]);
+    printTable(['URL', 'Title', 'Content'], rows, _options);
     console.log();
   }
 

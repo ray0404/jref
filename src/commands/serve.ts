@@ -160,12 +160,39 @@ export class ServeCommand extends Command {
           description: `Source file: ${path}`,
         }));
 
+        for (const source of this.snapshot.sources || []) {
+          resources.push({
+            uri: `jref://snapshot/sources/${encodeURIComponent(source.url)}`,
+            name: source.url,
+            mimeType: 'text/markdown',
+            description: `Scraped page: ${source.metadata?.title || source.url}`,
+          });
+        }
+
         return { resources };
       });
 
       server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
         const { uri } = request.params;
         if (!this.snapshot) throw new McpError(ErrorCode.InvalidRequest, 'No snapshot loaded');
+
+        const sourcesPrefix = 'jref://snapshot/sources/';
+        if (uri.startsWith(sourcesPrefix)) {
+          const url = decodeURIComponent(uri.slice(sourcesPrefix.length));
+          const source = (this.snapshot.sources || []).find((s) => s.url === url);
+          if (!source) {
+            throw new McpError(ErrorCode.InvalidRequest, `Source not found in snapshot: ${url}`);
+          }
+          return {
+            contents: [
+              {
+                uri,
+                mimeType: 'text/markdown',
+                text: source.markdown,
+              },
+            ],
+          };
+        }
 
         const prefix = 'jref://snapshot/files/';
         if (!uri.startsWith(prefix)) {

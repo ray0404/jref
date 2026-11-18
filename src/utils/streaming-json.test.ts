@@ -193,3 +193,91 @@ describe('extractFiles', () => {
     expect(Object.keys(result)).toHaveLength(2);
   });
 });
+const sourcedSnapshot: ProjectSnapshot = {
+  ...validSnapshot,
+  sources: [
+    {
+      url: 'https://example.com/',
+      scrapedAt: '2026-11-18T00:00:00.000Z',
+      engine: 'pyscraper-md-ts',
+      engineVersion: '0.1.0',
+      dynamic: false,
+      depth: 0,
+      parentUrl: null,
+      statusCode: null,
+      contentHash: 'abc123',
+      metadata: { title: 'Example Domain', description: null, author: null, date: null, tags: [] },
+      markdown: '# Example Domain\n\nHello world.',
+      html: '<h1>Example Domain</h1>',
+      navLinks: [],
+      internalLinks: [],
+      error: null,
+    },
+  ],
+};
+
+describe('scraped sources', () => {
+  it('should preserve sources through parseJSON (small snapshot path)', async () => {
+    const result = await parseJSON(JSON.stringify(sourcedSnapshot));
+
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources![0].url).toBe('https://example.com/');
+    expect(result.sources![0].metadata?.title).toBe('Example Domain');
+  });
+
+  it('should preserve sources through processSnapshot on a stream (token path)', async () => {
+    const stream = Readable.from([JSON.stringify(sourcedSnapshot)]);
+    let sources: any;
+    const files: Record<string, string> = {};
+
+    await processSnapshot(stream, {
+      onMetadata: (key, value) => {
+        if (key === 'sources') sources = value;
+      },
+      onFile: (path, content) => {
+        files[path] = content;
+      },
+    });
+
+    expect(files).toEqual(sourcedSnapshot.files);
+    expect(sources).toHaveLength(1);
+    expect(sources[0].url).toBe('https://example.com/');
+    expect(sources[0].markdown).toContain('Hello world.');
+    expect(sources[0].metadata.title).toBe('Example Domain');
+    expect(sources[0].metadata.tags).toEqual([]);
+  });
+
+  it('should preserve sources through parseJSON on a large (streaming) input', async () => {
+    // Pad the snapshot past the 8MB streaming threshold with a large file.
+    const big = { ...sourcedSnapshot, files: { ...sourcedSnapshot.files, 'big.txt': 'x'.repeat(9 * 1024 * 1024) } };
+    const result = await parseJSON(JSON.stringify(big));
+
+    expect(result.sources).toHaveLength(1);
+    expect(result.sources![0].url).toBe('https://example.com/');
+  });
+
+  it('should report source counts in calculateMetadata', () => {
+    const metadata = calculateMetadata(sourcedSnapshot);
+
+    expect(metadata.sourceCount).toBe(1);
+    expect(metadata.hasSources).toBe(true);
+    expect(metadata.totalSourceSize).toBeGreaterThan(0);
+    expect(metadata.totalSourceSize).toBe(
+      Buffer.byteLength('# Example Domain\n\nHello world.', 'utf8') +
+        Buffer.byteLength('<h1>Example Domain</h1>', 'utf8')
+    );
+  });
+
+  it('should report zero sources for snapshots without them', () => {
+    const metadata = calculateMetadata(validSnapshot);
+
+    expect(metadata.sourceCount).toBe(0);
+    expect(metadata.hasSources).toBe(false);
+    expect(metadata.totalSourceSize).toBe(0);
+  });
+
+  it('should validate snapshots with sources', () => {
+    expect(validateSnapshot(sourcedSnapshot)).toBe(true);
+    expect(validateSnapshot({ ...sourcedSnapshot, sources: [{ url: 'https://x/' }] })).toBe(false);
+  });
+});

@@ -154,6 +154,7 @@ export async function processSnapshot(
           if (snapshot.instruction) callbacks.onMetadata('instruction', snapshot.instruction);
           if (snapshot.fileSummary) callbacks.onMetadata('fileSummary', snapshot.fileSummary);
           if (snapshot.userProvidedHeader) callbacks.onMetadata('userProvidedHeader', snapshot.userProvidedHeader);
+          if (snapshot.sources) callbacks.onMetadata('sources', snapshot.sources);
           if (snapshot.encodings) {
             for (const [path, enc] of Object.entries(snapshot.encodings)) {
               callbacks.onMetadata('encodings', { [path]: enc });
@@ -178,6 +179,7 @@ export async function processSnapshot(
         if (snapshot.instruction) callbacks.onMetadata('instruction', snapshot.instruction);
         if (snapshot.fileSummary) callbacks.onMetadata('fileSummary', snapshot.fileSummary);
         if (snapshot.userProvidedHeader) callbacks.onMetadata('userProvidedHeader', snapshot.userProvidedHeader);
+        if (snapshot.sources) callbacks.onMetadata('sources', snapshot.sources);
         if (snapshot.encodings) {
            for (const [path, enc] of Object.entries(snapshot.encodings)) {
              callbacks.onMetadata('encodings', { [path]: enc });
@@ -206,6 +208,41 @@ export async function processSnapshot(
     let finished = false;
     let isPaused = false;
 
+    // Capturing the top-level `sources` array (array of objects) in
+    // streaming mode. The parser emits scalars and `files` entries
+    // directly, but a nested array value needs to be rebuilt token by
+    // token; only `sources` is captured (other level-1 arrays keep
+    // today's behaviour of being skipped).
+    let captureKey: string | null = null;
+    let captureName: string | null = null;
+    let captureStack: any[] = [];
+    let capturePendingKey: string | null = null;
+
+    const attachCapture = (container: any): void => {
+      if (captureStack.length === 0) {
+        captureName = captureKey;
+        captureKey = null;
+        captureStack.push(container);
+        return;
+      }
+      const parent = captureStack[captureStack.length - 1];
+      if (Array.isArray(parent)) {
+        parent.push(container);
+      } else {
+        parent[capturePendingKey as string] = container;
+        capturePendingKey = null;
+      }
+      captureStack.push(container);
+    };
+
+    const finishCaptureContainer = (): void => {
+      const done = captureStack.pop();
+      if (captureStack.length === 0 && captureName && callbacks.onMetadata) {
+        callbacks.onMetadata(captureName, done);
+        captureName = null;
+      }
+    };
+
     const checkFinished = () => {
       if (finished && pendingOps === 0 && !isPaused) {
         resolve();
@@ -216,10 +253,13 @@ export async function processSnapshot(
       try {
         switch (data.name) {
           case 'keyValue':
-            if (objectLevel === 1) {
+            if (captureStack.length > 0) {
+              capturePendingKey = data.value;
+            } else if (objectLevel === 1) {
               currentKey = data.value;
               inFiles = currentKey === 'files';
               inEncodings = currentKey === 'encodings';
+              captureKey = currentKey === 'sources' ? currentKey : null;
             } else if (objectLevel === 2) {
               currentFileKey = data.value;
             }
@@ -227,6 +267,15 @@ export async function processSnapshot(
 
           case 'startObject':
             objectLevel++;
+            if (captureKey || captureStack.length > 0) {
+              attachCapture({});
+            }
+            break;
+
+          case 'startArray':
+            if (captureKey || captureStack.length > 0) {
+              attachCapture([]);
+            }
             break;
 
           case 'endObject':
@@ -236,15 +285,46 @@ export async function processSnapshot(
               currentFileKey = null;
             }
             objectLevel--;
+            if (captureStack.length > 0) {
+              finishCaptureContainer();
+            }
+            break;
+
+          case 'endArray':
+            if (captureStack.length > 0) {
+              finishCaptureContainer();
+            }
             break;
 
           case 'stringValue':
           case 'numberValue':
           case 'booleanValue':
           case 'nullValue':
-            if (objectLevel === 2 && currentFileKey) {
+          case 'trueValue':
+          case 'falseValue': {
+            // stream-json emits numbers as strings and booleans as
+            // trueValue/falseValue tokens — coerce them so captured
+            // values (e.g. a source's depth/dynamic) keep their JSON
+            // types through the streaming path.
+            const scalarValue =
+              data.name === 'numberValue'
+                ? Number(data.value)
+                : data.name === 'trueValue'
+                  ? true
+                  : data.name === 'falseValue'
+                    ? false
+                    : data.value;
+            if (captureStack.length > 0) {
+              const top = captureStack[captureStack.length - 1];
+              if (Array.isArray(top)) {
+                top.push(scalarValue);
+              } else {
+                top[capturePendingKey as string] = scalarValue;
+                capturePendingKey = null;
+              }
+            } else if (objectLevel === 2 && currentFileKey) {
               if (inFiles && callbacks.onFile) {
-                const result = callbacks.onFile(currentFileKey, data.value);
+                const result = callbacks.onFile(currentFileKey, scalarValue);
                 if (result instanceof Promise) {
                   pendingOps++;
                   isPaused = true;
@@ -259,16 +339,17 @@ export async function processSnapshot(
                   });
                 }
               } else if (inEncodings && callbacks.onMetadata) {
-                callbacks.onMetadata('encodings', { [currentFileKey]: data.value });
+                callbacks.onMetadata('encodings', { [currentFileKey]: scalarValue });
               }
               currentFileKey = null;
             } else if (objectLevel === 1 && currentKey) {
               if (callbacks.onMetadata) {
-                callbacks.onMetadata(currentKey, data.value);
+                callbacks.onMetadata(currentKey, scalarValue);
               }
               currentKey = null;
             }
             break;
+          }
         }
       } catch (err) {
         p.destroy(err as Error);
@@ -384,6 +465,14 @@ export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
     }
   }
 
+  const sources = snapshot.sources || [];
+  let totalSourceSize = 0;
+  for (const source of sources) {
+    totalSourceSize += Buffer.byteLength(source.markdown || '', 'utf8');
+    totalSourceSize += Buffer.byteLength(source.html || '', 'utf8');
+    if (source.rawHtml) totalSourceSize += Buffer.byteLength(source.rawHtml, 'utf8');
+  }
+
   return {
     fileCount,
     totalSize,
@@ -393,7 +482,10 @@ export function calculateMetadata(snapshot: ProjectSnapshot): SnapshotMetadata {
     hasUserProvidedHeader: Boolean(snapshot.userProvidedHeader),
     directoryStructureLines: snapshot.directoryStructure
       ? snapshot.directoryStructure.split('\n').length
-      : 0
+      : 0,
+    sourceCount: sources.length,
+    hasSources: sources.length > 0,
+    totalSourceSize
   };
 }
 

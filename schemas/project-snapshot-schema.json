@@ -31,6 +31,42 @@
           "type": "string"
         }
       }
+    },
+    "sources": {
+      "type": "array",
+      "description": "Web pages scraped into this snapshot (see `jref scrape` / `jref pack --scrape`). Content is stored as cleaned Markdown + HTML; html_document is regenerable and raw HTML is opt-in.",
+      "items": {
+        "type": "object",
+        "required": ["url", "scrapedAt", "markdown", "html"],
+        "properties": {
+          "url": { "type": "string", "description": "Canonical URL that was scraped." },
+          "scrapedAt": { "type": "string", "format": "date-time", "description": "ISO 8601 timestamp of when the page was scraped." },
+          "engine": { "type": "string", "description": "Scraper engine used, e.g. pyscraper-md-ts." },
+          "engineVersion": { "type": "string", "description": "Version of the scraper engine." },
+          "dynamic": { "type": "boolean", "description": "Whether the page was rendered with a headless browser (Playwright)." },
+          "depth": { "type": "integer", "minimum": 0, "description": "Crawl depth of this page (0 = seed URL)." },
+          "parentUrl": { "type": ["string", "null"], "description": "URL of the page that linked to this one during a crawl, or null for seed URLs." },
+          "statusCode": { "type": ["integer", "null"], "description": "HTTP status code when known; null when the engine does not report one (the scraper throws on non-OK responses, so a stored page was fetched successfully)." },
+          "contentHash": { "type": "string", "description": "SHA-256 hex digest of the stored Markdown content." },
+          "metadata": {
+            "type": "object",
+            "description": "Page metadata extracted from JSON-LD, OpenGraph, and standard meta tags.",
+            "properties": {
+              "title": { "type": ["string", "null"] },
+              "description": { "type": ["string", "null"] },
+              "author": { "type": ["string", "null"] },
+              "date": { "type": ["string", "null"] },
+              "tags": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "markdown": { "type": "string", "description": "Main content converted to GitHub Flavored Markdown." },
+          "html": { "type": "string", "description": "Cleaned main-content HTML." },
+          "rawHtml": { "type": "string", "description": "Full raw HTML as fetched (only stored with --include-raw-html)." },
+          "navLinks": { "type": "array", "items": { "type": "string" }, "description": "Same-domain links found in nav/aside elements." },
+          "internalLinks": { "type": "array", "items": { "type": "string" }, "description": "Same-domain links found anywhere in the page." },
+          "error": { "type": ["string", "null"], "description": "Fetch/convert error for this page; set only when markdown/html are empty (a failed page in a crawl)." }
+        }
+      }
     }
   },
   "additionalProperties": false

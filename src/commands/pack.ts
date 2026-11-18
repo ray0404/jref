@@ -20,6 +20,8 @@ import { readFromInput } from '../utils/input.js';
 import { homedir, tmpdir } from 'os';
 import { createHash } from 'crypto';
 import { execSync } from 'child_process';
+import { scrapeSources } from '../api/scrape.js';
+import type { ScrapedSource } from '../types/index.js';
 
 interface PackFlags {
   instruction?: string;
@@ -39,6 +41,33 @@ interface PackFlags {
   hashes?: boolean;
   delta?: string | boolean;
   stream?: boolean;
+  scrape?: string[];
+  scrapeFile?: string;
+  scrapeFormat?: 'markdown' | 'html';
+  scrapeCrawl?: boolean;
+  scrapeDepth?: number;
+  scrapeMaxPages?: number;
+  scrapeOnlySubpaths?: boolean;
+  scrapeDynamic?: boolean;
+  scrapeDelay?: number;
+  includeRawHtml?: boolean;
+}
+
+/**
+ * Collects the URLs to scrape from --scrape flags and a --scrape-file
+ * (one URL per line, `#` comments and blank lines ignored), deduped
+ * in first-seen order.
+ */
+function resolveScrapeUrls(flags: PackFlags): string[] {
+  const urls: string[] = [...(flags.scrape ?? [])];
+  if (flags.scrapeFile) {
+    const content = readFileSync(flags.scrapeFile, 'utf8');
+    for (const line of content.split('\n')) {
+      const trimmed = line.trim();
+      if (trimmed && !trimmed.startsWith('#')) urls.push(trimmed);
+    }
+  }
+  return [...new Set(urls)];
 }
 
 export class PackCommand extends Command {
@@ -114,6 +143,46 @@ export class PackCommand extends Command {
       {
         flags: '--stream',
         description: 'Enable real-time streaming mode for piped synchronization'
+      },
+      {
+        flags: '--scrape <url>',
+        description: 'Also scrape a web page into the snapshot (repeatable)'
+      },
+      {
+        flags: '--scrape-file <file>',
+        description: 'Scrape URLs listed in a file (one per line, # comments allowed)'
+      },
+      {
+        flags: '--scrape-format <markdown|html>',
+        description: 'Default representation for query --source-url (default: markdown; both are always stored)'
+      },
+      {
+        flags: '--scrape-crawl',
+        description: 'Crawl same-domain links from the scraped URLs (BFS)'
+      },
+      {
+        flags: '--scrape-depth <number>',
+        description: 'Maximum crawl depth for --scrape-crawl (default: 2)'
+      },
+      {
+        flags: '--scrape-max-pages <number>',
+        description: 'Maximum pages to fetch for --scrape-crawl (default: 10)'
+      },
+      {
+        flags: '--scrape-only-subpaths',
+        description: 'Only follow links under the seed URL subpaths when crawling'
+      },
+      {
+        flags: '--scrape-dynamic',
+        description: 'Render scraped pages with a headless browser (requires Playwright + Chromium)'
+      },
+      {
+        flags: '--scrape-delay <seconds>',
+        description: 'Delay before each scrape fetch, for politeness (default: 1)'
+      },
+      {
+        flags: '--include-raw-html',
+        description: 'Also store the full raw HTML of scraped pages (roughly doubles snapshot size)'
       }
     ],
     examples: [
@@ -123,6 +192,8 @@ export class PackCommand extends Command {
       'jref pack . --output-style markdown --compress > project.md',
       'jref pack . --hashes > local.hashes.json',
       'jref pack . --delta remote.hashes.json > delta.json',
+      'jref pack . --scrape https://example.com/docs > snapshot.json',
+      'jref pack . --scrape https://example.com --scrape-crawl --scrape-depth 2 > snapshot.json',
       'ssh remote "jref pack . --hashes" | jref pack . --delta --stream | ssh remote "jref extract --listen"'
     ],
     workflows: [
@@ -233,6 +304,22 @@ export class PackCommand extends Command {
       if (flags.maxSize && flags.outputStyle && flags.outputStyle !== 'json') {
         console.error(`⚠️  Warning: --max-size chunking is only supported for JSON output. Proceeding without chunking.`);
         flags.maxSize = undefined;
+      }
+
+      // Scraped sources can only live in a single JSON snapshot: other
+      // output styles, chunked output, and hash/delta modes produce no
+      // snapshot to attach them to.
+      const scrapeUrls = resolveScrapeUrls(flags);
+      if (scrapeUrls.length > 0) {
+        if (flags.outputStyle && flags.outputStyle !== 'json') {
+          return this.error('--scrape requires JSON output: omit --output-style (sources cannot be stored in markdown/xml/plain output).', options);
+        }
+        if (flags.maxSize) {
+          return this.error('--scrape cannot be combined with --max-size chunking: sources need a single JSON snapshot.', options);
+        }
+        if (flags.hashes || flags.delta) {
+          return this.error('--scrape cannot be combined with --hashes or --delta: those modes produce no snapshot to attach sources to.', options);
+        }
       }
 
       const outputStyle = flags.outputStyle || 'json';
@@ -525,14 +612,40 @@ export class PackCommand extends Command {
         binaryScanWalk(rootDir);
       }
 
+      // Web scraping: skipped entirely when no --scrape flags are given,
+      // so existing pack behaviour is unchanged.
+      let sources: ScrapedSource[] | undefined;
+      if (scrapeUrls.length > 0) {
+        if (!options.silent) {
+          console.error(`🌐 Scraping ${scrapeUrls.length} URL(s) into the snapshot...`);
+        }
+        sources = await scrapeSources(scrapeUrls, {
+          format: flags.scrapeFormat ?? 'markdown',
+          crawl: flags.scrapeCrawl,
+          depth: flags.scrapeDepth,
+          maxPages: flags.scrapeMaxPages,
+          onlySubpaths: flags.scrapeOnlySubpaths,
+          dynamic: flags.scrapeDynamic,
+          delay: flags.scrapeDelay ?? 1,
+          includeRawHtml: flags.includeRawHtml,
+        });
+        if (!options.silent) {
+          for (const s of sources.filter((s) => s.error)) {
+            console.error(`⚠️  Failed to scrape ${s.url}: ${s.error}`);
+          }
+          console.error(`✅ Scraped ${sources.length} page(s).`);
+        }
+      }
+
       // Helper to create a snapshot object
-      const createSnapshot = (filesMap: Record<string, string>, encodingMap?: Record<string, any>): ProjectSnapshot => ({
+      const createSnapshot = (filesMap: Record<string, string>, encodingMap?: Record<string, any>, sourceList?: ScrapedSource[]): ProjectSnapshot => ({
         directoryStructure: generateDirectoryStructure(Object.keys(filesMap)),
         encodings: encodingMap && Object.keys(encodingMap).length > 0 ? encodingMap : undefined,
         files: filesMap,
         instruction,
         fileSummary: flags.summary,
-        chunks: allChunks.length > 0 ? allChunks : undefined
+        chunks: allChunks.length > 0 ? allChunks : undefined,
+        sources: sourceList && sourceList.length > 0 ? sourceList : undefined
       });
 
       // Handle Chunking
@@ -584,7 +697,7 @@ export class PackCommand extends Command {
       }
 
       // Normal single-file output
-      const snapshot = createSnapshot(allFiles, encodings);
+      const snapshot = createSnapshot(allFiles, encodings, sources);
       
       // Save to cache if remote
       if (isRemote && cachePath) {
@@ -685,6 +798,27 @@ export class PackCommand extends Command {
         }
       } else if (arg === '--stream') {
         flags.stream = true;
+      } else if (arg === '--scrape') {
+        if (!flags.scrape) flags.scrape = [];
+        flags.scrape.push(args[++i]);
+      } else if (arg === '--scrape-file') {
+        flags.scrapeFile = args[++i];
+      } else if (arg === '--scrape-format') {
+        flags.scrapeFormat = args[++i] as any;
+      } else if (arg === '--scrape-crawl') {
+        flags.scrapeCrawl = true;
+      } else if (arg === '--scrape-depth') {
+        flags.scrapeDepth = parseInt(args[++i], 10);
+      } else if (arg === '--scrape-max-pages') {
+        flags.scrapeMaxPages = parseInt(args[++i], 10);
+      } else if (arg === '--scrape-only-subpaths') {
+        flags.scrapeOnlySubpaths = true;
+      } else if (arg === '--scrape-dynamic') {
+        flags.scrapeDynamic = true;
+      } else if (arg === '--scrape-delay') {
+        flags.scrapeDelay = parseFloat(args[++i]);
+      } else if (arg === '--include-raw-html') {
+        flags.includeRawHtml = true;
       } else if (!arg.startsWith('-')) {
         targetDir = arg;
       }

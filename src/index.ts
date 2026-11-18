@@ -8,6 +8,7 @@ export * from './types/index.js';
 
 // Export API Wrappers
 export { pack, type PackOptions } from './api/pack.js';
+export { scrapeSources, scrapeUrl, scraperVersion, type ScrapeSourcesOptions, type ScrapeFormat } from './api/scrape.js';
 export { query, type QueryOptions } from './api/query.js';
 export { buildGraph, queryGraph, topology, type GraphBuildOptions } from './api/graph.js';
 export { search, type SearchOptions } from './api/search.js';

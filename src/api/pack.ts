@@ -67,6 +67,47 @@ export interface PackOptions {
    */
   semantic?: boolean;
   /**
+   * Web page URLs to scrape into the snapshot (see `jref scrape`).
+   * Skipped entirely when empty.
+   */
+  scrape?: string[];
+  /**
+   * File listing URLs to scrape, one per line (`#` comments allowed).
+   */
+  scrapeFile?: string;
+  /**
+   * Default representation for `query --source-url` on scraped pages.
+   */
+  scrapeFormat?: 'markdown' | 'html';
+  /**
+   * Crawl same-domain links from the scraped URLs.
+   */
+  scrapeCrawl?: boolean;
+  /**
+   * Maximum crawl depth for scraped URLs (default: 2).
+   */
+  scrapeDepth?: number;
+  /**
+   * Maximum pages to fetch when crawling scraped URLs (default: 10).
+   */
+  scrapeMaxPages?: number;
+  /**
+   * Only follow links under the seed URL subpaths when crawling.
+   */
+  scrapeOnlySubpaths?: boolean;
+  /**
+   * Render scraped pages with a headless browser (Playwright).
+   */
+  scrapeDynamic?: boolean;
+  /**
+   * Delay in seconds before each scrape fetch (default: 1).
+   */
+  scrapeDelay?: number;
+  /**
+   * Store the full raw HTML of scraped pages.
+   */
+  includeRawHtml?: boolean;
+  /**
    * Optional callback to receive progress updates during the packing process.
    * @param message - Progress message.
    */
@@ -111,6 +152,16 @@ export async function pack(targetDir: string = '.', options: PackOptions = {}): 
     if (options.includeBinaries) args.push('--include-binaries');
     if (options.maxBinarySize) args.push('--max-binary-size', options.maxBinarySize.toString());
     if (options.semantic) args.push('--semantic');
+    if (options.scrape) for (const url of options.scrape) args.push('--scrape', url);
+    if (options.scrapeFile) args.push('--scrape-file', options.scrapeFile);
+    if (options.scrapeFormat) args.push('--scrape-format', options.scrapeFormat);
+    if (options.scrapeCrawl) args.push('--scrape-crawl');
+    if (options.scrapeDepth !== undefined) args.push('--scrape-depth', options.scrapeDepth.toString());
+    if (options.scrapeMaxPages !== undefined) args.push('--scrape-max-pages', options.scrapeMaxPages.toString());
+    if (options.scrapeOnlySubpaths) args.push('--scrape-only-subpaths');
+    if (options.scrapeDynamic) args.push('--scrape-dynamic');
+    if (options.scrapeDelay !== undefined) args.push('--scrape-delay', options.scrapeDelay.toString());
+    if (options.includeRawHtml) args.push('--include-raw-html');
 
     const outputHandler = (data: string) => {
       if (options.onProgress) {

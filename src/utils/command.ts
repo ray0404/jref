@@ -425,6 +425,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   const { ServeCommand } = await import('../commands/serve.js');
   const { DiffCommand } = await import('../commands/diff.js');
   const { PackCommand } = await import('../commands/pack.js');
+  const { ScrapeCommand } = await import('../commands/scrape.js');
   const { SummarizeCommand } = await import('../commands/summarize.js');
   const { RunCommand } = await import('../commands/run.js');
   const { BinCommand } = await import('../commands/bin.js');
@@ -461,6 +462,7 @@ export async function registerBuiltinCommands(): Promise<void> {
   registry.register(new ServeCommand());
   registry.register(new DiffCommand());
   registry.register(new PackCommand());
+  registry.register(new ScrapeCommand());
   registry.register(new SummarizeCommand());
   registry.register(new RunCommand());
   registry.register(new BinCommand());

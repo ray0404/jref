@@ -103,3 +103,65 @@ describe('SearchCommand', () => {
     expect(result.success).toBe(true);
   });
 });
+const sourcedSnapshot = {
+  ...mockSnapshot,
+  sources: [
+    {
+      url: 'https://example.com/',
+      scrapedAt: '2026-11-18T00:00:00.000Z',
+      engine: 'pyscraper-md-ts',
+      engineVersion: '0.1.0',
+      dynamic: false,
+      depth: 0,
+      parentUrl: null,
+      statusCode: null,
+      contentHash: 'abc123',
+      metadata: { title: 'Example Domain', description: null, author: null, date: null, tags: [] },
+      markdown: '# Example Domain\n\nHello world.',
+      html: '<h1>Example Domain</h1><p>Hello world.</p>',
+      navLinks: [],
+      internalLinks: [],
+      error: null,
+    },
+  ],
+};
+
+describe('SearchCommand with scraped sources', () => {
+  let command: SearchCommand;
+  let sourcedContext: CommandContext;
+
+  beforeEach(() => {
+    command = new SearchCommand();
+    sourcedContext = {
+      stdin: JSON.stringify(sourcedSnapshot),
+      stdinIsPipe: true,
+    };
+  });
+
+  it('should not search sources by default', async () => {
+    const result = await command.execute(['Hello world'], { json: true }, sourcedContext);
+
+    expect(result.success).toBe(true);
+    const results = (result.data as any).results as Array<{ filePath: string }>;
+    expect(results.some((r) => r.filePath.startsWith('source:'))).toBe(false);
+  });
+
+  it('should search source markdown with --sources', async () => {
+    const result = await command.execute(['Hello world', '--sources'], { json: true }, sourcedContext);
+
+    expect(result.success).toBe(true);
+    const results = (result.data as any).results as Array<{ filePath: string }>;
+    expect(results.some((r) => r.filePath === 'source:https://example.com/')).toBe(true);
+  });
+
+  it('should only search source HTML with --include-html', async () => {
+    // 'Example Domain</h1>' only appears in the stored HTML, not the Markdown
+    // (the Markdown has '# Example Domain' as a heading line instead).
+    const withoutHtml = await command.execute(['</h1>', '--sources'], { json: true }, sourcedContext);
+    const withHtml = await command.execute(['</h1>', '--sources', '--include-html'], { json: true }, sourcedContext);
+
+    const hasSource = (r: any) => (r.data.results as Array<{ filePath: string }>).some((x) => x.filePath.startsWith('source:'));
+    expect(hasSource(withoutHtml)).toBe(false);
+    expect(hasSource(withHtml)).toBe(true);
+  });
+});

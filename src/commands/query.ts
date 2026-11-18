@@ -20,6 +20,8 @@ interface QueryFlags {
   searchBinaries?: boolean;
   semantic?: string;
   topK?: number;
+  sourceUrl?: string;
+  format?: 'markdown' | 'html';
 }
 
 export class QueryCommand extends Command {
@@ -55,6 +57,14 @@ export class QueryCommand extends Command {
       {
         flags: '--search-binaries',
         description: 'Allow querying raw content of binary files'
+      },
+      {
+        flags: '--source-url <url>',
+        description: 'URL of a scraped source to query (see jref scrape / pack --scrape)'
+      },
+      {
+        flags: '--format <markdown|html>',
+        description: 'Representation of the source to return (default: markdown)'
       }
     ],
     examples: [
@@ -62,6 +72,8 @@ export class QueryCommand extends Command {
       'jref query --path "src/main.ts" snapshot.json',
       'jref query --path "src/main.ts" --raw snapshot.json',
       'jref query --path "README.md" --json snapshot.json',
+      'jref query --source-url "https://example.com/" snapshot.json',
+      'jref query --source-url "https://example.com/" --format html --raw snapshot.json',
       'cat snapshot.json | jref query --path "src/index.ts"',
       'jref query --path "src/utils.ts" --line-start 10 --line-end 50 snapshot.json'
     ],
@@ -82,8 +94,16 @@ export class QueryCommand extends Command {
     try {
       const { flags, filePath } = this.parseArgs(args);
 
-      if (!flags.path && !flags.semantic) {
-        return this.error('Either --path <path> or --semantic <query> is required', options);
+      if (!flags.path && !flags.semantic && !flags.sourceUrl) {
+        return this.error('Either --path <path>, --source-url <url>, or --semantic <query> is required', options);
+      }
+
+      if (flags.sourceUrl && flags.path) {
+        return this.error('Use either --path or --source-url, not both', options);
+      }
+
+      if (flags.sourceUrl) {
+        return this.executeSourceQuery(flags, filePath, options, context);
       }
 
       if (flags.semantic) {
@@ -182,6 +202,17 @@ export class QueryCommand extends Command {
         case '--search-binaries':
           flags.searchBinaries = true;
           break;
+        case '--source-url':
+          flags.sourceUrl = args[++i];
+          break;
+        case '--format': {
+          const value = args[++i];
+          if (value !== 'markdown' && value !== 'html') {
+            throw new Error(`Invalid --format '${value}'. Expected 'markdown' or 'html'.`);
+          }
+          flags.format = value;
+          break;
+        }
         default:
           if (!arg.startsWith('-')) {
             filePath = arg;
@@ -190,6 +221,67 @@ export class QueryCommand extends Command {
     }
 
     return { flags, filePath };
+  }
+
+  /**
+   * Returns one scraped source's content. Sources are not streamed
+   * via processSnapshot's file path, so the full snapshot is loaded
+   * (sources survive loading via the updated ProjectSnapshotSchema).
+   */
+  private async executeSourceQuery(
+    flags: QueryFlags,
+    snapshotPath: string | undefined,
+    options: CLIOptions,
+    context: CommandContext
+  ): Promise<CommandResult> {
+    const snapshot = await this.getSnapshot(context, options, snapshotPath);
+    // Match tolerant of a single trailing slash: the scraper stores
+    // the URL exactly as requested, so `https://example.com` and
+    // `https://example.com/` are the same page to a user.
+    const wanted = flags.sourceUrl!.replace(/\/$/, '');
+    const source = (snapshot.sources || []).find((s) => s.url.replace(/\/$/, '') === wanted);
+
+    if (!source) {
+      return this.error(`Source not found in snapshot: ${flags.sourceUrl}`, options, 2);
+    }
+
+    const format = flags.format ?? 'markdown';
+    let content = format === 'html' ? source.html : source.markdown;
+    if (flags.lineStart !== undefined || flags.lineEnd !== undefined) {
+      content = this.extractLineRange(content, flags.lineStart, flags.lineEnd);
+    }
+
+    const label = `source:${source.url}`;
+    if (options.json) {
+      this.print(
+        {
+          url: source.url,
+          format,
+          content,
+          lineCount: content.split('\n').length,
+          byteSize: Buffer.byteLength(content, 'utf8')
+        },
+        options
+      );
+    } else if (flags.raw || options.raw) {
+      process.stdout.write(content);
+    } else {
+      console.log(`\n📄 ${label} (${format})`);
+      console.log('─'.repeat(50));
+      console.log(content);
+      console.log('─'.repeat(50));
+      console.log(`(${content.split('\n').length} lines, ${this.formatBytes(Buffer.byteLength(content, 'utf8'))})`);
+      console.log();
+    }
+
+    return this.success(undefined, {
+      url: source.url,
+      path: label,
+      format,
+      content,
+      lineCount: content.split('\n').length,
+      byteSize: Buffer.byteLength(content, 'utf8')
+    });
   }
 
   private async executeSemanticQuery(

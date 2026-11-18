@@ -42,6 +42,56 @@ export interface CodeChunk {
 }
 
 /**
+ * Metadata extracted from a scraped web page (JSON-LD, OpenGraph,
+ * standard meta tags, `<title>` fallback — as reported by
+ * `@ray0404/pyscraper-md-ts`).
+ */
+export const ScrapedSourceMetadataSchema = z.object({
+  title: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  author: z.string().nullable().optional(),
+  date: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
+});
+
+/**
+ * Metadata extracted from a scraped web page.
+ */
+export type ScrapedSourceMetadata = z.infer<typeof ScrapedSourceMetadataSchema>;
+
+/**
+ * Runtime schema for a single scraped web page stored in a snapshot.
+ * Content is stored as cleaned Markdown + HTML. The standalone HTML
+ * document is NOT stored — it is regenerable from `html` + `metadata`
+ * + `url` via the scraper's `wrapHtmlDocument`. `rawHtml` is opt-in
+ * (`--include-raw-html`) because it roughly doubles the stored size.
+ */
+export const ScrapedSourceSchema = z.object({
+  url: z.string(),
+  scrapedAt: z.string(),
+  engine: z.string().optional(),
+  engineVersion: z.string().optional(),
+  dynamic: z.boolean().optional(),
+  depth: z.number().int().min(0).optional(),
+  parentUrl: z.string().nullable().optional(),
+  statusCode: z.number().int().nullable().optional(),
+  contentHash: z.string().optional(),
+  metadata: ScrapedSourceMetadataSchema.optional(),
+  markdown: z.string(),
+  html: z.string(),
+  rawHtml: z.string().optional(),
+  navLinks: z.array(z.string()).optional(),
+  internalLinks: z.array(z.string()).optional(),
+  error: z.string().nullable().optional(),
+});
+
+/**
+ * A single web page scraped into a snapshot (see `jref scrape` and
+ * `jref pack --scrape`).
+ */
+export type ScrapedSource = z.infer<typeof ScrapedSourceSchema>;
+
+/**
  * Runtime schema for ProjectSnapshot validation.
  */
 export const ProjectSnapshotSchema = z.object({
@@ -53,6 +103,7 @@ export const ProjectSnapshotSchema = z.object({
   fileSummary: z.string().optional(),
   userProvidedHeader: z.string().optional(),
   chunks: z.array(z.custom<CodeChunk>()).optional(),
+  sources: z.array(ScrapedSourceSchema).optional(),
 });
 
 /**
@@ -118,6 +169,9 @@ export const SnapshotMetadataSchema = z.object({
   hasFileSummary: z.boolean(),
   hasUserProvidedHeader: z.boolean(),
   directoryStructureLines: z.number(),
+  sourceCount: z.number(),
+  hasSources: z.boolean(),
+  totalSourceSize: z.number(),
 });
 
 /**

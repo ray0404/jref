@@ -100,3 +100,85 @@ describe('QueryCommand', () => {
     expect(result.success).toBe(false);
   });
 });
+const sourcedSnapshot = {
+  ...mockSnapshot,
+  sources: [
+    {
+      url: 'https://example.com/',
+      scrapedAt: '2026-11-18T00:00:00.000Z',
+      engine: 'pyscraper-md-ts',
+      engineVersion: '0.1.0',
+      dynamic: false,
+      depth: 0,
+      parentUrl: null,
+      statusCode: null,
+      contentHash: 'abc123',
+      metadata: { title: 'Example Domain', description: null, author: null, date: null, tags: [] },
+      markdown: '# Example Domain\n\nHello world.',
+      html: '<h1>Example Domain</h1><p>Hello world.</p>',
+      navLinks: [],
+      internalLinks: [],
+      error: null,
+    },
+  ],
+};
+
+describe('QueryCommand with scraped sources', () => {
+  let command: QueryCommand;
+  let sourcedContext: CommandContext;
+
+  beforeEach(() => {
+    command = new QueryCommand();
+    sourcedContext = {
+      stdin: JSON.stringify(sourcedSnapshot),
+      stdinIsPipe: true,
+    };
+  });
+
+  it('should return a source markdown by --source-url', async () => {
+    const result = await command.execute(
+      ['--source-url', 'https://example.com/', '--raw'],
+      { json: true },
+      sourcedContext
+    );
+
+    expect(result.success).toBe(true);
+    const data = result.data as any;
+    expect(data.url).toBe('https://example.com/');
+    expect(data.format).toBe('markdown');
+    expect(data.content).toContain('Hello world.');
+  });
+
+  it('should return source HTML with --format html', async () => {
+    const result = await command.execute(
+      ['--source-url', 'https://example.com/', '--format', 'html', '--raw'],
+      { json: true },
+      sourcedContext
+    );
+
+    expect(result.success).toBe(true);
+    expect((result.data as any).format).toBe('html');
+    expect((result.data as any).content).toContain('<h1>Example Domain</h1>');
+  });
+
+  it('should error for an unknown source URL', async () => {
+    const result = await command.execute(
+      ['--source-url', 'https://missing.example/'],
+      { json: true },
+      sourcedContext
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.exitCode).toBe(2);
+  });
+
+  it('should error when --path and --source-url are combined', async () => {
+    const result = await command.execute(
+      ['--path', 'src/main.ts', '--source-url', 'https://example.com/'],
+      { json: true },
+      sourcedContext
+    );
+
+    expect(result.success).toBe(false);
+  });
+});

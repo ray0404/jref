@@ -111,3 +111,78 @@ describe('ExtractCommand', () => {
     rmSync(snapshotPath);
   });
 });
+
+const sourcedSnapshot = {
+  ...mockSnapshot,
+  sources: [
+    {
+      url: 'https://example.com/',
+      scrapedAt: '2026-11-18T00:00:00.000Z',
+      engine: 'pyscraper-md-ts',
+      engineVersion: '0.1.0',
+      dynamic: false,
+      depth: 0,
+      parentUrl: null,
+      statusCode: null,
+      contentHash: 'abc123',
+      metadata: { title: 'Example Domain', description: null, author: null, date: null, tags: [] },
+      markdown: '# Example Domain\n\nHello world.',
+      html: '<h1>Example Domain</h1><p>Hello world.</p>',
+      navLinks: [],
+      internalLinks: [],
+      error: null,
+    },
+  ],
+};
+
+describe('ExtractCommand with scraped sources', () => {
+  let command: ExtractCommand;
+  let sourcedContext: CommandContext;
+  const sourcesOutputDir = './test-extracted-sources';
+
+  beforeEach(() => {
+    command = new ExtractCommand();
+    sourcedContext = {
+      stdin: JSON.stringify(sourcedSnapshot),
+      stdinIsPipe: true,
+    };
+    if (existsSync(sourcesOutputDir)) {
+      rmSync(sourcesOutputDir, { recursive: true, force: true });
+    }
+  });
+
+  it('should extract sources to web/<host>/<slug>.md', async () => {
+    const result = await command.execute(['--sources', '--output', sourcesOutputDir], { json: true }, sourcedContext);
+
+    expect(result.success).toBe(true);
+    const mdPath = join(sourcesOutputDir, 'web/example.com/Example_Domain.md');
+    expect(existsSync(mdPath)).toBe(true);
+    expect(readFileSync(mdPath, 'utf8')).toContain('Hello world.');
+    // Default extract must not change: no snapshot files are written in --sources mode.
+    expect(existsSync(join(sourcesOutputDir, 'src/main.ts'))).toBe(false);
+  });
+
+  it('should also write .html with --format html', async () => {
+    const result = await command.execute(
+      ['--sources', '--format', 'html', '--output', sourcesOutputDir],
+      { json: true },
+      sourcedContext
+    );
+
+    expect(result.success).toBe(true);
+    expect(existsSync(join(sourcesOutputDir, 'web/example.com/Example_Domain.md'))).toBe(true);
+    const htmlPath = join(sourcesOutputDir, 'web/example.com/Example_Domain.html');
+    expect(existsSync(htmlPath)).toBe(true);
+    expect(readFileSync(htmlPath, 'utf8')).toContain('<h1>Example Domain</h1>');
+  });
+
+  it('should error when the snapshot has no sources', async () => {
+    const plainContext: CommandContext = {
+      stdin: JSON.stringify(mockSnapshot),
+      stdinIsPipe: true,
+    };
+    const result = await command.execute(['--sources', '--output', sourcesOutputDir], { json: true }, plainContext);
+
+    expect(result.success).toBe(false);
+  });
+});

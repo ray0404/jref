@@ -35,6 +35,14 @@ export interface QueryOptions {
    * Whether to include binary files in search results.
    */
   searchBinaries?: boolean;
+  /**
+   * URL of a scraped source to retrieve from the snapshot.
+   */
+  sourceUrl?: string;
+  /**
+   * Representation of a scraped source to return (default: 'markdown').
+   */
+  format?: 'markdown' | 'html';
 }
 
 /**
@@ -69,6 +77,8 @@ export async function query(snapshot: ProjectSnapshot | string, options: QueryOp
     if (options.lineStart) args.push('--line-start', options.lineStart.toString());
     if (options.lineEnd) args.push('--line-end', options.lineEnd.toString());
     if (options.searchBinaries) args.push('--search-binaries');
+    if (options.sourceUrl) args.push('--source-url', options.sourceUrl);
+    if (options.format) args.push('--format', options.format);
 
     let contextStdin = '';
     let filePath: string | undefined;

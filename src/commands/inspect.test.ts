@@ -134,3 +134,72 @@ describe('InspectCommand', () => {
     consoleSpy.mockRestore();
   });
 });
+const sourcedSnapshot = {
+  ...mockSnapshot,
+  sources: [
+    {
+      url: 'https://example.com/',
+      scrapedAt: '2026-11-18T00:00:00.000Z',
+      engine: 'pyscraper-md-ts',
+      engineVersion: '0.1.0',
+      dynamic: false,
+      depth: 0,
+      parentUrl: null,
+      statusCode: null,
+      contentHash: 'abc123',
+      metadata: { title: 'Example Domain', description: null, author: null, date: null, tags: [] },
+      markdown: '# Example Domain\n\nHello world.',
+      html: '<h1>Example Domain</h1><p>Hello world.</p>',
+      navLinks: [],
+      internalLinks: [],
+      error: null,
+    },
+  ],
+};
+
+describe('InspectCommand with scraped sources', () => {
+  let command: InspectCommand;
+  let sourcedContext: CommandContext;
+
+  beforeEach(() => {
+    command = new InspectCommand();
+    sourcedContext = {
+      stdin: JSON.stringify(sourcedSnapshot),
+      stdinIsPipe: true,
+    };
+  });
+
+  it('should include source counts in --metadata', async () => {
+    const result = await command.execute(['--metadata'], { json: true }, sourcedContext);
+
+    expect(result.success).toBe(true);
+    const data = result.data as any;
+    expect(data.metadata.sourceCount).toBe(1);
+    expect(data.metadata.hasSources).toBe(true);
+    expect(data.metadata.totalSourceSize).toBeGreaterThan(0);
+    expect(data.sources).toHaveLength(1);
+    expect(data.sources[0].url).toBe('https://example.com/');
+    expect(data.sources[0].title).toBe('Example Domain');
+    expect(data.sources[0].markdownChars).toBe('# Example Domain\n\nHello world.'.length);
+  });
+
+  it('should list sources in a bare inspect', async () => {
+    const result = await command.execute([], { json: true }, sourcedContext);
+
+    expect(result.success).toBe(true);
+    expect((result.data as any).sources).toHaveLength(1);
+  });
+
+  it('should report zero sources for snapshots without them', async () => {
+    const plainContext: CommandContext = {
+      stdin: JSON.stringify(mockSnapshot),
+      stdinIsPipe: true,
+    };
+    const result = await command.execute(['--metadata'], { json: true }, plainContext);
+
+    expect(result.success).toBe(true);
+    expect((result.data as any).metadata.sourceCount).toBe(0);
+    expect((result.data as any).metadata.hasSources).toBe(false);
+    expect((result.data as any).sources).toEqual([]);
+  });
+});

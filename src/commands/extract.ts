@@ -8,7 +8,8 @@ import { Command } from '../utils/command.js';
 import type {
   CLIOptions,
   CommandResult,
-  CommandContext
+  CommandContext,
+  ScrapedSource
 } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { mkdir, writeFile, existsSync } from 'fs';
@@ -31,6 +32,39 @@ interface ExtractFlags {
   flat?: boolean;
   stdout?: boolean;
   listen?: boolean;
+  sources?: boolean;
+  format?: 'markdown' | 'html';
+}
+
+/**
+ * Host part of a source URL, for the `web/<host>/` output directory.
+ */
+function sourceHost(url: string): string {
+  try {
+    return new URL(url).host;
+  } catch {
+    return 'unknown-host';
+  }
+}
+
+/**
+ * Filename slug for a scraped source, from its title (or URL path
+ * fallback), mirroring the scraper's filename rules.
+ */
+function sourceSlug(source: ScrapedSource): string {
+  let base = source.metadata?.title?.trim() || '';
+  if (!base) {
+    try {
+      const u = new URL(source.url);
+      base = u.pathname && u.pathname !== '/'
+        ? u.pathname.replace(/\/$/, '').split('/').pop() ?? ''
+        : u.host;
+    } catch {
+      base = 'scraped_page';
+    }
+  }
+  const slug = base.trim().replace(/ /g, '_').replace(/[^\p{L}\p{N}_.-]/gu, '').slice(0, 50);
+  return slug || 'scraped_page';
 }
 
 export class ExtractCommand extends Command {
@@ -62,12 +96,22 @@ export class ExtractCommand extends Command {
       {
         flags: '--listen',
         description: 'Listen on stdin for continuous stream of snapshots/deltas'
+      },
+      {
+        flags: '--sources',
+        description: 'Extract scraped web sources instead of files (to web/<host>/<slug>.md)'
+      },
+      {
+        flags: '--format <markdown|html>',
+        description: 'With --sources: also write the .html representation (default: markdown only)'
       }
     ],
     examples: [
       'jref extract snapshot.json',
       'jref extract snapshot.json "src/**/*.ts"',
       'jref extract --output ./output snapshot.json',
+      'jref extract --sources snapshot.json',
+      'jref extract --sources --format html --output ./web snapshot.json',
       'cat snapshot.json | jref extract "src/*.js"',
       'jref extract --dry-run snapshot.json',
       'jref extract --stdout snapshot.json "kick.wav" | ./dsp_tool',
@@ -100,6 +144,10 @@ export class ExtractCommand extends Command {
         }
         await this.handleListen(outputDir, flags, options);
         return this.success();
+      }
+
+      if (flags.sources && flags.stdout) {
+        return this.error('--stdout cannot be combined with --sources', options);
       }
 
       // Handle --stdout piping
@@ -159,6 +207,53 @@ export class ExtractCommand extends Command {
 
       const results: { path: string; size: number; success: boolean; skipped?: boolean }[] = [];
       const encodings: Record<string, string> = {};
+
+      // Handle --sources: write scraped pages to
+      // web/<host>/<slug>.md (+ .html when --format html) instead of
+      // snapshot files.
+      if (flags.sources) {
+        const snapshot = await this.getSnapshot(context, options, filePath);
+        let sources = snapshot.sources || [];
+        if (patterns.length > 0) {
+          sources = sources.filter((s) =>
+            patterns.some((p) => micromatch.isMatch(s.url, p) || s.url.includes(p))
+          );
+        }
+        if (sources.length === 0) {
+          return this.error('No scraped sources matched (snapshot has no sources, or no URL matched the patterns)', options);
+        }
+
+        const format = flags.format ?? 'markdown';
+        for (const source of sources) {
+          const relPath = `web/${sourceHost(source.url)}/${sourceSlug(source)}.md`;
+          const entries: Array<{ path: string; content: string }> = [
+            { path: relPath, content: source.markdown }
+          ];
+          if (format === 'html') {
+            entries.push({ path: relPath.replace(/\.md$/, '.html'), content: source.html });
+          }
+          for (const entry of entries) {
+            if (flags.dryRun) {
+              results.push({ path: join(outputDir, entry.path), size: Buffer.byteLength(entry.content, 'utf8'), success: true });
+              continue;
+            }
+            const res = await this.extractFile(entry.path, Buffer.from(entry.content, 'utf8'), outputDir, flags.overwrite as boolean, flags.flat as boolean);
+            results.push(res);
+          }
+        }
+
+        if (results.length === 0) {
+          return this.error('No files matched the patterns or snapshot is empty', options);
+        }
+
+        if (flags.dryRun) {
+          this.outputDryRun(results, outputDir, flags.flat as boolean, options);
+        } else {
+          this.outputResults(results, options);
+        }
+
+        return this.success(undefined, { results, outputDir });
+      }
 
       if (options.jq) {
         // Use full loading when JQ is active
@@ -265,6 +360,17 @@ export class ExtractCommand extends Command {
         case '--listen':
           flags.listen = true;
           break;
+        case '--sources':
+          flags.sources = true;
+          break;
+        case '--format': {
+          const value = args[++i];
+          if (value !== 'markdown' && value !== 'html') {
+            throw new Error(`Invalid --format '${value}'. Expected 'markdown' or 'html'.`);
+          }
+          flags.format = value;
+          break;
+        }
         case '--paths':
         case '-p':
           // Support old --paths flag for backward compatibility

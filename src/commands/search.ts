@@ -5,7 +5,7 @@
  */
 
 import { Command } from '../utils/command.js';
-import type { CLIOptions, CommandResult, CommandContext, SearchResult, SearchMatch } from '../types/index.js';
+import type { CLIOptions, CommandResult, CommandContext, SearchResult, SearchMatch, ScrapedSource } from '../types/index.js';
 import { processSnapshot } from '../utils/streaming-json.js';
 import { createReadStream } from 'fs';
 import { Readable } from 'stream';
@@ -17,6 +17,8 @@ interface SearchFlags {
   maxResults?: number;
   context?: number;
   searchBinaries?: boolean;
+  sources?: boolean;
+  includeHtml?: boolean;
 }
 
 export class SearchCommand extends Command {
@@ -48,6 +50,14 @@ export class SearchCommand extends Command {
       {
         flags: '--search-binaries',
         description: 'Include binary file content in search'
+      },
+      {
+        flags: '--sources',
+        description: 'Also search scraped web sources (sources[].markdown)'
+      },
+      {
+        flags: '--include-html',
+        description: 'With --sources, also search the stored HTML of each source'
       }
     ],
     // ... examples and workflows
@@ -112,6 +122,12 @@ export class SearchCommand extends Command {
             });
           }
         }
+        if (flags.sources) {
+          for (const source of snapshot.sources || []) {
+            if (results.length >= maxResults) break;
+            this.searchSource(source, regex, flags, results);
+          }
+        }
       } else {
         // Use streaming processor to avoid OOM
         const inputStream = filePath ? createReadStream(filePath) : (context.stdinIsPipe ? Readable.from([context.stdin!]) : process.stdin);
@@ -120,6 +136,12 @@ export class SearchCommand extends Command {
           {
             onMetadata: (key, value) => {
               if (key === 'encodings') Object.assign(encodings, value);
+              if (key === 'sources' && flags.sources) {
+                for (const source of value as ScrapedSource[]) {
+                  if (results.length >= maxResults) break;
+                  this.searchSource(source, regex, flags, results);
+                }
+              }
             },
             onFile: (path, content) => {
               if (results.length >= maxResults) return;
@@ -191,6 +213,12 @@ export class SearchCommand extends Command {
         case '--search-binaries':
           flags.searchBinaries = true;
           break;
+        case '--sources':
+          flags.sources = true;
+          break;
+        case '--include-html':
+          flags.includeHtml = true;
+          break;
         default:
           if (!pattern && !arg.startsWith('-')) {
             pattern = arg;
@@ -212,6 +240,34 @@ export class SearchCommand extends Command {
     
     const flagStr = flags.caseInsensitive ? 'gi' : 'g';
     return new RegExp(patternStr, flagStr);
+  }
+
+  /**
+   * Searches one scraped source (its URL, Markdown, and — with
+   * --include-html — its stored HTML) and appends a result when
+   * anything matches. Results are labelled `source:<url>` so they
+   * cannot be confused with snapshot file paths.
+   */
+  private searchSource(
+    source: ScrapedSource,
+    regex: RegExp,
+    flags: SearchFlags,
+    results: SearchResult[]
+  ): void {
+    const label = `source:${source.url}`;
+    let matches = [...this.searchContent(source.url, regex, 0)];
+    matches = [...matches, ...this.searchContent(source.markdown || '', regex, flags.context || 0)];
+    if (flags.includeHtml && source.html) {
+      matches = [...matches, ...this.searchContent(source.html, regex, flags.context || 0)];
+    }
+
+    if (matches.length > 0) {
+      results.push({
+        filePath: label,
+        matches,
+        score: matches.length
+      });
+    }
   }
 
   private searchContent(content: string, regex: RegExp, _contextLines: number): SearchMatch[] {
